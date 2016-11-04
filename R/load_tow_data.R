@@ -37,13 +37,13 @@ load_tow_data <- function(){
   ##rport 
   test <- data.frame("state_port" = paste(wc_data$agid, wc_data$rport))
   test$state_port <- as.character(test$state_port)
-  thing <- inner_join(x = test, y = port_codes[, c('state_port', 'description')], by = 'state_port')
+  thing <- dplyr::inner_join(x = test, y = port_codes[, c('state_port', 'description')], by = 'state_port')
   wc_data$rport_desc <- thing$description
 
   ##dport
   test <- data.frame("state_port" = paste(wc_data$agid, wc_data$dport))
   test$state_port <- as.character(test$state_port)
-  thing <- inner_join(test, port_codes[, c('state_port', 'description')], by = 'state_port')
+  thing <- dplyr::inner_join(test, port_codes[, c('state_port', 'description')], by = 'state_port')
   wc_data$dport_desc <- thing$description
 
   wc_data <- wc_data[-grep("\\.", row.names(wc_data)), ]
