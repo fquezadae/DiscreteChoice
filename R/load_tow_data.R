@@ -7,7 +7,7 @@
 #'load_tow_data()
 
 load_tow_data <- function(){
-  load('output/wc_data_expanded_tows.Rdata')
+  load('/Users/peterkuriyama/School/Research/output/wc_data_expanded_tows.Rdata')
 
 # wc_data_expanded <- wc_data
   wc_data_orig <- wc_data
