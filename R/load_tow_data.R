@@ -7,14 +7,14 @@
 #'load_tow_data()
 
 load_tow_data <- function(){
-  load('/Users/peterkuriyama/School/Research/output/wc_data_expanded_tows.Rdata')
+  load('/Users/peterkuriyama/School/Research/ch2_vms/output/wc_data_expanded_tows.Rdata')
 
 # wc_data_expanded <- wc_data
   wc_data_orig <- wc_data
 
   ####################################################
   # #Load Port data and rename
-  port_codes <- read.csv("data/port_codes.csv", stringsAsFactors = FALSE)
+  port_codes <- read.csv("/Users/peterkuriyama/School/Research/ch2_vms/data/port_codes.csv", stringsAsFactors = FALSE)
   port_codes <- plyr::rename(port_codes, c('Pcid' = 'text_id', 'Agid' = 'state',
     'Agency' = 'number_id', 'Port.Agency.Description' = 'description'))
 
