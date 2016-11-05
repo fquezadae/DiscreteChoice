@@ -3,3 +3,4 @@
 export(calc_bycatch)
 export(load_tow_data)
 export(sample_tows)
+export(spp_corrs)
