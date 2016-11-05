@@ -5,7 +5,7 @@
 \title{Sample Tows
 Function to sample tows from logbook data}
 \usage{
-sample_tows(nreps = 5000, nsamps = 50, tac = 50000)
+sample_tows(nreps = 5000, nsamps = 50, tac = 50000, seed = 300)
 }
 \arguments{
 \item{nreps}{Number of replicates}
