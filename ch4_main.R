@@ -19,17 +19,13 @@ library(reshape2)
 #Load the Tow Data
 wc_data <- load_tow_data() #Data should have spatial ids with years and without years
 
-
-
 #Data Processing initially
 #Try sampling of data to stay within the TAC of multiple species
-wc_data <- wc_data[-grep("\\.", row.names(wc_data)), ]
-
-# tows <- wc_data[-grep("\\.", row.names(wc_data)), ]
+wc_data <- wc_data[-grep("\\.", wc_data$row_name), ]
 
 #Keep only certain columns
 tows <- wc_data %>% select(trip_id, haul_id, hpounds, apounds, species, rport_desc,
-  agid)
+  agid, id_by_year, id_no_year)
 
 #Set TACs for a particular species
 tows$species <- tolower(tows$species)
@@ -49,162 +45,33 @@ tows[tows$species %in% constraining, 'category'] <- 'constraining'
 of_interest <- tows %>% filter(species == 'sablefish') %>% 
   arrange(desc(apounds))
 
-
-########################################################################################
-#Looking at sablefish, 50 tows on average will catch
-sample_tows <- function(nreps = 5000, nsamps = 50, tac = 50000){
-  #Things to save:
-  #(1) Percentage of the TAC caught
-  #(2) Summed Catch across all tows
-  #(3) Row indices to see the amount of other things caught
-  perc_samples <- vector('list', length = nreps)
-  tc_samples <- vector('list', length = nreps)
-  row_samples <- vector('list', length = nreps)
-
-  for(ii in 1:length(perc_samples)){
-    samp_rows <- sample(1:nrow(of_interest), nsamps, replace = FALSE)
-    sampled <- of_interest[samp_rows, ] %>% arrange(desc(apounds))
-
-    #Store outputs
-    perc_samples[[ii]] <- sampled$apounds / tac
-    tc_samples[[ii]] <- sum(sampled$apounds)
-    row_samples[[ii]] <- samp_rows
-  }
-
-  return(list('perc_samples' = perc_samples, 'tot_catch' = unlist(tc_samples),
-    'row_samples' = row_samples))
-}
-
-#Try writing a sample tows function that uses apply to run faster
-nreps <- 1000
-nsamps <- 100
-tac <- 50000
-
-sample_tows <- function(nreps = 5000, nsamps = 50, tac = 50000, seed = 300){
-  print('in the apply function one')
-  #Things to save:
-  #(1) Percentage of the TAC caught
-  #(2) Summed Catch across all tows
-  #(3) Row indices to see the amount of other things caught
-  perc_samples <- vector('list', length = nreps)
-  tc_samples <- vector('list', length = nreps)
-  row_samples <- vector('list', length = nreps)
-
-  #Set Seed
-  set.seed(seed)
-  
-  samp_rows <- lapply(row_samples, FUN = function(x) sample(1:nrow(of_interest), nsamps, replace = FALSE))
-  sampled <- lapply(samp_rows, FUN = function(x) of_interest[x, ] %>% arrange(desc(apounds)))
-  perc_samples <- sampled$apounds / tac
-  tc_samples <- lapply(sampled, FUN = function(x) sum(x$apounds))
-
-  return(list('perc_samples' = perc_samples, 'tot_catch' = unlist(tc_samples),
-    'row_samples' = samp_rows))
-
-  # for(ii in 1:length(perc_samples)){
-  #   samp_rows <- sample(1:nrow(of_interest), nsamps, replace = FALSE)
-  #   sampled <- of_interest[samp_rows, ] %>% arrange(desc(apounds))
-
-  #   #Store outputs
-  #   perc_samples[[ii]] <- sampled$apounds / tac
-  #   tc_samples[[ii]] <- sum(sampled$apounds)
-  #   row_samples[[ii]] <- samp_rows
-  # }
-
-  # return(list('perc_samples' = perc_samples, 'tot_catch' = unlist(tc_samples),
-  #   'row_samples' = row_samples))
-}
-
-########################################################################################
-#Function to Calculate Bycatch
-#of_interest is the data frame that is filtered to be only one species, maybe in a specific
-#region.
-
-calc_bycatch <- function(nreps = 5000, nsamps = 50, tac = 50000,
-  of_interest){
-# browser() 
-  # of_interest <- tows %>% filter(species == target_species) %>% arrange(desc(apounds))
-
-  samps <- sample_tows(nreps = nreps, nsamps = nsamps, tac = tac)
-
-  #Pull out sampled rows and look at bycatch
-  ind_rows <- lapply(samps[[3]], FUN = function(x){
-    hauls <- of_interest[x, 'haul_id']
-  })
-
-  ########---------------------------------------########
-  #Do two things with the sampled rows, right now only focusing on apounds
-  #1. Save the bycatch associated with each sample
-    #Only save the target and constraining species
-  #2. Save the coordinates of each tow
-  ########---------------------------------------########
-  
-  #1 Aggregated Bycatch
-  agg_byc <- lapply(ind_rows, FUN = function(x){
-               byc <- tows[tows$haul_id %in% x,]
-               agg_byc_t <- byc %>% filter(category == 'targets' | category == 'constraining') %>% 
-                 group_by(species) %>% summarize(tot_apounds = sum(apounds, na.rm = TRUE)) %>% 
-                 arrange(desc(tot_apounds)) %>% as.data.frame
-               return(agg_byc_t)
-               }
-             )
-
-  #2 Haul Locations From West Coast data
-  locs <- lapply(ind_rows, FUN = function(x){
-    ll <- wc_data[wc_data$haul_id %in% x, c('lat', 'long')]
-  })
-
-  return(list('agg_byc' = agg_byc , 'locs' = locs, 'hauls' = ind_rows))
-}
-
-########################################################################################
-#Function to plot interaction bycatch
-#Pass the output of calc_bycatch, and pass the tows dataframe
-
-#Calculate species correlations
-
-spp_corrs <- function(tows = tows, output, two_species = c('dover sole', 'sablefish')){
-  
-  #Pull out the sampled tows from each 
-  the_tows <- lapply(out$hauls, FUN = function(x) tows %>% filter(haul_id %in% x))
- 
-  filtered_tows <- lapply(the_tows, function(x) x %>% filter(species %in% two_species) %>% 
-                     select(haul_id, apounds, species))
-
-  #cast the tows to plot them
-  casted <- lapply(filtered_tows, FUN = function(x) dcast(x, haul_id ~ species, value.var = 'apounds'))
-  names(casted) <- 1:length(casted)
-
-  #Replace the NAs with 0
-  casted <- ldply(casted)
-  names(casted)[1] <- 'replicate'
-  casted[is.na(casted[, 3]), 3] <- 0
-  casted[is.na(casted[, 4]), 4] <- 0
-  
-  #Calculate correlations between pairs
-  names(casted)[3] <- 'spp1'
-  names(casted)[4] <- 'spp2'
-
-  pairs %>% group_by(replicate) %>% do({
-    mod <- lm(spp2 ~ spp1, data = .)
-    r2 <- summary(mod)$r.squared
-    data.frame(., r2)
-  }) %>% as.data.frame -> corrs
-
-  unq_r2 <- corrs %>% distinct(replicate, r2)
-
-  return(list("pairs" = casted, 'corrs' = unq_r2))
-}
-
-
 ########################################################################################
 #Try it for only sablefish in WA
-of_interest <- tows %>% filter(species == 'sablefish' & agid == 'O' )
+of_interest <- tows %>% filter(species == 'sablefish' & agid == 'O')
 
-out <- calc_bycatch(nreps = 100, nsamps = 100, tac = 50000, of_interest = of_interest)
+#look at the 
+out <- calc_bycatch(nreps = 10, nsamps = 100, tac = 50000, of_interest = of_interest)
 pairs <- spp_corrs(tows = tows, output = out, two_species = c('dover sole', 'longspine thornyhead'))
 hist(pairs$corrs$r2, breaks = 50)
 
+########################################################################################
+#Look at locations with the most tows
+
+#Sites with the most tows
+wc_data %>% group_by(id_no_year) %>% summarize(ntows = length(unique(haul_id))) %>%
+  arrange(desc(ntows))
+
+of_interest <- tows %>% filter(id_no_year == 845 & species == 'sablefish') 
+out <- calc_bycatch(nreps = 1, nsamps = nrow(of_interest), tac = 50000, of_interest = of_interest)
+pairs <- spp_corrs(tows, output = out, two_species = c('dover sole', 'sablefish'))
+
+plot(pairs$pairs$spp1, pairs$pairs$spp2, pch = 19)
+
+
+
+########################################################################################
+#To Do:
+#Parallelize and see how high bycatch rates are in certain places
 
 
 
