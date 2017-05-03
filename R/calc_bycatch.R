@@ -12,7 +12,6 @@
 #'@examples
 #' Put example in
 
-
 ########################################################################################
 #Function to Calculate Bycatch
 #of_interest is the data frame that is filtered to be only one species, maybe in a specific

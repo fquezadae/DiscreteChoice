@@ -26,4 +26,3 @@ Function to calculate bycatch from sampled tows
 \examples{
 Put example in
 }
-
