@@ -16,11 +16,11 @@ clust_by_port <- function(port, cut_point = NA){
   unq_tows <- temp %>% group_by(haul_id) %>% filter(row_number(haul_id) == 1) %>% as.data.frame
   xx <- clust_tows(dat = unq_tows)
 
-  if(is.na(cut_point)) calc_cut <- sqrt(2) * (median(dat$dist_slc_km) * 360) / 40075
+  if(is.na(cut_point)) calc_cut <- sqrt(2) * (median(temp$dist_slc_km) * 360) / 40075
   if(is.na(cut_point) == FALSE) calc_cut <- cut_point
 
   unq_tows <- cut_for_merge(input_data = unq_tows, clust_input = xx, cut_point = calc_cut)
 
-  temp <- left_join(dat, unq_tows, by = 'haul_id')
+  temp <- left_join(temp, unq_tows, by = 'haul_id')
   return(temp)
 }
