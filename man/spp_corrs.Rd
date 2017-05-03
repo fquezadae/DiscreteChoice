@@ -21,4 +21,3 @@ Function to calculate catch correlations between two species
 \examples{
 Put example in
 }
-
