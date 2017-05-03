@@ -14,4 +14,3 @@ Load WC Logbook Data
 \examples{
 load_tow_data()
 }
-

@@ -21,4 +21,3 @@ Function to sample tows from logbook data
 \examples{
 sample_tows(5, 10, 1000)
 }
-
