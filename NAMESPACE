@@ -2,6 +2,7 @@
 
 export(arrange_tows)
 export(calc_bycatch)
+export(calc_skew)
 export(clust_by_port)
 export(clust_tows)
 export(cut_for_merge)
