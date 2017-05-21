@@ -6,7 +6,7 @@
 Function to cluster values by port. Can specify a cut_point or use a default calculation
 from Trevor's fishing opportunity paper}
 \usage{
-clust_by_port(port, cut_point = NA)
+clust_by_port(port, cut_point = NA, input)
 }
 \arguments{
 \item{port}{Name or index for port of interest}
