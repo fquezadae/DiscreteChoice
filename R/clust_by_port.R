@@ -9,8 +9,8 @@
 #' @export
 
 #Write cluster function for mclapply call
-clust_by_port <- function(port, cut_point = NA){
-  temp <- wc_data %>% filter(dport_desc == port)
+clust_by_port <- function(port, cut_point = NA, input){
+  temp <- input %>% filter(dport_desc == port)
 
   #Filter out unique tows
   unq_tows <- temp %>% group_by(haul_id) %>% filter(row_number(haul_id) == 1) %>% as.data.frame
