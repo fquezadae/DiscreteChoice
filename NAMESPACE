@@ -3,6 +3,7 @@
 export(arrange_tows)
 export(calc_bycatch)
 export(calc_skew)
+export(ch4_format_data)
 export(clust_by_port)
 export(clust_tows)
 export(cut_for_merge)
