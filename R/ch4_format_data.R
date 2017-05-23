@@ -68,7 +68,8 @@ ch4_format_data <- function(input, top100 = FALSE){
   cols <- c('ntows', 'nvess')
   
   clust_tows_out <- mclapply(cols, mc.cores = 2, 
-    FUN = function(x) ch4_perm_test(input = clust_tows, column = x, ndraws = 1000))
+    FUN = function(x) ch4_perm_test(input = clust_tows, column = x, ndraws = 1000, 
+      crit = "<" ))
 
   #Combine the two parallelized things
   c1 <- clust_tows_out[[1]]
