@@ -23,11 +23,12 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   
   #Perm data frame, used to permute column of interest
   #Build up function evaluation 
+  if(column == 'nvess') summ <- "length(unique(drvid))"
+  if(column == 'ntows') summ <- "length(unique(haul_id))"
+  
   perm_call <- paste0("perm <- input %>% group_by(", gb, ") %>% summarize(",
         column, " = ", summ, ")")
   eval(parse(text = perm_call))
-  
-  if(column %in% names(input) == FALSE) stop("column has to be a column in input")
   
   #Define number of unique clusters, using clust_cat
   unq_call <- paste0("nclusts <- input %>% group_by(", clust_cat, ") %>% distinct()")
@@ -37,8 +38,6 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   # nclusts <- length(unique(input$unq_clust))
   # the_clusts <- unique(perm$unq_clust)
   ncols <- ncol(nclusts)
-  nclusts[ii, ncols[1]] 
-  nclusts[ii, ncols[2]]
 
   #Construct the filtering statement
   filt_statement <- paste(paste0(names(nclusts), " == nclusts[ii, ", 1:ncols, "]"), collapse = ", ")
@@ -62,6 +61,13 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
                  column,
                  "[4:6])")))
     emp_out <- aft - bef
+
+# if(ii == 1){
+#   cat('emp_out = ', emp_out, 'column=', column, '\n')
+#   browser()
+# temp
+#   column
+# } 
     
     #Run the resampling function
     resamp <- sapply(1:ndraws, FUN = function(x){
