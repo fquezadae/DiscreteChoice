@@ -5,31 +5,51 @@
 #' @param input Input data frame
 #' @param column Column to permute
 #' @param ndraws Number of draws; defaults to 1000
+#' @param gb Character string of things to group by for the parse statements
+#' @param summ Character string of things to group by for the parse statements
+#' @param seed Random sampling seed
 
 #' @export
 #' @examples
 #' dd <- ch4_perm_test(input = top100_clusts, column = 'ntows', ndraws = 50)
 
-ch4_perm_test <- function(input, column, ndraws = 1000){  
+ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
+  summ = 'length(species)', clust_cat = "unq_clust", seed = 12345){  
+
   #Check that column is actually a column
   if(column %in% names(input) == FALSE) stop("column has to be a column in input")
 
-  eval((parse(text = paste0("temp <- input %>% arrange(desc(", column, "))"))))
+  # eval((parse(text = paste0("temp <- input %>% arrange(desc(", column, "))"))))
   
-  #Group things by column to see how much of each one there are
-  eval(parse(text = paste0("perm <- input %>% group_by(dyear, unq_clust) %>% summarize(",
-          column,
-          "= length(species))")))
+  #Perm data frame, used to permute column of interest
+  #Build up function evaluation 
+  perm_call <- paste0("perm <- input %>% group_by(", gb, ") %>% summarize(",
+        column, " = ", summ, ")")
+  eval(parse(text = perm_call))
   
-  #Define number of unique clusters
-  nclusts <- length(unique(input$unq_clust))
-  the_clusts <- unique(perm$unq_clust)
+  if(column %in% names(input) == FALSE) stop("column has to be a column in input")
   
-  p_vals <- rep(999, nclusts)
+  #Define number of unique clusters, using clust_cat
+  unq_call <- paste0("nclusts <- input %>% group_by(", clust_cat, ") %>% distinct()")
+  eval(parse(text = unq_call))
+  nclusts <- nclusts %>% as.data.frame
 
-  for(ii in 1:nclusts){
-    #Filter years
-    temp <- perm %>% filter(unq_clust == the_clusts[ii], dyear > 2007)
+  # nclusts <- length(unique(input$unq_clust))
+  # the_clusts <- unique(perm$unq_clust)
+  ncols <- ncol(nclusts)
+  nclusts[ii, ncols[1]] 
+  nclusts[ii, ncols[2]]
+
+  #Construct the filtering statement
+  filt_statement <- paste(paste0(names(nclusts), " == nclusts[ii, ", 1:ncols, "]"), collapse = ", ")
+  p_vals <- rep(999, nrow(nclusts))
+
+  #Set the seed
+  set.seed(seed)
+
+  for(ii in 1:nrow(nclusts)){
+    #Filter the data to permutate
+    eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
     
     #Move to next value if number of years isn't 6
     if(length(temp$dyear) != 6) next
@@ -64,10 +84,11 @@ ch4_perm_test <- function(input, column, ndraws = 1000){
   sigs[(sigs$p_vals <= .05), "sig"] <- 'sig decrease'
   sigs[(sigs$p_vals >= .95), "sig"] <- 'sig increase'
   sigs[(sigs$p_vals == 999), "sig"] <- 'not enough years'
-  sigs$unq_clust <- the_clusts
+  
+  sigs <- cbind(sigs, nclusts)
   
   #Combine with clust_tows
-  output <- inner_join(input, sigs, by = c('unq_clust'))
+  output <- inner_join(input, sigs, by = names(input)[which(names(input) %in% names(sigs))])
   
   #Modify column names
   names(output)[which(names(output) %in% "p_vals")] <- paste0("p_vals_", column)
