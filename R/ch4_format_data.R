@@ -4,13 +4,14 @@
 #' data filtered to be 0.6-1.1 ratio between hailed and adjusted pounds for example.
 
 #' @param input Data frame input
+#' @param top100 Switch to filter to top100 clusters by tow
 
 #' @export
 
 #---------------------------------------------------------------------------------
 ##Fishing opportunities
 #---------------------------------------------------------------------------------
-ch4_format_data <- function(input){
+ch4_format_data <- function(input, top100 = FALSE){
   #Orient tows in the same direction
   input <- arrange_tows(dat = input)
   
@@ -45,18 +46,41 @@ ch4_format_data <- function(input){
     hpounds, apounds, gr_sector, haul_id, grouping, species, duration_min, dport_desc, ha_ratio, clust, ntows,
     unq_clust)
   
+  #Can filter to top100 clusters
+  if(top100 == TRUE){    
+    top100 <- clust_tows %>% group_by(unq_clust) %>% summarize(ntows = length(unique(haul_id))) %>%
+      as.data.frame %>% arrange(desc(ntows))
+    clust_tows <- clust_tows %>% filter(unq_clust %in% top100$unq_clust[1:100])
+    
+  } 
+
   #--------------------------------------------------------------------------------
   #Permutation tests in each cluster
   #Group values by year and cluster
-  #---------------------------------------
-  #Number of tows
-  clust_tows <- ch4_perm_test(input = clust_tows, column = 'ntows', ndraws = 1000)
 
   #---------------------------------------
-  #Number of vessels
+  #Add number of vessels
   clust_tows <- clust_tows %>% group_by(dyear, unq_clust) %>% mutate(nvess = length(unique(drvid))) %>% 
     as.data.frame
-  clust_tows <- ch4_perm_test(input = clust_tows, column = 'nvess', ndraws = 1000)
+  
+  #---------------------------------------
+  #Run permutation test in parallel
+  cols <- c('ntows', 'nvess')
+browser()
+  clust_tows_out <- mclapply(cols, mc.cores = 2, 
+    FUN = function(x) ch4_perm_test(input = clust_tows, column = x, ndraws = 1000))
+
+  #Combine the two parallelized things
+  c1 <- clust_tows_out[[1]]
+  c2 <- clust_tows_out[[2]] %>% select(dday, dmonth, dyear, trip_id, haul_id, species, 
+    p_vals_nvess, sig_nvess)
+
+  clust_tows <- left_join(c1, c2, by = c('dday', 'dmonth', 'dyear', 'trip_id', 'haul_id',
+    'species'))
+  
+  # clust_tows <- ch4_perm_test(input = clust_tows, column = 'ntows', ndraws = 1000)
+
+  # clust_tows <- ch4_perm_test(input = clust_tows, column = 'nvess', ndraws = 1000)
     #--------------------------------------------------------------------------------
   #Add in before/after catch shares column
   clust_tows$when <- 'before'
@@ -91,7 +115,6 @@ ch4_format_data <- function(input){
     group_by(haul_id, species) %>% mutate(perc = hpounds / tot ) %>% as.data.frame -> clust_tows
   
   #Histograms across all species of catch percentages
-
   # clust_tows %>% filter(type == 'targets') %>% ggplot(aes(x = perc)) + 
   #   geom_histogram() + facet_wrap(~ species + when, ncol = 2)
   # clust_tows %>% filter(type == 'weaks') %>% ggplot(aes(x = perc)) + 

@@ -6,10 +6,12 @@
 Format the data, adding columns required for analysis. Can input any data frame, unfiltered data, 
 data filtered to be 0.6-1.1 ratio between hailed and adjusted pounds for example.}
 \usage{
-ch4_format_data(input)
+ch4_format_data(input, top100 = FALSE)
 }
 \arguments{
 \item{input}{Data frame input}
+
+\item{top100}{Switch to filter to top100 clusters by tow}
 }
 \description{
 Format the data based on whatever the input is
