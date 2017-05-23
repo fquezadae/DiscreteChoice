@@ -6,15 +6,16 @@
 #' @param column Column to permute
 #' @param ndraws Number of draws; defaults to 1000
 #' @param gb Character string of things to group by for the parse statements
-#' @param summ Character string of things to group by for the parse statements
+#' @param summ How to group things for resampling? Either by cluster, or cluster and type of species.
 #' @param seed Random sampling seed
+#' @param cri Criteria for determing p-value, should be "<" or "<=" 
 
 #' @export
 #' @examples
 #' dd <- ch4_perm_test(input = top100_clusts, column = 'ntows', ndraws = 50)
 
 ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
-  summ = 'length(species)', clust_cat = "unq_clust", seed = 12345){  
+  summ = 'length(species)', clust_cat = "unq_clust", seed = 12345, crit = "<="){  
 
   #Check that column is actually a column
   if(column %in% names(input) == FALSE) stop("column has to be a column in input")
@@ -49,7 +50,8 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   for(ii in 1:nrow(nclusts)){
     #Filter the data to permutate
     eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
-    
+    temp <- temp %>% arrange(dyear)
+
     #Move to next value if number of years isn't 6
     if(length(temp$dyear) != 6) next
     
@@ -80,8 +82,11 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
        return(out)
     })
 
-    #Calculate p-value
-    p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)
+# browser()
+    eval(parse(text = paste("p_vals[ii] <- length(which(resamp", 
+          crit, "emp_out)) / length(resamp)")))
+    # p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)
+
   }
 
   sigs <- data.frame(p_vals = p_vals, sig = "999")
