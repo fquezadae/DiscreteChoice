@@ -2,6 +2,7 @@
 
 export(arrange_tows)
 export(calc_bycatch)
+export(calc_comb_deltas)
 export(calc_skew)
 export(ch4_format_data)
 export(ch4_perm_test)
