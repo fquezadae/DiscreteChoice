@@ -6,7 +6,8 @@
 Function to conduct permutation test on different columns}
 \usage{
 ch4_perm_test(input, column, ndraws = 1000, gb = "dyear, unq_clust",
-  summ = "length(species)", clust_cat = "unq_clust", seed = 12345)
+  summ = "length(species)", clust_cat = "unq_clust", seed = 12345,
+  crit = "<=", annual = TRUE, save_resamps = FALSE)
 }
 \arguments{
 \item{input}{Input data frame}
@@ -17,9 +18,15 @@ ch4_perm_test(input, column, ndraws = 1000, gb = "dyear, unq_clust",
 
 \item{gb}{Character string of things to group by for the parse statements}
 
-\item{summ}{Character string of things to group by for the parse statements}
+\item{summ}{How to group things for resampling? Either by cluster, or cluster and type of species.}
 
 \item{seed}{Random sampling seed}
+
+\item{annual}{Resample annual averages (TRUE)? Or resample tows then calculate annual averages (FALSE)}
+
+\item{save_resamps}{Save resampled values?}
+
+\item{cri}{Criteria for determing p-value, should be "<" or "<="}
 }
 \description{
 Permutation Test

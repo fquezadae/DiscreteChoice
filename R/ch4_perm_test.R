@@ -9,13 +9,16 @@
 #' @param summ How to group things for resampling? Either by cluster, or cluster and type of species.
 #' @param seed Random sampling seed
 #' @param cri Criteria for determing p-value, should be "<" or "<=" 
+#' @param annual Resample annual averages (TRUE)? Or resample tows then calculate annual averages (FALSE)
+#' @param save_resamps Save resampled values?
 
 #' @export
 #' @examples
 #' dd <- ch4_perm_test(input = top100_clusts, column = 'ntows', ndraws = 50)
 
 ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
-  summ = 'length(species)', clust_cat = "unq_clust", seed = 12345, crit = "<="){  
+  summ = 'length(species)', clust_cat = "unq_clust", seed = 12345, crit = "<=",
+  annual = TRUE, save_resamps = FALSE){  
 
   #Check that column is actually a column
   if(column %in% names(input) == FALSE) stop("column has to be a column in input")
@@ -26,9 +29,19 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   #Build up function evaluation 
   if(column == 'nvess') summ <- "length(unique(drvid))"
   if(column == 'ntows') summ <- "length(unique(haul_id))"
+
+  perm <- input %>% group_by(dyear, unq_clust, species) %>% filter
+
+  if(annual == FALSE){
+    perm_call <- "perm <- input"
+  }
+
+  #If annual == TRUE
+  if(annual == TRUE){
+    perm_call <- paste0("perm <- input %>% group_by(", gb, ") %>% summarize(",
+          column, " = ", summ, ")")  
+  }
   
-  perm_call <- paste0("perm <- input %>% group_by(", gb, ") %>% summarize(",
-        column, " = ", summ, ")")
   eval(parse(text = perm_call))
   
   #Define number of unique clusters, using clust_cat
@@ -42,12 +55,19 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
 
   #Construct the filtering statement
   filt_statement <- paste(paste0(names(nclusts), " == nclusts[ii, ", 1:ncols, "]"), collapse = ", ")
-  p_vals <- rep(999, nrow(nclusts))
-
+  
   #Set the seed
   set.seed(seed)
 
-  for(ii in 1:nrow(nclusts)){
+  #----------------------------------------------------------------------
+  #If bootstrapping the annual numbers
+  if(annual == TRUE){
+    p_vals <- rep(999, nrow(nclusts))
+    resamps <- vector('list', length = nrow(nclusts))
+
+    for(ii in 1:nrow(nclusts)){
+  
+    
     #Filter the data to permutate
     eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
     temp <- temp %>% arrange(dyear)
@@ -63,13 +83,6 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
                  column,
                  "[4:6])")))
     emp_out <- aft - bef
-
-# if(ii == 1){
-#   cat('emp_out = ', emp_out, 'column=', column, '\n')
-#   browser()
-# temp
-#   column
-# } 
     
     #Run the resampling function
     resamp <- sapply(1:ndraws, FUN = function(x){
@@ -82,11 +95,78 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
        return(out)
     })
 
-# browser()
+    #Store p values and resampled values
     eval(parse(text = paste("p_vals[ii] <- length(which(resamp", 
           crit, "emp_out)) / length(resamp)")))
-    # p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)
+    resamps[[ii]] <- resamp
+    
+    # p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)    
+    }
+  }
+  
+  #----------------------------------------------------------------------
+  #If bootstrapping the tows or something
+  #Resample all the tows in a year then aggregate
+  if(annual == FALSE){
 
+    #Break up clusters based on number of cores   
+    tot <- 1:nrow(nclusts)
+    tots <- split(tot, ceiling(seq_along(tot) / (nrow(nclusts) / 6)))
+   
+     # Have to work on data structures for this one
+    ttt <-  mclapply(1:6, mc.cores = 6, FUN = function(xx){
+      the_rows <- tots[[xx]]
+      # resamps <- vector('list', length = length(the_rows))
+      
+      p_vals <- data.frame(rownum = the_rows, pval = 999)
+      resamps <- vector('list', length = length(the_rows))
+      
+      for(jj in 1:length(the_rows)){
+        ii <- the_rows[jj]
+        
+        #Filter the data to permutate
+        eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
+        temp <- temp %>% arrange(dyear)
+      
+        #Move to next value if number of years isn't 6
+        if(length(unique(temp$dyear)) != 6){
+          # cat("nada", '\n')
+          next
+        } 
+          
+        #Calculate empirical before/after difference
+        emp_out <- temp %>% group_by(when) %>% summarize(avg = mean(hpounds))
+        emp_out <- (emp_out[2, 'avg'] - emp_out[1, 'avg'])
+        emp_out <- emp_out$avg
+        
+        #Run the resampling function
+        resamp <- sapply(1:ndraws, FUN = function(x){
+          samp1 <- sample(1:nrow(temp), replace = F)
+           
+          #Add sampled column
+          eval(parse(text = paste0("temp$samp_", column, "<- temp[", "samp1", ", '", column, "']")))
+           
+          samp2 <- temp %>% group_by(when) %>% summarize(avg = mean(samp_hpounds))
+          out <- samp2[2, 'avg'] - samp2[1, 'avg']
+          out <- out$avg         
+          return(out)
+        })
+    
+        eval(parse(text = paste("p_vals[jj, 'pval'] <- length(which(resamp", 
+              crit, "emp_out)) / length(resamp)")))
+        resamps[[jj]] <- resamp
+      }
+      return(list(pval = p_vals, resamps = resamps))        
+    })
+# browser()    
+    #Format output from the thing
+    pp <- lapply(ttt, FUN = function(xx) xx$pval)
+    pp <- ldply(pp)
+    p_vals <- pp
+  
+    resamps1 <- lapply(ttt, FUN = function(xx) ldply(xx$resamps))
+    resamps2 <- ldply(resamps1)
+    resamps <- resamps2
   }
 
   sigs <- data.frame(p_vals = p_vals, sig = "999")
@@ -104,6 +184,19 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   #Modify column names
   names(output)[which(names(output) %in% "p_vals")] <- paste0("p_vals_", column)
   names(output)[which(names(output) %in% "sig")] <- paste0("sig_", column)
+  
+  #Save the resampled data which is a lot
+  if(annual == TRUE & save_resamps == TRUE){
+    filenm <- paste0('output/resamps_annual_', column, "_nrows_", nrow(sigs), '_ndraws_', ndraws,
+      ".Rdata")
+    save(resamps, file = filnm)
+  }
+
+  if(annual == FALSE & save_resamps == TRUE){
+    filenm <- paste0("output/resamps_notannual", "_nrows_" , nrow(sigs), "_ndraws_", ndraws,
+      ".Rdata")
+    save(resamps, file = filenm)  
+  }
   
   return(output)
 }
@@ -157,5 +250,5 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   
 #   #Combine with clust_tows
 #   top100_clusts <- inner_join(clust_tows, sigs, by = c('unq_clust'))
-#   top100_clusts <- plyr::rename(top100_clusts, c("p_vals" = 'p_vals_tows', 'sig' = 'sig_tows'))
-#   
+##   top100_clusts <- plyr::rename(top100_clusts, c("p_vals" = 'p_vals_tows', 'sig' = 'sig_tows'))
+  
