@@ -158,18 +158,23 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
       }
       return(list(pval = p_vals, resamps = resamps))        
     })
-# browser()    
+
     #Format output from the thing
     pp <- lapply(ttt, FUN = function(xx) xx$pval)
     pp <- ldply(pp)
-    p_vals <- pp
-  
+    pp <- cbind(nclusts, pp)
+    pp$rownum <- NULL
+
+    p_vals <- pp$pval
+    # names(p_vals)[3] <- 'p_val'
+
     resamps1 <- lapply(ttt, FUN = function(xx) ldply(xx$resamps))
     resamps2 <- ldply(resamps1)
     resamps <- resamps2
   }
 
-  sigs <- data.frame(p_vals = p_vals, sig = "999")
+  sigs <- data.frame(p_vals = p_vals, sig = "999")  
+    
   sigs$sig <- as.numeric(sigs$sig)
   sigs$sig <- 'no change'
   sigs[(sigs$p_vals <= .05), "sig"] <- 'sig decrease'
