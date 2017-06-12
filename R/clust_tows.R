@@ -13,7 +13,6 @@
 #
 clust_tows <- function(dat){
   # temp <- subset(dat, dport_desc == port)
-  
   # print(dim(temp))
 
   distances <- dist(dat[, c('up_lat', 'set_lat', 'trans_set_long', 'trans_up_long')],
