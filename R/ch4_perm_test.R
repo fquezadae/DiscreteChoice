@@ -66,41 +66,39 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
     resamps <- vector('list', length = nrow(nclusts))
 
     for(ii in 1:nrow(nclusts)){
+      #Filter the data to permutate
+      eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
+      temp <- temp %>% arrange(dyear)
   
-    
-    #Filter the data to permutate
-    eval(parse(text = paste0("temp <- perm %>% filter(", filt_statement, ")"  )))
-    temp <- temp %>% arrange(dyear)
-
-    #Move to next value if number of years isn't 6
-    if(length(temp$dyear) != 6) next
-    
-    #Calculate empirical before/after difference
-    eval(parse(text = paste0("bef <- mean(temp$",
-                  column,
-                  "[1:3])")))
-    eval(parse(text = paste0("aft <- mean(temp$",
-                 column,
-                 "[4:6])")))
-    emp_out <- aft - bef
-    
-    #Run the resampling function
-    resamp <- sapply(1:ndraws, FUN = function(x){
-       eval(parse(text = paste0("draw <- sample(temp$",
-                            column,
-                            ", replace = F)")))
-       bef <- mean(draw[1:3])
-       aft <- mean(draw[4:6])
-       out <- aft - bef
-       return(out)
-    })
+      #Move to next value if number of years isn't 8
+      if(length(temp$dyear) != 8) next
+      
+      #Calculate empirical before/after difference
+      eval(parse(text = paste0("bef <- mean(temp$",
+                    column,
+                    "[1:4])")))
+      eval(parse(text = paste0("aft <- mean(temp$",
+                   column,
+                   "[5:8])")))
+      emp_out <- aft - bef
+      
+      #Run the resampling function
+      resamp <- sapply(1:ndraws, FUN = function(x){
+         eval(parse(text = paste0("draw <- sample(temp$",
+                              column,
+                              ", replace = F)")))
+         bef <- mean(draw[1:4])
+         aft <- mean(draw[5:8])
+         out <- aft - bef
+         return(out)
+      })
 
     #Store p values and resampled values
     eval(parse(text = paste("p_vals[ii] <- length(which(resamp", 
           crit, "emp_out)) / length(resamp)")))
     resamps[[ii]] <- resamp
     
-    # p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)    
+    p_vals[ii] <- length(which(resamp <= emp_out)) / length(resamp)    
     }
   }
   
@@ -185,10 +183,10 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   
   #Combine with clust_tows
   output <- inner_join(input, sigs, by = names(input)[which(names(input) %in% names(sigs))])
-  
+    
   #Modify column names
-  names(output)[which(names(output) %in% "p_vals")] <- paste0("p_vals_", column)
-  names(output)[which(names(output) %in% "sig")] <- paste0("sig_", column)
+  names(output)[which(names(output) == "p_vals")] <- paste0("p_vals_", column)
+  names(output)[which(names(output) == "sig")] <- paste0("sig_", column)
   
   #Save the resampled data which is a lot
   if(annual == TRUE & save_resamps == TRUE){
