@@ -20,6 +20,8 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   summ = 'length(species)', clust_cat = "unq_clust", seed = 12345, crit = "<=",
   annual = TRUE, save_resamps = FALSE){  
 
+# browser()
+  
   #Check that column is actually a column
   if(column %in% names(input) == FALSE) stop("column has to be a column in input")
 
@@ -46,9 +48,12 @@ ch4_perm_test <- function(input, column, ndraws = 1000, gb = "dyear, unq_clust",
   
   #Define number of unique clusters, using clust_cat
   unq_call <- paste0("nclusts <- input %>% group_by(", clust_cat, ") %>% distinct()")
+  
+  
   eval(parse(text = unq_call))
   nclusts <- nclusts %>% as.data.frame
 
+  nclusts <- data.frame(unq_clust = unique(input$unq_clust))
   # nclusts <- length(unique(input$unq_clust))
   # the_clusts <- unique(perm$unq_clust)
   ncols <- ncol(nclusts)
