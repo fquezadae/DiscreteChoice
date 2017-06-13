@@ -14,35 +14,32 @@ library(doParallel)
 
 #Load Data
 # load("C:\\Users\\Lewis\\Documents\\Data\\OBDATA_Barnett_OBProcessed_Catch_Data_2002_2014_2015-10-21.Rda")
-
-# lbk_names <- read.csv('C:\\Users\\Lewis\\Documents\\Data\\lbk_names.csv')
+# obs_data <- OB.ad2
 # rm(OB.ad2)
 
-load("/Users/peterkuriyama/Desktop/AST.Rdata")
-
-obs_data <- ast
+# load("/Users/peterkuriyama/Desktop/AST.Rdata")
+# obs_data <- ast
 
 #States Map
-states_map <- map_data("state")
+# states_map <- map_data("state")
 
 #Install delta plot functions
 devtools::install_github("peterkuriyama/ch2vms/ch2vms")
 library(ch2vms)
 
-#Load observer data, this is from the sample that you sent me
-
 #get column names in the right format
-names(obs_data) <- tolower(names(obs_data))
-
-#Remove mt and scientific name columns
-obs_data[, c(80, 117)] <- NULL
-
-#Convert latitudes to longitudes
-obs_data$trans_set_long <- obs_data$set_long * cos((2 * pi * obs_data$set_lat) / 360)
-obs_data$trans_up_long <- obs_data$up_long * cos((2 * pi * obs_data$up_lat) / 360)
+# names(obs_data) <- tolower(names(obs_data))
+# 
+# #Remove mt and scientific name columns
+# obs_data[, c(80, 117)] <- NULL
+# 
+# #Convert latitudes to longitudes
+# obs_data$trans_set_long <- obs_data$set_long * cos((2 * pi * obs_data$set_lat) / 360)
+# obs_data$trans_up_long <- obs_data$up_long * cos((2 * pi * obs_data$up_lat) / 360)
 
 #Names to change
 obs_data <- plyr::rename(obs_data, c("d_port" = 'dport_desc'))
+load_all("GitHub/ch4")
 
 #---------------------------------------------------------------------------------
 #Calculate distances between tows
@@ -68,12 +65,38 @@ obs_data$km_duration <- obs_data$dist_slc_km / obs_data$haul_duration
 # obs_data %>% filter(km_duration < 10) %>% dim
 # obs_data %>% distinct(km_duration) %>% arrange(desc(km_duration)) %>% head(n = 100)
 
+obs_data$hpounds <- obs_data$lb
+#---------------------------------------------------------------------------------
+#Remove seattle values from obs_data
+obs_data <- obs_data %>% filter(dport_desc != "SEATTLE")
+
+obs_data1 <- ch4_format_data(obs_data, top100 = FALSE) 
+#Save this once and never run again hopefully
+save(obs_data1, file = "Data/obs_data1.Rdata")
+
+rm(obs_data)
+
+#Compare the two data types, also filtered to be 2007-2014 only*****
+obs_data %>% group_by(dport_desc) %>% summarize(nports = n()) %>% arrange(desc(nports))
+obs_data1 %>% group_by(dport_desc) %>% summarize(nports = n()) %>% arrange(desc(nports))
+head(obs)
 
 #---------------------------------------------------------------------------------
-obs_data1 <- ch4_format_data(obs_data, top100 = FALSE) 
+#---------------------------------------------------------------------------------
+#Load processed data
+load(file = "C:\\Users\\Lewis\\Documents\\Data\\obs_data1.Rdata")
+
+obs_data <- obs_data1
+rm(obs_data1)
+
+#---------------------------------------------------------------------------------
+obs_data %>% group_by(dport_desc) %>% summarize
+obs_data %>% select(ntows, nvess, unq_clust) %>% head(n = 30)
 
 #---------------------------------------------------------------------------------
 #Aggregate measures
+#See ch4_centroid
+
 obs_data %>% group_by(dyear) %>% summarize(ntows = length(unique(haul_id)),
   avg_dist = mean(dist_slc_km, na.rm = T))
 
