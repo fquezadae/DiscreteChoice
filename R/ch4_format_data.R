@@ -40,17 +40,25 @@ ch4_format_data <- function(input, top100 = FALSE, nncores = 6){
   }
 
   if(length(unq_ports) > 1){
-    clusters <- parallel::makeCluster(nncores)
-    doParallel::registerDoParallel(clusters)  
+    tows_clust_list <- vector('list', length = length(unq_ports))
+
+
+
+    for(ii in 1:length(unq_ports)){
+      clusters <- parallel::makeCluster(nncores)
+      doParallel::registerDoParallel(clusters)  
+      
+      tows_clust_list[[ii]] <- clust_by_port(port = unq_ports[ii], cut_point = NA, input = input)
+
+      stopCluster(clusters)
+    }
+
+    # tows_clust <- foreach(ii = unq_ports,
+    #   .packages = c('plyr', 'dplyr', 'reshape2', 'ch4')) %dopar% {
+    #     clust_by_port(port = ii, cut_point = NA, input = input)   
+    # } 
     
-    tows_clust <- foreach(ii = unq_ports,
-      .packages = c('plyr', 'dplyr', 'reshape2', 'ch4')) %dopar% {
-        clust_by_port(port = ii, cut_point = NA, input = input)   
-    } 
-  
-    #close clusters
-    stopCluster(clusters)
-    tows_clust <- ldply(tows_clust)
+    tows_clust <- ldply(tows_clust_list)
   }
 
   #Clustering occurs on unique tows only...
