@@ -41,24 +41,23 @@ ch4_format_data <- function(input, top100 = FALSE, nncores = 6){
 
   if(length(unq_ports) > 1){
     tows_clust_list <- vector('list', length = length(unq_ports))
-
-
-
+    
     for(ii in 1:length(unq_ports)){
-      clusters <- parallel::makeCluster(nncores)
-      doParallel::registerDoParallel(clusters)  
-      
+      # clusters <- parallel::makeCluster(nncores)
+      # doParallel::registerDoParallel(clusters)  
+      print(unq_ports[ii])
       tows_clust_list[[ii]] <- clust_by_port(port = unq_ports[ii], cut_point = NA, input = input)
 
-      stopCluster(clusters)
+      # stopCluster(clusters)
     }
-
+    # browser()
     # tows_clust <- foreach(ii = unq_ports,
     #   .packages = c('plyr', 'dplyr', 'reshape2', 'ch4')) %dopar% {
     #     clust_by_port(port = ii, cut_point = NA, input = input)   
     # } 
     
     tows_clust <- ldply(tows_clust_list)
+
   }
 
   #Clustering occurs on unique tows only...
@@ -105,7 +104,7 @@ ch4_format_data <- function(input, top100 = FALSE, nncores = 6){
   #Permutation test for vessels
   tows_clust_out <- ch4_perm_test(input = tows_clust_out, column = cols[2], ndraws = 1000,
     crit = "<")
-  
+# browser()  
   # tows_clust_out <- mclapply(cols, mc.cores = nncores, 
   #   FUN = function(x) ch4_perm_test(input = tows_clust, column = x, ndraws = 1000, 
   #     crit = "<" ))
@@ -122,6 +121,10 @@ ch4_format_data <- function(input, top100 = FALSE, nncores = 6){
 
   # tows_clust <- ch4_perm_test(input = tows_clust, column = 'nvess', ndraws = 1000)
     #--------------------------------------------------------------------------------
+  #Remove shit because running out of memory
+  rm(input)
+  rm(tows_clust)
+  
   #Add in before/after catch shares column
   tows_clust_out$when <- 'before'
   tows_clust_out[which(tows_clust_out$dyear > 2010), 'when'] <- 'after'
