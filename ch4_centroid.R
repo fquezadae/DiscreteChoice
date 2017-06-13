@@ -88,7 +88,7 @@ wc_data_focus[which(-wc_data_focus$vess_tot_avg_long_before >=
 
 #-------------------------------
 # Washington
-wash <- wc_data_focus %>% filter(agid == "W", dport_desc != "dont know ORE")
+wash <- wc_data_focus %>% filter(agid == "WA", dport_desc != "dont know ORE")
 
 #Raw numbers of tows
 wash %>% group_by(dport_desc, dyear) %>% 
@@ -100,14 +100,14 @@ wash %>% group_by(dport_desc, dyear) %>%
     width = 6.9, height = 5)
 
 #Spatial shifts
-wash %>% filter(gr_sector == "TRAWL") %>%
+wash %>% 
   ggplot() + 
-  geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat,
+  geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
     colour = dport_desc), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -tot_avg_long_before, xend = -tot_avg_long_after,
+  geom_segment(aes(x = tot_avg_long_before, xend = tot_avg_long_after,
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -123.5)) + scale_y_continuous(limits = c(43.5, 48)) +
@@ -116,11 +116,11 @@ wash %>% filter(gr_sector == "TRAWL") %>%
 
 #Vessel Shifts
 wash %>%
- ggplot() + geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat),
+ ggplot() + geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat),
     colour = 'gray', arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -123.5)) + 
     scale_y_continuous(limits = c(43, 48))  + facet_wrap(~ vess_both) + 
@@ -131,10 +131,10 @@ wash %>%
 wash %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() + 
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -123.5)) + 
-  scale_y_continuous(limits = c(43, 48)) + geom_point(aes(x = -vess_tot_avg_long_before,
+  scale_y_continuous(limits = c(43, 48)) + geom_point(aes(x = vess_tot_avg_long_before,
   y = vess_tot_avg_lat_before, size = nunq_hauls, colour = drvid)) + 
   facet_wrap(~ direc) + 
   ggsave(width = 8.5, height = 6, file = 'figs/wa_vess_shift_dir.png')
@@ -143,7 +143,7 @@ wash %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() +
    
 #-------------------------------
 #Oregon
-oregon <- wc_data_focus %>% filter(agid == "O", dport_desc != "dont know",
+oregon <- wc_data_focus %>% filter(agid == "OR", dport_desc != "dont know",
   dport_desc != "WASHINGTON STATE")
  
 #Number of tows
@@ -156,14 +156,14 @@ oregon %>% group_by(dport_desc, dyear) %>%
     width = 6.9, height = 5)
 
 #Map of shifts
-oregon %>% filter(gr_sector == "TRAWL") %>%
+oregon %>% 
   ggplot() + 
-  geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat,
+  geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
     colour = dport_desc), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -tot_avg_long_before, xend = -tot_avg_long_after,
+  geom_segment(aes(x = tot_avg_long_before, xend = tot_avg_long_after,
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -123.5)) + scale_y_continuous(limits = c(43.5, 48)) +
@@ -172,11 +172,11 @@ oregon %>% filter(gr_sector == "TRAWL") %>%
 
 #Vessel shifts
 oregon %>%
- ggplot() + geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat),
+ ggplot() + geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat),
     colour = 'gray', arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), 
       show.legend = F, arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -123.5)) + 
@@ -188,16 +188,16 @@ oregon %>%
 oregon %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() + 
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -123.5)) + 
     scale_y_continuous(limits = c(40, 48)) +
-  geom_point(aes(x = -vess_tot_avg_long_before,
+  geom_point(aes(x = vess_tot_avg_long_before,
   y = vess_tot_avg_lat_before, size = nunq_hauls, colour = drvid)) + 
   facet_wrap(~ direc) + ggsave(width = 8.3, height = 9.6, file = 'figs/oregon_vess_shift_dir.png')
     
 #-------------------------------
-calif <- wc_data_focus %>% filter(agid == "C") 
+calif <- wc_data_focus %>% filter(agid == "CA") 
 
 #Number of tows
 calif %>% group_by(dport_desc, dyear) %>% 
@@ -209,16 +209,16 @@ calif %>% group_by(dport_desc, dyear) %>%
     width = 6.9, height = 5)
 
 #Map of shifts
-calif %>% filter(gr_sector == "TRAWL") %>% 
+calif %>% 
   filter(dport_desc %in% c("SAN FRANCISCO", "NORTH OF CALIFORNIA",
     "FORT BRAGG", "EUREKA", "CRESCENT CITY")) %>%
   ggplot() + 
-  geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat,
+  geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
     colour = dport_desc), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -tot_avg_long_before, xend = -tot_avg_long_after,
+  geom_segment(aes(x = tot_avg_long_before, xend = tot_avg_long_after,
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -121.5)) + scale_y_continuous(limits = c(35, 43)) +
@@ -227,11 +227,11 @@ calif %>% filter(gr_sector == "TRAWL") %>%
 
 
 calif %>%
- ggplot() + geom_segment(aes(x = -set_long, xend = -up_long, y = set_lat, yend = up_lat),
+ ggplot() + geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat),
     colour = 'gray', arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), 
       show.legend = F, arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -121.5)) + 
@@ -242,11 +242,11 @@ calif %>%
 calif %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() + 
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
-  geom_segment(aes(x = -vess_tot_avg_long_before, xend = -vess_tot_avg_long_after,
+  geom_segment(aes(x = vess_tot_avg_long_before, xend = vess_tot_avg_long_after,
     y = vess_tot_avg_lat_before, yend = vess_tot_avg_lat_after, colour = drvid), arrow = arrow(type = 'open',
       length = unit(.4, 'cm'))) + scale_x_continuous(limits = c(-125.5, -121.5)) + 
     scale_y_continuous(limits = c(35, 43)) +
-  geom_point(aes(x = -vess_tot_avg_long_before,
+  geom_point(aes(x = vess_tot_avg_long_before,
   y = vess_tot_avg_lat_before, size = nunq_hauls, colour = drvid)) + 
   facet_wrap(~ direc) + ggsave(width = 8.3, height = 9.6, file = 'figs/ca_vess_shift_dir.png')
 #--------------------------------------------------------------------------------------------------
