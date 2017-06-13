@@ -1,5 +1,6 @@
 #load observer data
 setwd('/Users/peterkuriyama/School/Research/ch4')
+setwd("C:\\Users\\Lewis\\Documents\\GitHub\\ch4")
 load_all()
 
 #Load Packages
@@ -21,7 +22,7 @@ library(doParallel)
 # obs_data <- ast
 
 #States Map
-# states_map <- map_data("state")
+states_map <- map_data("state")
 
 #Install delta plot functions
 devtools::install_github("peterkuriyama/ch2vms/ch2vms")
@@ -66,6 +67,9 @@ obs_data$km_duration <- obs_data$dist_slc_km / obs_data$haul_duration
 # obs_data %>% distinct(km_duration) %>% arrange(desc(km_duration)) %>% head(n = 100)
 
 obs_data$hpounds <- obs_data$lb
+obs_data$avglat <- obs_data$avg_lat
+obs_data$avglong <- obs_data$avg_long
+obs_data$agid <- obs_data$d_state
 #---------------------------------------------------------------------------------
 #Remove seattle values from obs_data
 obs_data <- obs_data %>% filter(dport_desc != "SEATTLE")
