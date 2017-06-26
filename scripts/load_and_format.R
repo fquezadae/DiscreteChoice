@@ -5,6 +5,7 @@ load("C://Users//Lewis//Documents//Data//OBDATA_Barnett_OBProcessed_Catch_Data_2
 obs_data <- OB.ad2
 rm(OB.ad2)
 
+
 load("C://Users//Lewis//Documents//Data//LBKDATA_Barnett_Logbook_Data_2002_2015_2016-06-07.Rda")
 lbk <- LBK
 rm(LBK)
@@ -120,7 +121,7 @@ obs_data1 <- obs_data[, c("drvid", "dmonth", "dday", "dyear", "d_port", "d_port_
                           "set_lat", "set_long", "set_depth", "up_time", "type",
                           "up_lat", "up_long", "up_depth", "haul_duration", "avg_depth", 
                           "trip_id", "lb", "dis", "species", 'set_month', 'set_day', 'set_year', 'set_time',
-                          'fish_tickets')]
+                          'fish_tickets', 'avg_long', 'avg_lat')]
 
 
 lbk1 <- lbk[, c("trip_id", "agid", "dday", 
@@ -129,12 +130,12 @@ lbk1 <- lbk[, c("trip_id", "agid", "dday",
                 "set_lat", "set_long", "up_time", "duration", 
                 "up_lat", "up_long", "depth1", "target", "hpounds", "apounds", 
                 "haul_id", "spc.name", "type", "d_portgrp", "r_portgrp", 'set_month', 'set_day',
-                'set_year', 'set_time', 'fish_tickets')]
+                'set_year', 'set_time', 'fish_tickets', 'avglong', 'avglat')]
 
 lbk1 <- plyr::rename(lbk1, c('spc.name' = 'species', "agid" = 'd_state', "dport" = "d_port",
                              "rport" = "r_port", "townum" = "haul_num", "duration" = "haul_duration",
                              "depth1" = "avg_depth", "d_portgrp" = "d_port_group", 
-                             "r_portgrp" = "r_port_group"))
+                             "r_portgrp" = "r_port_group", 'avglong' = 'avg_long', 'avglat' = 'avg_lat'))
 
 
 #Change lbk1 colums from factor to character class
@@ -159,8 +160,8 @@ lbk1$set_depth <- lbk1$avg_depth
 lbk1$up_depth <- lbk1$avg_depth
 
 #Double check that numbers of columns is the same
-sum(names(obs_data1) %in% names(lbk1)) == 36
-sum(names(lbk1) %in% names(obs_data1)) == 36
+sum(names(obs_data1) %in% names(lbk1)) == 38
+sum(names(lbk1) %in% names(obs_data1)) == 38
 
 #Replace tows in logbook data with tows from the observer data
 #Subset logbook data to be before 2011
@@ -301,6 +302,62 @@ lbk2 <- rbind(the_same, to_change1)
 comb_data <- rbind(obs_data2, lbk2)
 dim(obs_data2)
 dim(obs_after)
+
+
+obs_data <- comb_data
+
+#---------------------------------------------------------------------------------
+#Calculate distances between tows
+#Function to convert degrees to radians
+deg2rad <- function(deg) return(deg*pi/180)
+
+#Calculate distance with haversine distance
+gcd_slc <- function(long1, lat1, long2, lat2) {
+  R <- 6371 # Earth mean radius [km]
+  d <- acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2) * cos(long2-long1)) * R
+  return(d) # Distance in km
+}
+
+#Add in the distances
+obs_data$dist_slc_km <- gcd_slc(deg2rad(obs_data$set_long), deg2rad(obs_data$set_lat), 
+                                deg2rad(obs_data$up_long), deg2rad(obs_data$up_lat))
+
+#Filter data by speed
+obs_data$km_duration <- obs_data$dist_slc_km / obs_data$haul_duration
+
+#Maybe filter to be 10km 
+# obs_data %>% filter(km_duration < 10) %>% dim
+# obs_data %>% distinct(km_duration) %>% arrange(desc(km_duration)) %>% head(n = 100)
+
+#Make sure all the longitudes are negative
+obs_data[which(obs_data$set_long >= 0), 'set_long'] <- -obs_data[which(obs_data$set_long >= 0), 'set_long'] 
+obs_data[which(obs_data$up_long >= 0), 'up_long'] <- -obs_data[which(obs_data$up_long >= 0), 'up_long'] 
+
+#Check that they're all negative
+which(obs_data$set_long > 0)
+which(obs_data$up_long > 0)
+
+#Add columns for avg lat and longs
+obs_data$avg_lat <- (obs_data$set_lat + obs_data$up_lat) / 2
+obs_data$avg_long <- (obs_data$up_long + obs_data$set_long) / 2
+
+#Add in the d_port and r_port groups
+obs_data <- obs_data %>% group_by(d_port_group) %>% mutate(d_port_group_desc = paste0(unique(d_port), collapse = "; ")) %>%
+  as.data.frame
+obs_data <- obs_data %>% group_by(r_port_group) %>% mutate(r_port_group_desc = paste0(unique(r_port), collapse = "; ")) %>%
+  as.data.frame
+
+#Add in time descriptions
+obs_data$when <- 'baseline'
+obs_data[which(obs_data$dyear >= 2007 & obs_data$dyear < 2011), 'when'] <- 'before'
+obs_data[which(obs_data$dyear >= 2011), 'when'] <- 'after'
+
+#Filter out long tows
+quantile(obs_data$km_duration, na.rm = T)
+
+obs_data <- obs_data %>% filter(km_duration <= 10)
+
+obs_data$set_year <- as.numeric(obs_data$set_year)
 
 save(comb_data, file = "C://Users//Lewis//Documents//Data//comb_data.Rda")
 

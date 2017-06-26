@@ -6,7 +6,7 @@
 Format the data, adding columns required for analysis. Can input any data frame, unfiltered data, 
 data filtered to be 0.6-1.1 ratio between hailed and adjusted pounds for example.}
 \usage{
-ch4_format_data(input, top100 = FALSE)
+ch4_format_data(input, top100 = FALSE, nncores = 6)
 }
 \arguments{
 \item{input}{Data frame input}
