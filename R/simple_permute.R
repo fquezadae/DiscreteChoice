@@ -10,6 +10,7 @@
 #' @param column Column of years by default, whatever index to permute
 #' @param index Values in column that are indices of permutation
 
+#' @export
 #Specify index for aggregation
 simple_permute <- function(input, perm_column, nperms = 1000, seed = 12345,
                            crit = "<=", column = 'set_year', index = c(2007,2010)){
