@@ -36,18 +36,23 @@ wc_data_focus <- subset(wc_data_orig, dyear >= 2008 & dyear <= 2013)
 #--------------------------------------------------------------------------------------------------
 wc_data_focus <- obs_data
 
+wc_data_focus
+
+
 #Unweighted Averages
 #calculate average before after coordinates
-wc_data_focus %>% group_by(dport_desc, when) %>% mutate(tot_avg_lat = mean(avglat),
-  tot_avg_long = mean(avglong)) %>% select(tot_avg_lat, tot_avg_long) %>%
-  distinct(dport_desc, when, .keep_all = T) %>% melt %>% 
-  dcast(dport_desc ~ variable + when) -> port_avg_coords
+wc_data_focus <- wc_data_focus %>% filter(when != 'baseline')
 
-wc_data_focus <- left_join(wc_data_focus, port_avg_coords, by = 'dport_desc')
+port_avg_coords <- wc_data_focus %>% group_by(d_port, when) %>% mutate(tot_avg_lat = mean(avg_lat),
+  tot_avg_long = mean(avg_long)) %>% select(tot_avg_lat, tot_avg_long) %>%
+  distinct(d_port, when, .keep_all = T) %>% melt %>% 
+  dcast(d_port ~ variable + when)
+
+wc_data_focus <- left_join(wc_data_focus, port_avg_coords, by = 'd_port')
 
 #Vessel averages
-wc_data_focus %>% group_by(drvid, when) %>% mutate(vess_tot_avg_lat = mean(avglat),
-  vess_tot_avg_long = mean(avglong)) %>% 
+wc_data_focus %>% group_by(drvid, when) %>% mutate(vess_tot_avg_lat = mean(avg_lat),
+  vess_tot_avg_long = mean(avg_long)) %>% 
   select(vess_tot_avg_lat, vess_tot_avg_long) %>%
   distinct(drvid, when, .keep_all = T) %>% melt %>% 
   dcast(drvid ~ variable + when) -> vess_avg_coords
@@ -58,7 +63,8 @@ wc_data_focus <- left_join(wc_data_focus, vess_avg_coords, by = 'drvid')
 wc_data_focus <- wc_data_focus %>% group_by(drvid) %>% mutate(vess_both = length(unique(when))) %>%
   as.data.frame
 unique(wc_data_focus$vess_both)
-wc_data_focus <- wc_data_focus %>% group_by(when) %>% mutate(nunq_hauls = mean(length(unique(drvid)))) %>%
+wc_data_focus <- wc_data_focus %>% group_by(drvid, when) %>% 
+  mutate(nunq_hauls = mean(length(unique(haul_id)))) %>%
   as.data.frame
 
 #Add in the direction of the shift for unique vessels
@@ -86,24 +92,27 @@ wc_data_focus[which(-wc_data_focus$vess_tot_avg_long_before >=
 
 #Check to see all missing ones just had NAs for one of the coordinates
 
+#Make wc_data_focus$when a factor
+wc_data_focus$when <- factor(wc_data_focus$when, levels = c('before','after'))
+
 #-------------------------------
 # Washington
-wash <- wc_data_focus %>% filter(agid == "WA", dport_desc != "dont know ORE")
+wash <- wc_data_focus %>% filter(d_state == "WA")
 
 #Raw numbers of tows
-wash %>% group_by(dport_desc, dyear) %>% 
+wash %>% group_by(d_port, dyear) %>% 
   summarize(ntows = length(unique(haul_id))) %>% 
-  ggplot(aes(x = dyear, y = ntows, colour = dport_desc,
-    group = dport_desc)) + geom_line() + geom_point() + theme_bw() + 
+  ggplot(aes(x = dyear, y = ntows, colour = d_port,
+    group = d_port)) + geom_line() + geom_point() + theme_bw() + 
   geom_vline(xintercept = 2010.5, lty = 2) + xlab("Year") + 
   ylab("Number of Unique Tows") + ggsave(file = 'figs/wash_tows.png',
     width = 6.9, height = 5)
 
 #Spatial shifts
-wash %>% 
+wash %>% group_by(d_port) %>% mutate(bef_aft = length(unique(when))) %>% filter(bef_aft == 2) %>%
   ggplot() + 
   geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
-    colour = dport_desc), 
+    colour = d_port), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
@@ -111,7 +120,7 @@ wash %>%
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -123.5)) + scale_y_continuous(limits = c(43.5, 48)) +
-  facet_grid(dport_desc ~ when) + 
+  facet_grid(d_port ~ when) +
   ggsave('figs/washington_shift_unweighted.png', width = 7, height = 7)
 
 #Vessel Shifts
@@ -143,23 +152,22 @@ wash %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() +
    
 #-------------------------------
 #Oregon
-oregon <- wc_data_focus %>% filter(agid == "OR", dport_desc != "dont know",
-  dport_desc != "WASHINGTON STATE")
+oregon <- wc_data_focus %>% filter(d_state == "OR")
  
 #Number of tows
-oregon %>% group_by(dport_desc, dyear) %>% 
+oregon %>% group_by(d_port, dyear) %>% 
   summarize(ntows = length(unique(haul_id))) %>% 
-  ggplot(aes(x = dyear, y = ntows, colour = dport_desc,
-    group = dport_desc)) + geom_line() + geom_point() + theme_bw() + 
+  ggplot(aes(x = dyear, y = ntows, colour = d_port,
+    group = d_port)) + geom_line() + geom_point() + theme_bw() + 
   geom_vline(xintercept = 2010.5, lty = 2) + xlab("Year") + 
   ylab("Number of Unique Tows") + ggsave(file = 'figs/oregon_tows.png',
     width = 6.9, height = 5)
 
 #Map of shifts
-oregon %>% 
+oregon %>% group_by(d_port) %>% mutate(bef_aft = length(unique(when))) %>% filter(bef_aft == 2) %>%
   ggplot() + 
   geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
-    colour = dport_desc), 
+    colour = d_port), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
@@ -167,7 +175,7 @@ oregon %>%
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -123.5)) + scale_y_continuous(limits = c(43.5, 48)) +
-  facet_grid(dport_desc ~ when) + 
+  facet_grid(d_port ~ when) + 
   ggsave('figs/oregon_shift_unweighted.png', width = 7, height = 7)
 
 #Vessel shifts
@@ -197,24 +205,24 @@ oregon %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() 
   facet_wrap(~ direc) + ggsave(width = 8.3, height = 9.6, file = 'figs/oregon_vess_shift_dir.png')
     
 #-------------------------------
-calif <- wc_data_focus %>% filter(agid == "CA") 
+calif <- wc_data_focus %>% filter(d_state == "CA") 
 
 #Number of tows
-calif %>% group_by(dport_desc, dyear) %>% 
+calif %>% group_by(d_port, dyear) %>% 
   summarize(ntows = length(unique(haul_id))) %>% 
-  ggplot(aes(x = dyear, y = ntows, colour = dport_desc,
-    group = dport_desc)) + geom_line() + geom_point() + theme_bw() + 
+  ggplot(aes(x = dyear, y = ntows, colour = d_port,
+    group = d_port)) + geom_line() + geom_point() + theme_bw() + 
   geom_vline(xintercept = 2010.5, lty = 2) + xlab("Year") + 
   ylab("Number of Unique Tows") + ggsave(file = 'figs/ca_tows.png',
     width = 6.9, height = 5)
 
 #Map of shifts
 calif %>% 
-  filter(dport_desc %in% c("SAN FRANCISCO", "NORTH OF CALIFORNIA",
+  filter(d_port %in% c("SAN FRANCISCO", "NORTH OF CALIFORNIA",
     "FORT BRAGG", "EUREKA", "CRESCENT CITY")) %>%
   ggplot() + 
   geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat,
-    colour = dport_desc), 
+    colour = d_port), 
      arrow = arrow(type = 'open', length = unit(.1, 'cm'))) +
   geom_map(data = states_map, map = states_map, 
                   aes(x = long, y = lat, map_id = region)) + 
@@ -222,7 +230,7 @@ calif %>%
     y = tot_avg_lat_before, yend = tot_avg_lat_after), arrow = arrow(type = 'open',
       length = unit(.3, 'cm'))) +
   scale_x_continuous(limits = c(-125.5, -121.5)) + scale_y_continuous(limits = c(35, 43)) +
-  facet_grid(dport_desc ~ when) + 
+  facet_grid(d_port ~ when) + 
   ggsave('figs/ca_shift_unweighted.png', width = 5.5, height = 7)
 
 
@@ -249,39 +257,29 @@ calif %>% distinct(drvid, .keep_all = T) %>% filter(direc != 999) %>% ggplot() +
   geom_point(aes(x = vess_tot_avg_long_before,
   y = vess_tot_avg_lat_before, size = nunq_hauls, colour = drvid)) + 
   facet_wrap(~ direc) + ggsave(width = 8.3, height = 9.6, file = 'figs/ca_vess_shift_dir.png')
-#--------------------------------------------------------------------------------------------------
-#Look at individual vessel shifts
 
-wash %>% group_by(drvid, when) %>% mutate(vess)
+#-------------------------------
+#Individual vessel plot
+ind_vess_changes <- obs_data %>% group_by(drvid, set_year) %>% mutate(ntows = length(unique(haul_id))) %>%
+  group_by(drvid, when) %>% summarize(avg_long = mean(avg_long), avg_lat = mean(avg_lat), 
+                                      avg_ntows = mean(ntows)) %>% filter(when != 'baseline') %>%
+  melt(., id.vars = c('drvid', 'when')) %>% dcast(., drvid ~ when + variable)
 
+#Shifts in individual vessels after catch shares
+ind_vess_changes$diff_avg_long <- ind_vess_changes$after_avg_long - ind_vess_changes$before_avg_long
+ind_vess_changes$diff_avg_lat <- ind_vess_changes$after_avg_lat - ind_vess_changes$before_avg_lat
+ind_vess_changes$diff_avg_ntows <- ind_vess_changes$after_avg_ntows - ind_vess_changes$before_avg_ntows
 
-geom_segment(aes(x = set_long, xend = up_long, y = set_lat, yend = up_lat, colour = clust)) + 
-  facet_wrap(~ dyear)
-
-
-
-#Individual vessel centroids by year
-wc_data_orig %>% group_by(drvid, dyear) %>% summarize(avg_set_lat = mean(set_lat),
-  avg_set_long = mean(set_long), avg_up_lat = mean(up_lat), avg_up_long = mean(up_long)) %>%
-  filter(drvid == 1037785) %>% ggplot() + geom_segment(aes(x = avg_set_long, xend = avg_up_long, 
-  y = avg_set_lat, yend = avg_up_lat, col = dyear))
-
-  
-
-   + 
-  facet_wrap(~ dyear)
-
-#Do this by port, weigh by number of rows
+#Add in transparent colors
+ggplot(ind_vess_changes, aes(x = diff_avg_long, y = diff_avg_lat)) + 
+  geom_point(aes(fill = diff_avg_ntows, size = abs(diff_avg_ntows)), pch = 21, alpha = .5) + 
+  theme_bw() + geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
+  scale_fill_gradient2(low = 'blue', high = 'red') + ylab("Change in latitude") + 
+  xlab("Change in Longitude") +
+  ggsave(file = 'figs/ind_vess_latlong_shifts.png', width = 7, height = 7)
 
 
-
-
-#Need to calculate relative weights for each catgeory and supply the mean values
-
-
-
-
-
+obs_data %>% group_by(drvid, when) %>% summarize(avg_long = avg_long, avg_lat = avg_lat, )
 
 
 
