@@ -56,7 +56,7 @@ simple_permute <- function(input, perm_column, nperms = 1000, seed = 12345,
   if(emp_diff > 0) sig_statement <- paste0(sig_statement, " increase")
   if(emp_diff < 0) sig_statement <- paste0(sig_statement, " decrease")
 
-  if(nrow(input) != inds[2] * 2) sig_statement <- paste0(sig_statement, "; not enough years")
+  # if(nrow(input) != inds[2] * 2) sig_statement <- paste0(sig_statement, "; not enough years")
   
   input$p_val <- p_val
   input$sig <- sig_statement
