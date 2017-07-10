@@ -11,10 +11,8 @@ library(doParallel)
 #load observer data
 # setwd('/Users/peterkuriyama/School/Research/ch4')
 setwd("C:\\Users\\Lewis\\Documents\\GitHub\\ch4")
-install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
+devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
 library("ch4")
-
-install_github("https://github.com/peterkuriyama/ch4")
 
 
 # load_all()
@@ -47,7 +45,6 @@ agg_effort <- obs_data %>% group_by(set_year) %>% summarize(nvess = length(uniqu
                                                             ntows = length(unique(haul_id)),
                                                             avg_depth = mean(avg_depth))
 agg_effort$set_year <- as.numeric(agg_effort$set_year)
-
 
 #-----------------------------------
 #By State
@@ -90,7 +87,6 @@ ind_changes$diff_avg_long <- ind_changes$after_avg_long - ind_changes$before_avg
 ind_changes$diff_avg_ntows <- ind_changes$after_avg_ntows - ind_changes$before_avg_ntows
 ind_changes$type <- "inc"
 ind_changes[which(ind_changes$diff_avg_ntows < 0), 'type'] <- 'dec'
-
 
 #Delta changes in long and lat
 ind_changes %>% ggplot(aes(x = diff_avg_long, y = diff_avg_lat)) + 
@@ -193,6 +189,8 @@ obs_data <- plyr::rename(obs_data, c('lb' = 'hpounds',
   'dmonth' = 'tow_month', 'dyear' = 'tow_year',
   'dday' = 'tow_day', 'set_depth' = 'depth1',
   'haul_duration' = 'duration'))
+
+obs_data1 <- arrange_tows(obs_data)
 
 #---------------------------------------------------------------------------------
 #Function to calculate values for delta plots

@@ -1,43 +1,21 @@
 #Straight effort, no filtering based on hpounds/apounds catch compositions
 
-
 #Weighted mean stuff
 #Weigh by 
 wc_data_orig
 
-morn <- c(62, 67, 71, 74, 76, 77, 78, 79, 79, 80, 80, 81, 81, 82, 83, 84, 86, 89, 93, 98)
-afte <- c(81, 82, 83, 84, 85, 86, 87, 87, 88, 88, 89, 89, 89, 90, 90, 
-  90, 90, 91, 91, 91, 92, 92, 93, 93, 94, 95, 96, 97, 98, 99)
-
-#Weight by number of students
-((mean(morn) * length(morn)) + (mean(afte) * length(afte)) ) / (length(morn) + length(afte))
-
-#Do this as a convex combination
-(length(morn) / (length(morn) + length(afte))) * mean(morn) + 
-  (length(afte) / (length(morn) + length(afte))) * mean(afte)
-
-c(length(morn), length(afte)) / (length(morn) + length(afte))
-
-#Example with weighted.mean function
-weighted.mean(c(mean(morn), mean(afte)), 
-  c(length(morn), length(afte)) / (length(morn) + length(afte)))
-
-
 #Port centroids
 
 #Figure out which ports
-wc_data_orig$when <- 'before'
-wc_data_orig[which(wc_data_orig$dyear > 2010), 'when'] <- 'after'
-wc_data_orig$when <- factor(wc_data_orig$when, levels = c('before', 'after'))
-
-#Filter the data for years
-wc_data_focus <- subset(wc_data_orig, dyear >= 2008 & dyear <= 2013)
+# wc_data_orig$when <- 'before'
+# wc_data_orig[which(wc_data_orig$dyear > 2010), 'when'] <- 'after'
+# wc_data_orig$when <- factor(wc_data_orig$when, levels = c('before', 'after'))
+# 
+# #Filter the data for years
+# wc_data_focus <- subset(wc_data_orig, dyear >= 2008 & dyear <= 2013)
 
 #--------------------------------------------------------------------------------------------------
 wc_data_focus <- obs_data
-
-wc_data_focus
-
 
 #Unweighted Averages
 #calculate average before after coordinates
@@ -270,17 +248,70 @@ ind_vess_changes$diff_avg_long <- ind_vess_changes$after_avg_long - ind_vess_cha
 ind_vess_changes$diff_avg_lat <- ind_vess_changes$after_avg_lat - ind_vess_changes$before_avg_lat
 ind_vess_changes$diff_avg_ntows <- ind_vess_changes$after_avg_ntows - ind_vess_changes$before_avg_ntows
 
+ind_vess_changes$lab <- "no"
+
+ind_vess_changes[which(abs(ind_vess_changes$diff_avg_long) >= 0.2), 'lab'] <- 'yes'
+ind_vess_changes[which(abs(ind_vess_changes$diff_avg_lat) >= 2.5), 'lab'] <- 'yes'
+
+
 #Add in transparent colors
 ggplot(ind_vess_changes, aes(x = diff_avg_long, y = diff_avg_lat)) + 
   geom_point(aes(fill = diff_avg_ntows, size = abs(diff_avg_ntows)), pch = 21, alpha = .5) + 
   theme_bw() + geom_vline(xintercept = 0, lty = 2) + geom_hline(yintercept = 0, lty = 2) + 
   scale_fill_gradient2(low = 'blue', high = 'red') + ylab("Change in latitude") + 
-  xlab("Change in Longitude") +
-  ggsave(file = 'figs/ind_vess_latlong_shifts.png', width = 7, height = 7)
+  xlab("Change in Longitude") + 
+  geom_text(data = ind_vess_changes %>% filter(lab == 'yes'), 
+            aes(x = diff_avg_long, y = diff_avg_lat, label = drvid), nudge_y = .3) + 
+  ggsave("figs/ind_vess_latlog_shifts_drvid.png", width = 9, height = 7)
+
+ind_vess_changes %>% filter(lab == 'yes') %>% select(drvid)
+
+#-------------------------------
+#Vessels that moved the most or had the biggest increases...
+
+big_changes <- ind_vess_changes[which(abs(ind_vess_changes$diff_avg_ntows) > 85), 'drvid']
+big_changes <- obs_data %>% filter(drvid %in% big_changes)
+
+big_changes %>% group_by(set_year, drvid, d_state) %>% summarize(ntows = length(unique(haul_id))) %>%
+  ggplot(aes(x = set_year, y = ntows)) + geom_point(aes(group = drvid)) + 
+  geom_line(aes(group = drvid)) + facet_wrap(~ d_state)
+
+big_changes <- big_changes %>% group_by(set_year, drvid, d_state) %>% summarize(ntows = length(unique(haul_id))) 
+
+big_changes %>%
+  ggplot(aes(x = set_year, y = ntows)) + geom_point(aes(group = drvid)) + 
+  geom_line(aes(group = drvid)) + facet_wrap(~ d_state) + geom_vline(xintercept = 2010.5, lty = 2)
+
+#Look at one vessel specifically
+big_changes <- big_changes %>% group_by(set_year, drvid) %>% mutate(ntows = length(unique(haul_id))) %>%
+  as.data.frame
+
+big_changes %>% filter(d_state == 'CA', max(ntows) > 200) %>% arrange(desc(ntows))
+
+big_changes %>% filter(drvid == '610567') %>% ggplot(aes(x = set_year, y = ntows)) +
+  geom_line() + geom_point()
+
+vess <- ind_vess_changes %>% filter(lab == 'yes')
+vess <- vess$drvid
+
+# 610567; morro bay
+pdf(file = 'figs/drvid_big_changes.pdf', width = 9.8, height = 6.5)
+
+for(ii in 1:length(vess)){
+  one_vess <- obs_data %>% filter(drvid == vess[ii])  
+  pp <- one_vess %>% distinct(haul_id, .keep_all = TRUE) %>% ggplot(aes(x = avg_long, y = avg_lat)) + 
+    geom_line() + 
+    geom_point(aes(colour = set_month)) + facet_wrap(~ set_year) + 
+    geom_map(data = states_map, map = states_map, aes(x = long, y = lat, map_id = region)) + 
+    scale_x_continuous(limits = range(one_vess$avg_lon)) + 
+    scale_y_continuous(limits = range(one_vess$avg_lat)) + ggtitle(unique(one_vess$drvid))
+  print(pp)
+}
+
+dev.off()
 
 
-obs_data %>% group_by(drvid, when) %>% summarize(avg_long = avg_long, avg_lat = avg_lat, )
-
+big_changes %>% filter(d_state == 'CA', max(ntows) > 200)
 
 
 
