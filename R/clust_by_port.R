@@ -8,10 +8,6 @@
 
 #' @export
 
-
-input <- oo
-port <- unq_ports[5]
-
 #Write cluster function for mclapply call
 clust_by_port <- function(port, cut_point = NA, input){
 
