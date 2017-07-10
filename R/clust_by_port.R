@@ -14,7 +14,8 @@ clust_by_port <- function(port, cut_point = NA, input){
   temp <- input %>% filter(dport_desc == port)
 
   #Filter out unique tows
-  unq_tows <- temp %>% group_by(haul_id) %>% filter(row_number(haul_id) == 1) %>% as.data.frame
+  unq_tows <- temp %>% distinct(haul_id, .keep_all = T)
+  # unq_tows <- temp %>% group_by(haul_id) %>% filter(row_number(haul_id) == 1) %>% as.data.frame
   xx <- clust_tows(dat = unq_tows)
 
   if(is.na(cut_point)) calc_cut <- sqrt(2) * (median(temp$dist_slc_km, na.rm = T) * 360) / 40075
