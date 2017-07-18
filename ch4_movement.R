@@ -74,13 +74,12 @@ filt_clusts$d_port_clust_dist <- gcd_slc(deg2rad(filt_clusts$avg_long_clust),
   deg2rad(filt_clusts$avg_lat_clust), deg2rad(filt_clusts$d_port_long), 
   deg2rad(filt_clusts$d_port_lat))
 
-
 #Look at overlap in tows from each port
-filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
-  filter(d_port %in% c("CHARLESTON (COOS BAY)", "NEWPORT", "ASTORIA / WARRENTON")) %>% ggplot() + 
-  geom_point(aes(x = set_long, y = set_lat, colour = d_port)) + geom_map(data = states_map, map = states_map, 
-         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
-  scale_y_continuous(limits = c(30, 49)) + facet_wrap(~ d_port)
+# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
+#   filter(d_port %in% c("CHARLESTON (COOS BAY)", "NEWPORT", "ASTORIA / WARRENTON")) %>% ggplot() + 
+#   geom_point(aes(x = set_long, y = set_lat, colour = d_port)) + geom_map(data = states_map, map = states_map, 
+#          aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
+#   scale_y_continuous(limits = c(30, 49)) + facet_wrap(~ d_port)
 
 #Create a data frame to look at 
 #Add in cost information by region
@@ -92,57 +91,311 @@ filt_clusts <- filt_clusts %>% left_join(costs, by = c('d_port', 'ryear'))
 #to match some of the published numbers
 filt_clusts$ddate <- mdy(paste(filt_clusts$dmonth, filt_clusts$dday, filt_clusts$dyear, sep = "-"))
 filt_clusts$rdate <- mdy(paste(filt_clusts$rmonth, filt_clusts$rday, filt_clusts$ryear, sep = "-"))
+filt_clusts$set_date <- mdy(paste(filt_clusts$set_month, filt_clusts$set_day, filt_clusts$set_year, sep = "-"))
 filt_clusts$trip_duration_days <- as.numeric(filt_clusts$rdate - filt_clusts$ddate) + 1
 
-filt_clusts %>% group_by(trip_id) %>% 
-  mutate(ntows_per_day = length(unique(haul_id)) / trip_duration_days) %>% 
-  group_by(r_port, ryear) %>% 
-  mutate(avg_tows_per_day = mean(ntows_per_day)) %>% select(avg_tows_per_day) %>%
+#Calculate number tows per day
+filt_clusts <- filt_clusts %>% group_by(trip_id) %>% mutate(ntows_per_day = length(unique(haul_id)) /
+  unique(trip_duration_days)) 
 
-  distinct(avg_tows_per_day)
+#Scale the costs by the number of tows per day for each trip
+filt_clusts[which(filt_clusts$ntows_per_day < 1), 'ntows_per_day'] <- 1
 
+filt_clusts$buyback_per_tow <- filt_clusts$buyback / filt_clusts$ntows_per_day
+filt_clusts$captain_per_tow <- filt_clusts$captain / filt_clusts$ntows_per_day
+filt_clusts$crew_per_tow <- filt_clusts$crew / filt_clusts$ntows_per_day
+filt_clusts$fuel_per_tow <- filt_clusts$fuel / filt_clusts$ntows_per_day
+filt_clusts$observer_per_tow <- filt_clusts$observer / filt_clusts$ntows_per_day
 
-
-
-filt_clusts %>% distinct(haul_id, .keep_all = T) %>% group_by(set_year) %>% 
-  summarize(tot_value = sum(haul_value),
-  value_per_boat = tot_value / length(unique(drvid)), ndays = length(unique))
-
-
-
-
-ff <- filt_clusts[1, ]
-days
-as.vector(ff$rdate - ff$ddate)
-days(ff$rdate - ff$ddate)
-
+# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% group_by(set_year) %>% 
+#   summarize(tot_value = sum(haul_value),
+#   value_per_boat = tot_value / length(unique(drvid)), ndays = length(unique))
 
 #Scale fuel cost based on percentages
 filt_clusts <- filt_clusts %>% group_by(d_port) %>%
   mutate(avg_d_port_clust_dist = mean(d_port_clust_dist),
     dist_perc_diff = (d_port_clust_dist - avg_d_port_clust_dist) / avg_d_port_clust_dist,
-    scaled_fuel_per_clust = fuel * dist_perc_diff + fuel) 
+    scaled_fuel_per_clust_per_tow = fuel_per_tow * dist_perc_diff + fuel) 
 
+#---------------------------------------------------------------------------------
 #Check the profits, with published numbers
 filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(ryear) %>%
-  summarize(value = sum(haul_value), 
-    cost = sum(buyback, captain, crew, observer, scaled_fuel_per_clust, na.rm = TRUE),
-    profit = value - cost)
+  summarize(haul_value = sum(haul_value), unq_haul_value = unique(haul_value),
+    cost = sum(buyback_per_tow, captain_per_tow, crew_per_tow, 
+      observer_per_tow, scaled_fuel_per_clust_per_tow, na.rm = TRUE),
+    profit = haul_value - cost)
 
-#Calculate number of tows per day to scale the costs
-filt_clusts %>% group_by(dport_desc)
+haul_profits <- filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>%
+  group_by(haul_id) %>% summarize(haul_value = sum(haul_value), 
+    unq_haul_value = unique(haul_value), costs = buyback_per_tow + captain_per_tow +
+    crew_per_tow + observer_per_tow + scaled_fuel_per_clust_per_tow,
+    haul_profit = haul_value - costs, profit_fuel_only = haul_value - scaled_fuel_per_clust_per_tow)
 
-unique(nchar(filt_clusts$dyear))
-ymd(112004)
+#Table 3-10 has outputs and inputs in trawl
+# haul_profits %>% group_by(set_year) %>% summarize(haul_value = sum(haul_value, na.rm = T) , 
+#   haul_profit = sum(haul_profit, na.rm = T), haul_rev_fuel = sum(rev_fuel_only,
+#     na.rm = T))
 
-filt_clusts[which(filt_clusts$trip_duration == 999), ] %>%
-  filter(dyear != ryear) %>%
-  select(dmonth, dday, dyear, rmonth, rday, ryear, trip_duration) 
+# haul_profits %>% group_by(drvid, ryear) %>% summarize(profits = sum(haul_profit),
+#   rev_fuel = sum(rev_fuel_only)) %>%
+#   group_by(ryear) %>% summarize(avg_profits = mean(profits, na.rm = T), 
+#     avg_rev_fuel = mean(rev_fuel, na.rm = T))
+
+#Because detailed data is unavailable to us, we assume that all the per tow costs
+  #are the same but fuel scales variably
+filt_clusts$haul_profit_fuel <- filt_clusts$haul_value - filt_clusts$scaled_fuel_per_clust_per_tow
+
+#Add in haul_profits
+filt_clusts <- filt_clusts %>% left_join(haul_profits %>% select(-haul_value), 
+  by = 'haul_id')
+
+#---------------------------------------------------------------------------------
+#Bin the clusters to define the range of clusters a boat can move to
+filt_clusts %>% distinct(unq_clust, .keep_all = TRUE) %>% as.data.frame %>% head
+
+bin_clusts <- bin_data(data = filt_clusts %>% distinct(unq_clust, .keep_all = TRUE), 
+  x_col = "avg_long_clust", "avg_lat_clust", group = "dyear", 
+  grid_size = c(.0909, .11), group_vec = 2007:2014)
+
+#Condense the data frame to remove year values
+dim(bin_clusts)
+bin_clusts <- bin_clusts %>% group_by(unq) %>% mutate(count = sum(count)) 
+bin_clusts <- bin_clusts %>% distinct(unq, .keep_all = TRUE) %>% arrange(unq) %>% as.data.frame
+bin_clusts$unq_clust_bin <- 1:nrow(bin_clusts)
+
+#From filt_clusts, make it computationally easier
+unique_clusters <- filt_clusts %>% distinct(unq_clust, .keep_all = TRUE) %>% ungroup() %>% select(avg_long_clust,
+  avg_lat_clust, unq_clust) %>% as.data.frame 
+unique_clusters$unq_clust_bin <- 999
+
+#Use for loop to assign individual clusters to a binned cluster group
+for(ii in 1:nrow(bin_clusts)){
+  tt <- bin_clusts[ii, ]
+
+  unique_clusters[which(unique_clusters$avg_long_clust >= tt$xmin & 
+      unique_clusters$avg_long_clust <= tt$xmax & 
+      unique_clusters$avg_lat_clust >= tt$ymin & 
+      unique_clusters$avg_lat_clust <= tt$ymax), 'unq_clust_bin'] <- tt$unq_clust_bin
+
+}
+
+#looks like it accounted for all the clusters
+unique_clusters %>% group_by(unq_clust_bin) %>% summarize(nclusts = length(unique(unq_clust))) %>%
+  select(nclusts) %>% sum()
+
+#Add in the xbin and ybin to unique_clusters
+bb <- bin_clusts %>% select(unq_clust_bin, xbin, ybin, unq)
+unique_clusters1 <- unique_clusters %>% left_join(bb, by = 'unq_clust_bin') 
+unique_clusters1 <- unique_clusters1 %>% select(-avg_long_clust, -avg_lat_clust)
+
+filt_clusts <- filt_clusts %>% left_join(unique_clusters1, by = 'unq_clust')
+
+#---------------------------------------------------------------------------------
+#Average number of tows per vessel
+# filt_clusts %>% filter(type %in% c('targets', 'weaks')) %>% group_by(set_year, species) %>% 
+#   summarize(catch = sum(hpounds, na.rm = T)) %>% filter(set_year == 2011)
+
+# filt_clusts %>% filter(set_year == 2011) %>% group_by(drvid) %>% 
+#   summarize(ntows = length(unique(haul_id))) %>% arrange(desc(ntows)) 
+
+#---------------------------------------------------------------------------------
+#Start with only clusters out of astoria, ten vessels, 
+ast <- filt_clusts %>% filter(d_port == 'ASTORIA / WARRENTON')
+
+#Select different clusters based on proximity to current cluster...
+scope_type <- "adjacent"
+scope <- 1
+
+catch_list <- vector('list', length = 10)
+#Start of decision framework function
+#58 good
+#265 ok 
+#295 shitty
+
+#Inputs are 
+#Start in a shitty cluster
+first_cluster <- ast %>% filter(unq_clust == 295)
+
+first_tow <- base::sample(unique(first_cluster$haul_id), size = 1)
+
+xx <- summarize_catch(clust = first_cluster, haul_id1 = first_tow)
+
+fish_trip
+
+#Profile the function
+devtools::install_github("hadley/lineprof")
+library(lineprof)
+
+xx <- fish_trip(ntows = 50, scope = 5)
+
+#Pull out haul_id
+filt_clusts %>% distinct(haul_id, .keep_all = T) %>% filter(haul_id %in% 
+  xx$haul_id) %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat)) + 
+geom_line(aes(x = avg_long, y = avg_lat))
 
 
-filt_clusts %>% filter(trip_id == '961620') %>% distinct(haul_id, .keep_all = TRUE) %>%
-  summarize(value =  sum(haul_value), cost = sum(buyback, captain, crew, observer, 
-    scaled_fuel_per_clust))
+
+unique(xx$set_long)
+
+xx %>% filter(type %in% c('groundfish', 'targets', 'weaks')) %>% group_by(species) %>% 
+  summarize(tot_hpounds = sum(hpounds)) 
+
+#Quantify risk based on 
+
+runtime <- lineprof(fish_trip(ntows = 50))
+
+
+
+
+
+
+
+
+
+#Move to the most profitable nearby cluster
+#Possible clusters are within one cell
+#Define the possible clusters based on the unique_bins
+poss_clusts <- expand.grid((temp$xbin - scope):(temp$xbin + scope), (temp$ybin - scope):(temp$ybin + scope))
+names(poss_clusts) <- c("xbin", 'ybin')
+poss_clusts$unq <- paste(poss_clusts$xbin, poss_clusts$ybin)
+
+#Evaluate possible locations of movement
+poss_movement <- filt_clusts %>% filter(unq %in% poss_clusts$unq)
+
+#Look at average profits in each cluster
+poss_profits <- poss_movement %>% distinct(haul_id, .keep_all = T) %>% group_by(unq_clust) %>%
+  summarize(avg_haul_profit = mean(haul_profit, na.rm = T), avg_profit_fuel_only = mean(profit_fuel_only, na.rm = TRUE)) %>%
+  arrange(desc(avg_profit_fuel_only))
+
+#Movement to a new cluster is based on the profits
+poss_profits$prob <- poss_profits$avg_profit_fuel_only / sum(poss_profits$avg_profit_fuel_only)
+next_clust <- sample(poss_profits$unq_clust, prob = poss_profits$prob, size = 1)
+
+poss_tows <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
+  filter(unq_clust == next_clust) %>% select(haul_id)
+next_tow <- base::sample(poss_tows$haul_id, size = 1)
+
+
+
+
+
+
+next_tow
+catch_list[[2]] <- catch
+#
+
+
+
+
+#clust_locs
+bc_temp$xbin
+
+temp <- bc_temp[100, ]
+
+#Look at range of values in adjacent bins
+#Possible clusters
+poss_clusts <- expand.grid((temp$xbin - 1):(temp$xbin + 1), (temp$ybin - 1):(temp$ybin + 1) )
+names(poss_clusts) <- c("xbin", 'ybin')
+poss_clusts$unq <- paste(poss_clusts$xbin, poss_clusts$ybin)
+
+bc_temp[bc_temp$unq %in% poss_clusts$unq, ]
+poss_clusts$unq %in%
+
+bc_temp
+
+
+
+
+
+bc_temp %>% filter(unq_clust_bin <= 10) %>% ggplot() + 
+  geom_tile(aes(x = x, y = y, fill = unq_clust_bin))
+
+bc_temp %>% arrange(unq) %>% as.data.frame %>% head
+
+
+avg_long_clust, avg_lat_clust
+
+
+
+
+
+
+
+
+#---------------------------------------------------------------------------------
+#Start Developing movement rules
+ggplot(filt_clusts) + geom_histogram(aes(x = haul_profit)) + facet_wrap(~ set_year)
+
+#Which are the most profitable clusters?
+filt_clusts %>% group_by(unq_clust) %>% summarize(avg_haul_profit = mean(unique(haul_profit),
+  na.rm = TRUE), avg_long_clust = unique(avg_long_clust), avg_lat_clust = unique(avg_lat_clust),
+avg_haul_value = mean(unique(haul_value), na.rm = T),
+avg_haul_profit_fuel = mean(unique(haul_profit_fuel), na.rm = T)) -> prof_clusts
+
+prof_clusts_m <- melt(prof_clusts, id.vars = c("unq_clust", 'avg_long_clust', 
+  'avg_lat_clust'))
+
+#Plot 
+ggplot(prof_clusts_m) + geom_point(aes(x = avg_long_clust, y = avg_lat_clust, col = value),
+  alpha = .5) + 
+  scale_colour_gradient2(low = 'blue', mid = 'white', high = 'red') + facet_wrap(~ variable) +
+  geom_map(data = states_map, map = states_map, 
+         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
+  scale_y_continuous(limits = c(30, 49))
+
+# filt_clusts %>% arrange(haul_profit) %>% select(haul_id, haul_profit, d_port_clust_dist) %>% head
+
+# filt_clusts %>% filter(haul_id == 133618) %>% as.data.frame %>% head 
+
+#cluster 991 consistently catches lots of sablefish
+
+###Need to add in distances from port
+
+#Pick three clusters and see if I can get from the shitty one to the good one
+#with certain rules
+# filt_clusts %>% filter(d_port == "ASTORIA / WARRENTON") -> ast
+
+#58 good
+#265 ok 
+#295 shitty
+
+#start in shitty
+#Add in economic data from 5 year review, 
+#cost per day, per port, in each year, fuel scaled by distance traveled,
+#like 3-64 of 5yr_review
+
+#Assume perfect knowledge of the three clusters
+filt_clusts %>% distinct(unq_clust) %>% group_by(unq_clust) %>% 
+  avg_profit
+
+prof_clusts %>% arrange(desc(avg_haul_profit))
+
+#Sample a tow in the shitty cluster
+first_clust <- filt_clusts %>% filter(unq_clust == 295) %>% 
+  select(unq_clust, d_port, haul_id, species, hpounds, apounds, 
+    haul_value, d_port_clust_dist, trip_id, haul_profit, profit_fuel_only)
+sample_tow <- base::sample(unique(first_clust$haul_id), size = 1)
+
+#Has knowledge of nearby clusters...
+#Bin the clusters to be in 10x10 
+#Add cluster group column, can expand the cluster group
+
+first_clust %>% group_by(species) %>% summarize()
+
+filter(haul_id == sample_tow) %>% as.data.frame
+
+#
+
+
+#Look at catch
+first_clust %>% filter(trip_id %in% trip) %>% group_by(species) %>%
+  summarize(hpounds = sum(hpounds, na.rm = T), haul_value = sum(unique(haul_value), na_rm = T))
+
+filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>% 
+
+
+
+
 
 #Calculate the number proportion of values that overlap?
 
@@ -183,57 +436,6 @@ filt_clusts %>% filter(trip_id == 6219) %>% distinct(haul_id, .keep_all = TRUE) 
   as.data.frame %>% head
 
 
-#---------------------------------------------------------------------------------
-#Make assumption about:
-# number of tows per day
-# number of tows per trip
-
-filt_clusts %>% filter(trip_id == '961620') %>% as.data.frame 
-
-
-
-#Start Developing movement rules
-#cluster 991 consistently catches lots of sablefish
-
-###Need to add in distances from port
-
-#Pick three clusters and see if I can get from the shitty one to the good one
-#with certain rules
-# filt_clusts %>% filter(d_port == "ASTORIA / WARRENTON") -> ast
-
-#58 good
-#265 ok 
-#295 shitty
-
-#start in shitty
-
-filt_clusts %>% filter(trip_id == '961620') %>% as.data.frame 
-
-
-
-
-
-
-#Add in economic data from 5 year review, 
-#cost per day, per port, in each year, fuel scaled by distance traveled,
-#like 3-64 of 5yr_review
-
-#Sample a tow in the shitty cluster
-first_clust <- filt_clusts %>% filter(unq_clust == 295) %>% 
-  select(unq_clust, d_port, haul_id, species, hpounds, apounds, 
-    haul_value, d_port_clust_dist, trip_id)
-
-#Sample a trip
-trip <- base::sample(unique(first_clust$trip_id), size = 1)
-
-#Look at catch
-first_clust %>% filter(trip_id %in% trip) %>% group_by(species) %>%
-  summarize(hpounds = sum(hpounds, na.rm = T), haul_value = sum(unique(haul_value), na_rm = T))
-
-filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>% 
-
-
-
 
 
 #Steps should be:
@@ -261,36 +463,72 @@ filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>%
 
 
 
-#------------------
-#Look at the difference between hpounds and apounds
-filt_clusts$ah_diff <- filt_clusts$apounds - filt_clusts$hpounds
+# #------------------
+# #Look at the difference between hpounds and apounds
+# filt_clusts$ah_diff <- filt_clusts$apounds - filt_clusts$hpounds
 
-filt_clusts[which(is.na(filt_clusts$ah_diff)), 'ah_diff'] <- filt_clusts[which(is.na(filt_clusts$ah_diff)), 'apounds']
-filt_clusts[which(is.na(filt_clusts$ah_diff)), 'ah_diff'] <- filt_clusts[which(is.na(filt_clusts$ah_diff)), 'hpounds']
+# filt_clusts[which(is.na(filt_clusts$ah_diff)), 'ah_diff'] <- filt_clusts[which(is.na(filt_clusts$ah_diff)), 'apounds']
+# filt_clusts[which(is.na(filt_clusts$ah_diff)), 'ah_diff'] <- filt_clusts[which(is.na(filt_clusts$ah_diff)), 'hpounds']
 
 
-filt_clusts %>% group_by(set_year, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
-  apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) %>%
-  filter(type == 'weaks', ha_diff != 0) %>% as.data.frame -> ha_diffs
+# filt_clusts %>% group_by(set_year, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
+#   apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) %>%
+#   filter(type == 'weaks', ha_diff != 0) %>% as.data.frame -> ha_diffs
 
-tow_ha_diffs <- filt_clusts %>% group_by(haul_id, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
-  apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) 
+# tow_ha_diffs <- filt_clusts %>% group_by(haul_id, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
+#   apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) 
 
-trip_ha_diffs <- filt_clusts %>% group_by(trip_id, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
-  apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) 
+# trip_ha_diffs <- filt_clusts %>% group_by(trip_id, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
+#   apounds = sum(apounds, na.rm = T), ha_diff = apounds - hpounds) %>% arrange(desc(ha_diff)) 
 
-trip_ha_diffs %>% filter(type == 'targets') %>% head
+# trip_ha_diffs %>% filter(type == 'targets') %>% head
 
-   %>%
-  filter(type == 'weaks', ha_diff != 0) %>% as.data.frame -> ha_diffs
+#    %>%
+#   filter(type == 'weaks', ha_diff != 0) %>% as.data.frame -> ha_diffs
  
-  ah_diff = mean(ah_diff)) %>% 
-  arrange(desc(ah_diff)) %>% filter(type == 'weaks') %>% as.data.frame
+#   ah_diff = mean(ah_diff)) %>% 
+#   arrange(desc(ah_diff)) %>% filter(type == 'weaks') %>% as.data.frame
 
 
-filt_clusts
+# filt_clusts
 
 
 
 
+
+
+
+#Scarps
+
+# #Calculate number of days per boat
+# ndays_fishing <- filt_clusts %>% distinct(trip_id, .keep_all = T) %>% 
+#   group_by(ryear, drvid) %>% summarize(ndays_fishing = sum(trip_duration_days)) %>% 
+#   group_by(ryear) %>% mutate(avg_days_per_year = mean(ndays_fishing))
+
+# filt_clusts <- filt_clusts %>% left_join(ndays_fishing, by = c('ryear', 'drvid'))
+
+# #Pretty close I think
+# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% group_by(drvid, ryear) %>%   
+#   summarize(ndays = length(unique(set_date)))
+
+# filt_clusts %>% group_by(drvid, ryear) %>% summarize(ndays = length(unique(set_date)))
+
+
+# #Calculate profits per boat
+# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear) %>%
+#   mutate(value = sum(haul_value), 
+#     cost = sum(buyback_per_tow, captain_per_tow, crew_per_tow, 
+#       observer_per_tow, scaled_fuel_per_clust_per_tow, na.rm = TRUE),
+#     profit = value - cost) %>% 
+#   group_by(ryear) %>% summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)),
+#     avg_profit_per_boat_per_day = avg_profit_per_boat / unique(avg_days_per_year))
+  
+
+
+#   group_by(drvid, ryear, trip_id) %>% mutate(unq_days_per_trip = unique(trip_duration_days)) %>% 
+#   group_by(drvid, ryear) %>% mutate(ndays_per_boat = sum(unq_days_per_trip)) %>% 
+#   select(ndays_per_boat)
+#   group_by(ryear) %>% 
+#   summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)) / )
+# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear)
 
