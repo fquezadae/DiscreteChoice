@@ -6,15 +6,17 @@
 
 #' @export
 
-summarize_catch <- function(input = filt_clusts, haul_id){
+summarize_catch <- function(clust = filt_clusts, haul_id1){
+
   #Pull out the specific tow
-  tow <- input %>% filter(haul_id == haul_id)
+  tow <- clust %>% filter(haul_id == haul_id1)
   
   catch <- tow %>% group_by(species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T),
     haul_value = unique(haul_value), haul_profit = unique(haul_profit), 
     profit_fuel_only = unique(profit_fuel_only), unq_clust_bin = unique(unq_clust_bin), 
     xbin = unique(xbin), ybin = unique(ybin), unq = unique(unq),
-    haul_id = unique(haul_id), unq_clust = unique(unq_clust)) %>% as.data.frame
+    haul_id = unique(haul_id), unq_clust = unique(unq_clust),
+    avg_long = unique(avg_long), avg_lat = unique(avg_lat)) %>% as.data.frame
 
   return(catch)
 
