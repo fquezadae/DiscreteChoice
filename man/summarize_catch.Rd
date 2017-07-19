@@ -5,7 +5,7 @@
 \title{Summarize catch
 Function to take haul_id, and count the things that came out}
 \usage{
-summarize_catch(input = filt_clusts, haul_id)
+summarize_catch(clust = filt_clusts, haul_id1)
 }
 \arguments{
 \item{input}{Data as input; defaults to filt_clusts}
