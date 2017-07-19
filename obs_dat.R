@@ -1,3 +1,7 @@
+#---------------------------------------------------------------------------------
+#Start of obs_dat, work off this script
+setwd('/Users/peterkuriyama/School/Research/ch4')
+
 #Load Packages
 library(ggplot2)
 library(plyr)
@@ -8,30 +12,46 @@ library(devtools)
 library(maps)
 library(doParallel)
 
-#load observer data
-# setwd('/Users/peterkuriyama/School/Research/ch4')
-setwd("C:\\Users\\Lewis\\Documents\\GitHub\\ch4")
+#Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
 library("ch4")
 
+#Install delta plot functions
+devtools::install_github("peterkuriyama/ch2vms/ch2vms")
+library(ch2vms)
 
-# load_all()
+#---------------------------------------------------------------------------------
 
+
+
+
+
+#---------------------------------------------------------------------------------
 #Load Data
 # load("C:\\Users\\Lewis\\Documents\\Data\\OBDATA_Barnett_OBProcessed_Catch_Data_2002_2014_2015-10-21.Rda")
 # obs_data <- OB.ad2
 # rm(OB.ad2)
 
 #States Map
-states_map <- map_data("state")
+# states_map <- map_data("state")
 
-#Install delta plot functions
-devtools::install_github("peterkuriyama/ch2vms/ch2vms")
-library(ch2vms)
+#Load obs_data
 
-load(file = "C://Users//Lewis//Documents//Data//comb_data.Rda")
-obs_data <- comb_data
-rm(comb_data)
+#add in prices
+load('output/exvessel_formatted.Rdata')
+exvessel$mt <- NULL
+exvessel$pounds <- NULL
+exvessel$value <- NULL
+names(exvessel) <- c('set_year', 'd_state', 'species', 'exval_pound')
+
+#Can find tows_clust in "ch4_cluster.R"
+
+tows_clust <- left_join(tows_clust, exvessel, by = c("set_year", "d_state", "species"))
+
+# load(file = "C://Users//Lewis//Documents//Data//comb_data.Rda")
+# obs_data <- comb_data
+# rm(comb_data)
+
 
 #---------------------------------------------------------------------------------
 #To Do
@@ -39,6 +59,8 @@ rm(comb_data)
 #Have looked at individual vessel shifts
 
 #---------------------------------------------------------------------------------
+#Code arranged by figures
+
 #---------------------------------------------------------------------------------
 #Aggregate measures of effort
 agg_effort <- obs_data %>% group_by(set_year) %>% summarize(nvess = length(unique(drvid)), 
