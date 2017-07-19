@@ -191,6 +191,26 @@ unique_clusters1 <- unique_clusters1 %>% select(-avg_long_clust, -avg_lat_clust)
 filt_clusts <- filt_clusts %>% left_join(unique_clusters1, by = 'unq_clust')
 
 #---------------------------------------------------------------------------------
+#For each cluster, calculate frequency of species encounters, 
+  #frequency of species type encounters,
+  #species proportions of catch ["clust_perc_avg"], and proportion for each species type
+
+#Add frequency of encounters for species
+filt_clusts <- filt_clusts %>% group_by(unq_clust) %>% 
+  mutate(nhauls_in_clust = length(unique(haul_id))) %>%
+  group_by(unq_clust, species) %>% mutate(spp_nhauls_in_clust = length(unique(haul_id))) %>%
+  mutate(prop_hauls_w_spp = spp_nhauls_in_clust / nhauls_in_clust) 
+
+#Add frequency of encounters by type of species
+filt_clusts <- filt_clusts %>% group_by(unq_clust, type) %>%   
+  mutate(type_nhauls_in_clust = length(unique(haul_id))) %>%
+  mutate(prop_hauls_by_type = type_nhauls_in_clust / nhauls_in_clust) 
+
+#---------------------------------------------------------------------------------
+#See scripts/quota_props.R for details of quota formatting
+load('output/quotas.Rdata')
+
+#---------------------------------------------------------------------------------
 #Average number of tows per vessel
 # filt_clusts %>% filter(type %in% c('targets', 'weaks')) %>% group_by(set_year, species) %>% 
 #   summarize(catch = sum(hpounds, na.rm = T)) %>% filter(set_year == 2011)
@@ -199,14 +219,45 @@ filt_clusts <- filt_clusts %>% left_join(unique_clusters1, by = 'unq_clust')
 #   summarize(ntows = length(unique(haul_id))) %>% arrange(desc(ntows)) 
 
 #---------------------------------------------------------------------------------
+#Notes for movement
+#I think the profitable clusters are nearby
+
+#Currently there doesn't seem to be an average path for these?
+#Think about risk profile, where fishers balance profits with bycatch associated with each cluster
+
+#How to specify data available to make decision about which cluster to move to next
+#
+#Can move to a different cluster 
+
+#Strategies are the data available
+#1. Average of the whole cluster?
+#2. Recent catches from nearby vessels
+#3. 
+
+#Movement rules
+#Risk-Reward based
+  #based on profits and probability of catching
+#Implement a kind of move on rule - Have to move if there's catch of a target species
+#Depends on how close the vessel is to its quota
+
+#Available clusters
+#1. All clusters within a port
+#2. 
+
+#Move to the most profitable nearby cluster
+#Possible clusters are within one cell
+#Define the possible clusters based on the unique_bins
+
+#Specify quota pound amount
+qps <- 70000 #get to the point where you can catch at least one pound of yelloweye
+
+quotas$tac <- quotas$tac_prop * qps
+
 #Start with only clusters out of astoria, ten vessels, 
 ast <- filt_clusts %>% filter(d_port == 'ASTORIA / WARRENTON')
 
 #Select different clusters based on proximity to current cluster...
-scope_type <- "adjacent"
-scope <- 1
 
-catch_list <- vector('list', length = 10)
 #Start of decision framework function
 #58 good
 #265 ok 
@@ -216,108 +267,53 @@ catch_list <- vector('list', length = 10)
 #Start in a shitty cluster
 first_cluster <- ast %>% filter(unq_clust == 295)
 
-first_tow <- base::sample(unique(first_cluster$haul_id), size = 1)
-
-xx <- summarize_catch(clust = first_cluster, haul_id1 = first_tow)
-
-fish_trip
-
-#Profile the function
+#Tools to profile functions
 devtools::install_github("hadley/lineprof")
 library(lineprof)
+library(pryr)
+mem_used()
 
-xx <- fish_trip(ntows = 50, scope = 5)
-
-#Pull out haul_id
-filt_clusts %>% distinct(haul_id, .keep_all = T) %>% filter(haul_id %in% 
-  xx$haul_id) %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat)) + 
-geom_line(aes(x = avg_long, y = avg_lat))
-
-
-
-unique(xx$set_long)
+#Run the function
+#Starting in a shitty cluster
+xx <- fish_trip(ntows = 50, scope = 5, quotas = quotas)
 
 xx %>% filter(type %in% c('groundfish', 'targets', 'weaks')) %>% group_by(species) %>% 
   summarize(tot_hpounds = sum(hpounds)) 
 
-#Quantify risk based on 
-
-runtime <- lineprof(fish_trip(ntows = 50))
+xxs <- xx %>% distinct(haul_id, .keep_all = T)
 
 
+#Start in a dope one
+yy <- fish_trip(ntows = 50, scope = 5, start_clust = 58)
+yys <- yy %>% distinct(haul_id, .keep_all = T)
 
-
-
-
-
-
-
-#Move to the most profitable nearby cluster
-#Possible clusters are within one cell
-#Define the possible clusters based on the unique_bins
-poss_clusts <- expand.grid((temp$xbin - scope):(temp$xbin + scope), (temp$ybin - scope):(temp$ybin + scope))
-names(poss_clusts) <- c("xbin", 'ybin')
-poss_clusts$unq <- paste(poss_clusts$xbin, poss_clusts$ybin)
-
-#Evaluate possible locations of movement
-poss_movement <- filt_clusts %>% filter(unq %in% poss_clusts$unq)
-
-#Look at average profits in each cluster
-poss_profits <- poss_movement %>% distinct(haul_id, .keep_all = T) %>% group_by(unq_clust) %>%
-  summarize(avg_haul_profit = mean(haul_profit, na.rm = T), avg_profit_fuel_only = mean(profit_fuel_only, na.rm = TRUE)) %>%
-  arrange(desc(avg_profit_fuel_only))
-
-#Movement to a new cluster is based on the profits
-poss_profits$prob <- poss_profits$avg_profit_fuel_only / sum(poss_profits$avg_profit_fuel_only)
-next_clust <- sample(poss_profits$unq_clust, prob = poss_profits$prob, size = 1)
-
-poss_tows <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
-  filter(unq_clust == next_clust) %>% select(haul_id)
-next_tow <- base::sample(poss_tows$haul_id, size = 1)
-
-
-
-
-
-
-next_tow
-catch_list[[2]] <- catch
 #
+zz <- fish_trip(ntows = 50, scope = 1, start_clust = 835)
+zzs <- zz %>% distinct(haul_id, .keep_all = T)
+
+ggplot(xxs, aes(x = avg_long, y = avg_lat))  + geom_point() + geom_line() + 
+  geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
+  geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
+  geom_point(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') +
+  geom_line(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') 
+
+filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(unq_clust, d_port) %>%
+  summarize(avg_prof = mean(profit_fuel_only)) %>% arrange(desc(avg_prof))
+
+#Pull out haul_id
+filt_clusts %>% distinct(haul_id, .keep_all = T) %>% filter(haul_id %in% 
+  xx$haul_id) %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat)) + 
+geom_line(aes(x = avg_long, y = avg_lat)) + 
+geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') + 
+geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red')
+
+
+unique(xx$set_long)
 
 
 
-
-#clust_locs
-bc_temp$xbin
-
-temp <- bc_temp[100, ]
-
-#Look at range of values in adjacent bins
-#Possible clusters
-poss_clusts <- expand.grid((temp$xbin - 1):(temp$xbin + 1), (temp$ybin - 1):(temp$ybin + 1) )
-names(poss_clusts) <- c("xbin", 'ybin')
-poss_clusts$unq <- paste(poss_clusts$xbin, poss_clusts$ybin)
-
-bc_temp[bc_temp$unq %in% poss_clusts$unq, ]
-poss_clusts$unq %in%
-
-bc_temp
-
-
-
-
-
-bc_temp %>% filter(unq_clust_bin <= 10) %>% ggplot() + 
-  geom_tile(aes(x = x, y = y, fill = unq_clust_bin))
-
-bc_temp %>% arrange(unq) %>% as.data.frame %>% head
-
-
-avg_long_clust, avg_lat_clust
-
-
-
-
+#Quantify risk based on 
+runtime <- lineprof(fish_trip(ntows = 50))
 
 
 
