@@ -5,7 +5,7 @@
 \title{Permutation Test
 Function to conduct permutation test on different columns}
 \usage{
-ch4_perm_test(input, column, ndraws = 1000, gb = "dyear, unq_clust",
+ch4_perm_test(input, column, ndraws = 1000, gb = "set_year, unq_clust",
   summ = "length(species)", clust_cat = "unq_clust", seed = 12345,
   crit = "<=", annual = TRUE, save_resamps = FALSE)
 }
