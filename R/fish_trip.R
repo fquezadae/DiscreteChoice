@@ -7,11 +7,12 @@
 #' @param ntows Number of tows in the fishing trip
 #' @param start_clust Starting cluster to fish in
 #' @param seed Seed for random sampling
-#' @param movement Probably going to be taken out
 #' @param scope Scope of available information; probably will be taken out
 #' @param quotas Data frame of quota for target and weak stock species
 #' @param scale Scale of movement; if scale == 'port', specify a d_port; if scale == 'scope', 
 #' specify scale
+#' @param prob_type Probability type; type_prop_hauls -- frequency of encounter 
+#' or type_clust_perc -- proportion of catch in each cluster
 
 #' @export
 
@@ -31,7 +32,8 @@
 
 #Cluster, number of samples, catch_list, 
 fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed = 300,
-  movement = "profit", scope = 1, quotas, scale = "scope", the_port = "ASTORIA / WARRENTON"){
+  scope = 1, quotas, scale = "scope", the_port = "ASTORIA / WARRENTON",
+  prob_type = "type_clust_perc"){
 
   #Define initial cluster
   set.seed(seed)
@@ -69,12 +71,22 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
 
   #Start with proportion of hauls, go to the place with the biggest difference between 
   #targets and weaks; change value.var to use a different column
+  
+  #Catch composition; where do you catch most targets and least weak stock
   probs <- poss_clusts %>% 
     distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
       avg_profit_fuel_only) %>%
     dcast(unq_clust +  avg_profit_fuel_only ~ type, 
-      value.var = 'type_prop_hauls') %>% mutate(targ_weak_diff = targets - weaks) %>%
+      value.var = prob_type) %>% mutate(targ_weak_diff = targets - weaks) %>%
     select(-targets, - weaks)
+
+  #Encounter frequency; how often do you catch a target and a weak stock species
+  # probs <- poss_clusts %>% 
+  #   distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
+  #     avg_profit_fuel_only) %>%
+  #   dcast(unq_clust +  avg_profit_fuel_only ~ type, 
+  #     value.var = 'type_prop_hauls') %>% mutate(targ_weak_diff = targets - weaks) %>%
+  #   select(-targets, - weaks)
 
   #Remove any NA values from targ_weak_diff
   probs <- probs %>% filter(is.na(targ_weak_diff) == FALSE)
@@ -82,6 +94,7 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
   #Transform the values so that there are no negative numbers
   probs[, 2] <- probs[, 2] + abs(min(probs[, 2])) + 1
   probs[, 3] <- probs[, 3] + abs(min(probs[, 3])) + 1
+  
   probs$probs <- (probs[, 2] / sum(probs[, 2]) + probs[, 3] / sum(probs[, 3])) / 2
 
   #Next Cluster
