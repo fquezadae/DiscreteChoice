@@ -5,10 +5,12 @@
 \title{Values for probability calculations
 Function to format values for calculating movement probabilities}
 \usage{
-values_for_probs(poss_clusts)
+values_for_probs(poss_clusts, input_vfb)
 }
 \arguments{
 \item{poss_clust}{Vector of possible clusters}
+
+\item{thing_vfb}{Input (filt_clusts essentailly)}
 }
 \description{
 Values for probability calculations

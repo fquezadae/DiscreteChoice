@@ -3,19 +3,21 @@
 #' Function to format values for calculating movement probabilities
 
 #' @param poss_clust Vector of possible clusters
+#' @param thing_vfb Input (filt_clusts essentailly)
 #' @export
 
 #Pull profits per cluster, and proportions of catch and proprtions of tows given a set of clusters
-values_for_probs <- function(poss_clusts){
+values_for_probs <- function(poss_clusts, input_vfb){
   #--------------------------------------------------------  
-  focus_clusts <- input %>% filter(unq_clust %in% poss_clusts)
-  
+  focus_clusts <- input_vfb %>% filter(unq_clust %in% poss_clusts)
+
   #--------------------------------------------------------  
   #Profits
   poss_profits <- focus_clusts %>% 
     distinct(haul_id, .keep_all = T) %>% group_by(unq_clust) %>%
     summarize(avg_haul_profit = mean(haul_profit, na.rm = T), 
         avg_profit_fuel_only = mean(profit_fuel_only, na.rm = TRUE))
+
   poss_profits$trans_val <- poss_profits$avg_profit_fuel_only + 
       abs(min(poss_profits$avg_profit_fuel_only)) + 1
   poss_profits$prob <- poss_profits$trans_val / sum(poss_profits$trans_val)
