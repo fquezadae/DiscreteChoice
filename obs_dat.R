@@ -20,9 +20,9 @@ library("ch4")
 devtools::install_github("peterkuriyama/ch2vms/ch2vms")
 library(ch2vms)
 
+#States Map
+states_map <- map_data("state")
 #---------------------------------------------------------------------------------
-
-
 
 
 
@@ -32,8 +32,7 @@ library(ch2vms)
 # obs_data <- OB.ad2
 # rm(OB.ad2)
 
-#States Map
-# states_map <- map_data("state")
+
 
 #Load obs_data
 

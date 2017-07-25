@@ -87,6 +87,7 @@ load(file = 'output/costs.Rdata')
 names(costs)[2] <- 'ryear'
 filt_clusts <- filt_clusts %>% left_join(costs, by = c('d_port', 'ryear'))
 
+
 #Costs are per day, calculate costs per tow based on averages and see if I can get profits
 #to match some of the published numbers
 filt_clusts$ddate <- mdy(paste(filt_clusts$dmonth, filt_clusts$dday, filt_clusts$dyear, sep = "-"))
@@ -176,7 +177,6 @@ for(ii in 1:nrow(bin_clusts)){
       unique_clusters$avg_long_clust <= tt$xmax & 
       unique_clusters$avg_lat_clust >= tt$ymin & 
       unique_clusters$avg_lat_clust <= tt$ymax), 'unq_clust_bin'] <- tt$unq_clust_bin
-
 }
 
 #looks like it accounted for all the clusters
@@ -205,6 +205,9 @@ filt_clusts <- filt_clusts %>% group_by(unq_clust) %>%
 filt_clusts <- filt_clusts %>% group_by(unq_clust, type) %>%   
   mutate(type_nhauls_in_clust = length(unique(haul_id))) %>%
   mutate(prop_hauls_by_type = type_nhauls_in_clust / nhauls_in_clust) 
+
+#Remove Washington State values
+filt_clusts <- filt_clusts[-which(filt_clusts$d_port == "WASHINGTON STATE"), ] 
 
 #---------------------------------------------------------------------------------
 #See scripts/quota_props.R for details of quota formatting
@@ -248,13 +251,15 @@ load('output/quotas.Rdata')
 #Possible clusters are within one cell
 #Define the possible clusters based on the unique_bins
 
-#Specify quota pound amount
-qps <- 70000 #get to the point where you can catch at least one pound of yelloweye
-
+#Specify quota pound amount; Base this on the median amount of catch per vessel per year
+filt_clusts %>% group_by(drvid, haul_id, set_year) %>% summarize(hpounds = sum(hpounds)) %>%
+  group_by(drvid, set_year) %>% summarize(hpounds = sum(hpounds, na.rm = T)) %>%
+  group_by(set_year) %>% summarize(med_hpounds = median(hpounds))
+qps <- 400000 #get to the point where you can catch at least one pound of yelloweye
 quotas$tac <- quotas$tac_prop * qps
 
 #Start with only clusters out of astoria, ten vessels, 
-ast <- filt_clusts %>% filter(d_port == 'ASTORIA / WARRENTON')
+# ast <- filt_clusts %>% filter(d_port == 'ASTORIA / WARRENTON')
 
 #Select different clusters based on proximity to current cluster...
 
@@ -273,18 +278,204 @@ library(lineprof)
 library(pryr)
 mem_used()
 
-#Run the function
-#Starting in a shitty cluster
-xx <- fish_trip(ntows = 50, scope = 5, quotas = quotas)
+#Can start looking at how these things compare
+#Compare catch:TAC, cumulative profits
 
-xx %>% filter(type %in% c('groundfish', 'targets', 'weaks')) %>% group_by(species) %>% 
-  summarize(tot_hpounds = sum(hpounds)) 
+xx <- fish_trip(ntows = 20, scope = 5, quotas = quotas1, seed = 300, scale = "port")
 
-xxs <- xx %>% distinct(haul_id, .keep_all = T)
+yy <- fleet_trip(scope = 1, quotas = quotas, seed = 300, scale = 'fleet', prob_type = "type_clust_perc",
+  ntows = 20)
 
+#---------------------------------------------------------------------------------
+#Figures used to compare things
+#can compare straight up profits
+
+
+
+#---------------------------------------------------------------------------------
+#Test consistency of algorithm by fishing in the best cluster multiple times until
+# catch:TAC hit for something; baseline for expectations
+
+#---------------------------------------------------------------------------------
+#Specify arguments as a list
+in_list <- list(nreps = 6, ncores = 6, ntows = 20, scope = 5, 
+  scale = 'scope', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
+  quotas = quotas)
+
+run_trip_simulation <- function(in_list){
+  #Run simulation
+  start_time <- Sys.time()
+  the_runs <- mclapply(1:in_list$nreps, 
+    FUN = function(seeds) fish_trip(ntows = in_list$ntows, scope = in_list$scope, 
+      quotas = quotas, seed = seeds, scale = in_list$scale, prob_type = in_list$prob_type,
+    the_port = in_list$the_port), 
+    mc.cores = in_list$ncores)
+  run_time <- Sys.time() - start_time
+
+  #Store the catch results in a list
+  catches <- lapply(the_runs, FUN = function(x) x[[1]])
+  catches <- list_to_df(catches, ind_name = "rep", 
+    col_ind_name = 'rep_id')
+  catches$rep_id <- factor(catches$rep_id, 
+    levels = unique(catches$rep_id))
+  catches$tow <- as.numeric(substr(catches$tow_num, 4, 
+    nchar(catches$tow_num)))
+
+  #Store the quotas
+  quotas <- lapply(the_runs, FUN = function(x) x[[2]])
+  quotas <- list_to_df(quotas, ind_name = "rep", 
+    col_ind_name = 'rep_id')
+  quotas$rep_id <- factor(quotas$rep_id, 
+    levels = unique(quotas$rep_id))
+
+  return(list(catches = catches, quotas = quotas, run_time = run_time))
+}
+
+
+in_list1 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
+  scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
+  quotas = quotas)
+
+in_list2 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
+  scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_prop_hauls",
+  quotas = quotas)
+
+#Make input list
+in_list <- list(in_list1, in_list2)
+
+#Run simulation with many replicates
+res <- lapply(1:length(in_list), FUN = function(xx) run_trip_simulation(in_list[[xx]]))
+
+#Compress and compare results with different strategies
+catches <- lapply(1:length(res), FUN = function(xx) res[[xx]]$catches)
+catches1 <- list_to_df(catches, ind_name = c("spp_perc", "prop_hauls"), col_ind_name = "prob_type") 
+
+catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
+  profits = sum(unique(profit_fuel_only)), med = median())
+
+catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
+  profits = sum(unique(profit_fuel_only))) %>% ggplot(aes(x = profits)) + 
+  geom_histogram() +  
+  facet_wrap(~ prob_type, ncol = 1) + geom_vline(aes(xintercept = median(profits)), col = 'red', lty = 2) 
+
+
+
+str(res)
+res[[1]]$catches %>% distinct(rep_id, haul_id, .keep_all = TRUE) %>% group_by(rep_id) %>%
+  summarize(profit_fuel_only = sum(profit_fuel_only))
+distinct(rep_id, tow, .keep_all = TRUE)
+
+issa <- res[[1]]$quotas
+
+#compare strategies
+
+
+
+#Maybe calculate the proportion below a certain number
+issa %>% ggplot() + geom_histogram(aes(x = ratio)) + facet_wrap(~ type)
+
+
+
+
+#Do proportion less than 0.1 and skew
+issa %>% group_by(type) %>% summarize(skew = calc_skew(log(catch))) %>% as.data.frame
+
+
+
+
+
+lapply(res, FUN = function(xx) xx[[3]])
+
+
+
+
+
+
+
+xx <- run_trip_simulation(in_list)
+
+#At the port level, clusters should on average get to the same spot
+start_time <- Sys.time()
+catch_perc_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
+  quotas = quotas, seed = seeds, scale = 'port'), mc.cores = 6)
+run_time <- Sys.time() - start_time
+
+#Look at catches
+the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[1]])
+the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
+  col_ind_name = 'rep_id')
+the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
+  levels = unique(the_catch_lists$rep_id))
+the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
+  nchar(the_catch_lists$tow_num)))
+
+the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+  group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
+  ggplot() + geom_histogram(aes(profits))
+
+the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+  ggplot(aes(x = avg_long, y = avg_lat)) + geom_point(aes(colour = tow)) + 
+  facet_wrap(~ rep_id) + geom_map(data = states_map, map = states_map, 
+         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -123.5)) + 
+  scale_y_continuous(limits = c(45, 48))
+
+the_quotas <- the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[2]])
+the_quotas <- list_to_df(the_quotas, ind_name = "rep", 
+  col_ind_name = 'rep_id')
+the_quotas$rep_id <- factor(the_quotas$rep_id, 
+  levels = unique(the_quotas$rep_id))
+
+#Some things go way over
+ggplot(the_quotas) + geom_histogram(aes(ratio)) + facet_wrap(~ rep_id)
+
+
+
+#----------------------------------------------------------------------
+#Repeat for proportion of hauls
+start_time <- Sys.time()
+prop_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
+  quotas = quotas, seed = seeds, scale = 'port', prob_type = "type_prop_hauls"), 
+mc.cores = 6)
+run_time <- Sys.time() - start_time
+
+#Look at catches
+the_catch_lists <- lapply(prop_reps, FUN = function(x) x[[1]])
+the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
+  col_ind_name = 'rep_id')
+the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
+  levels = unique(the_catch_lists$rep_id))
+the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
+  nchar(the_catch_lists$tow_num)))
+the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+  group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
+  ggplot() + geom_histogram(aes(profits))
+
+
+
+#Next step is to write this so 
+
+#Which was the most caught thing
+the_quotas <- lapply(reps, FUN = function(x) x[[2]])
+the_quotas <- list_to_df(the_quotas, ind_name = 'rep', col_ind_name = 'rep_id')
+
+the_quotas %>% filter(ratio >= 1)
+
+
+
+the_catch_lists %>% group_by(rep_id) %>% summarize(ntows = length(unique(tow_num)))
+ 
+
+
+
+ggplot()
+xx[[1]] %>% head
+
+xx[[2]]
+
+#Manipulate the amount of available clusters
 
 #Start in a dope one
-yy <- fish_trip(ntows = 50, scope = 5, start_clust = 58)
+yy <- fish_trip(ntows = 50, scope = 5, start_clust = 58, quotas = quotas)
 yys <- yy %>% distinct(haul_id, .keep_all = T)
 
 #
