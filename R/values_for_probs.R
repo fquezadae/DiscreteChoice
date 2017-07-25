@@ -8,6 +8,7 @@
 
 #Pull profits per cluster, and proportions of catch and proprtions of tows given a set of clusters
 values_for_probs <- function(poss_clusts, input_vfb){
+
   #--------------------------------------------------------  
   focus_clusts <- input_vfb %>% filter(unq_clust %in% poss_clusts)
 
