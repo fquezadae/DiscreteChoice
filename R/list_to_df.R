@@ -8,9 +8,13 @@
 #' @export
 
 list_to_df <- function(the_thing, ind_name, col_ind_name){
-  names(the_thing) <- paste0(ind_name, 1:length(the_thing))
+  #Option to keep 
+  if(length(ind_name) == 1) names(the_thing) <- paste0(ind_name, 1:length(the_thing))
+  if(length(ind_name) > 1) names(the_thing) <- ind_name
+  
   the_thing <- ldply(the_thing)
   names(the_thing)[1] <- col_ind_name
+  
   return(the_thing)
 }
 
