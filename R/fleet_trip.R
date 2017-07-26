@@ -9,6 +9,10 @@
 #' @param quotas Quotas; can be a list for each vessel or a single data frame if risk pool
 #' @param risk_pool If TRUE, quotas can only be a data frame and everything held to the same standard
 #' @param scale If scale == "fleet"; can only look at clusters that others are fishing in 
+#' @param scope Scope of movement
+#' @param prob_type Type of probability to use; type_clust_perc (proportion of tows with species group)
+#' or type_clust_catch (proportion of catches)
+#' @param ntows Number of tows
 
 # clusts <- c(295, 58, 265)
 # quotas1 <- quotas
