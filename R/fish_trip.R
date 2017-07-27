@@ -33,7 +33,7 @@
 #Cluster, number of samples, catch_list, 
 fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed = 300,
   scope = 1, quotas, scale = "scope", the_port = "ASTORIA / WARRENTON",
-  prob_type = "type_clust_perc"){
+  catch_type = "type_clust_perc", prof_type = "avg_profit_fuel_only", objective){
 
   #Define initial cluster
   set.seed(seed)
@@ -57,6 +57,7 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
   #Nearby clusters only
   if(scale == "scope"){
     poss_clusts <- clust_scope(catch_input = catch_list[[1]], input_cs = input, clust_scope = scope)    
+    if(scope == 0) poss_clusts <- start_clust
   }
 
   if(scale == "port"){
@@ -69,37 +70,14 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
   #Maybe function to process the cluster informa
   poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
 
-  #Start with proportion of hauls, go to the place with the biggest difference between 
-  #targets and weaks; change value.var to use a different column
-  
-  #Catch composition; where do you catch most targets and least weak stock
-  probs <- poss_clusts %>% 
-    distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
-      avg_profit_fuel_only) %>%
-    dcast(unq_clust +  avg_profit_fuel_only ~ type, 
-      value.var = prob_type) %>% mutate(targ_weak_diff = targets - weaks) %>%
-    select(-targets, - weaks)
-
-  #Encounter frequency; how often do you catch a target and a weak stock species
-  # probs <- poss_clusts %>% 
-  #   distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
-  #     avg_profit_fuel_only) %>%
-  #   dcast(unq_clust +  avg_profit_fuel_only ~ type, 
-  #     value.var = 'type_prop_hauls') %>% mutate(targ_weak_diff = targets - weaks) %>%
-  #   select(-targets, - weaks)
-
-  #Remove any NA values from targ_weak_diff
-  probs <- probs %>% filter(is.na(targ_weak_diff) == FALSE)
-
-  #Transform the values so that there are no negative numbers
-  probs[, 2] <- probs[, 2] + abs(min(probs[, 2])) + 1
-  probs[, 3] <- probs[, 3] + abs(min(probs[, 3])) + 1
-  
-  probs$probs <- (probs[, 2] / sum(probs[, 2]) + probs[, 3] / sum(probs[, 3])) / 2
+  #values for probabilities
+  probs <- calc_probs(poss_clusts = poss_clusts, catch_type = catch_type, prof_type = prof_type,
+    objective = objective, in_cp_name = "poss_clusts")
 
   #Next Cluster
-  next_clust <- base::sample(probs$unq_clust, prob = probs$probs, size = 1, replace = T)
-   
+  next_clust <- probs %>% sample_n(1, weight = probs)
+  next_clust <- next_clust$unq_clust
+  
   #------------------------------------------------------------
   #Start of for loop
   for(ii in 2:ntows){
@@ -132,11 +110,13 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
     }
 
     poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
+    probs <- calc_probs(poss_clusts = poss_clusts, catch_type = catch_type, prof_type = prof_type,
+      objective = objective, in_cp_name = "poss_clusts")
 
     #Pick next cluster
-    poss_profits <- poss_clusts %>% distinct(unq_clust, prob)
-    
-    next_clust <- sample(poss_profits$unq_clust, prob = poss_profits$prob, size = 1)    
+    next_clust <- probs %>% sample_n(1, weight = probs)
+    next_clust <- next_clust$unq_clust  
+
   }
 
   names(catch_list) <- paste0("tow", 1:ntows)
