@@ -7,7 +7,7 @@ Stop at each time step and allow vessels to share recent catch information}
 \usage{
 fleet_trip(input = filt_clusts, clusts = c(295, 58, 265), seed = 300,
   quotas, scale = "fleet", scope = 1, prob_type = "type_clust_perc",
-  ntows)
+  ntows, risk_pool = TRUE)
 }
 \arguments{
 \item{input}{Input; default to filt_clusts}

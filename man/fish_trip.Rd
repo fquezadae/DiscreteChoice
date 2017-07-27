@@ -7,7 +7,8 @@ Function to conduct a fishing trip}
 \usage{
 fish_trip(input = filt_clusts, ntows = 10, start_clust = 295,
   seed = 300, scope = 1, quotas, scale = "scope",
-  the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc")
+  the_port = "ASTORIA / WARRENTON", catch_type = "type_clust_perc",
+  prof_type = "avg_profit_fuel_only", objective)
 }
 \arguments{
 \item{input}{Overall input to the function; defaults to filt_clusts which is the data with clusters
