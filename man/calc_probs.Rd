@@ -6,7 +6,7 @@
 Calculate probabilites based on type of profits and type of catch}
 \usage{
 calc_probs(prof_type = "avg_profit_fuel_only", catch_type,
-  objective = "difference")
+  objective = "difference", in_cp = poss_clusts)
 }
 \arguments{
 \item{prof_type}{Type of profit; can be "avg_haul_profit" or "avg_profit_fuel_only"}
@@ -15,6 +15,8 @@ calc_probs(prof_type = "avg_profit_fuel_only", catch_type,
 
 \item{objective}{Objective; to catch the "highest" of target species? "lowest" of weak stock species? 
 Or area with the biggest "difference" between target and weaks?}
+
+\item{in_cp}{Input to calc_probs; defaults to poss_clusts}
 }
 \description{
 Calculate Probabilities 
