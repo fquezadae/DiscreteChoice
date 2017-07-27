@@ -30,8 +30,9 @@ fish_trip_simulation <- function(in_list){
   start_time <- Sys.time()
   the_runs <- mclapply(1:in_list$nreps, 
     FUN = function(seeds) fish_trip(ntows = in_list$ntows, scope = in_list$scope, 
-      quotas = quotas, seed = seeds, scale = in_list$scale, prob_type = in_list$prob_type,
-    the_port = in_list$the_port), 
+      quotas = quotas, seed = seeds, scale = in_list$scale,
+    the_port = in_list$the_port, catch_type = in_list$catch_type, prof_type = in_list$prof_type,
+    objective = in_list$objective), 
     mc.cores = in_list$ncores)
   run_time <- Sys.time() - start_time
 
@@ -53,10 +54,21 @@ fish_trip_simulation <- function(in_list){
   quotas$rep_id <- factor(quotas$rep_id, 
     levels = unique(quotas$rep_id))
 
+  #Add in skew of catch-quota balancing
+  quotas <- quotas %>% group_by(rep_id) %>% mutate(skew = calc_skew(ratio)) %>% as.data.frame
+
+  #---------------------------------
+  #Add in Trip profits and skew to the trip information
+  trip_profits <- catches %>% distinct(rep_id, tow_num, .keep_all = TRUE) %>% group_by(rep_id) %>%
+    summarize(trip_profits = sum(profit_fuel_only)) %>% as.data.frame
+  catches <- left_join(catches, trip_profits, by = "rep_id")
+
+  #Add in skew to catches
+  catches <- left_join(catches, quotas %>% select(rep_id, skew), by = 'rep_id')
+
   return(list(catches = catches, quotas = quotas, run_time = run_time))
 }
 
-
-in_list1 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
-  scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
-  quotas = quotas)
+# in_list1 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
+#   scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
+#   quotas = quotas)t
