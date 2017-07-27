@@ -6,7 +6,7 @@
 #' @param catch_type Type of catch; can be "type_clust_catch", "type_clust_perc", or "type_prop_hauls"
 #' @param objective Objective; to catch the "highest" of target species? "lowest" of weak stock species? 
 #' Or area with the biggest "difference" between target and weaks?
-#' @param poss_clusts Input to function; defaults to poss_clusts, called in the parent environment
+#' @param poss_clusts1 Input to function; defaults to poss_clusts, called in the parent environment
 #' @param in_cp_name Character string of input to calc_probs name
 
 #' @export
@@ -21,7 +21,7 @@
 #' cbind(f3$unq_clust, f4$unq_clust)
 
 calc_probs <- function(prof_type = "avg_profit_fuel_only", catch_type, objective = "difference",
-  in_cp_name = poss_clusts, poss_clusts = poss_clusts){
+  in_cp_name = "poss_clusts1", poss_clusts1 = poss_clusts){
 
   #Three objectives: 
   #1. fish in places with the biggest difference between target and weaks
