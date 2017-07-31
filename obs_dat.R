@@ -11,6 +11,9 @@ library(reshape2)
 library(devtools)
 library(maps)
 library(doParallel)
+library(lubridate)
+library(GGally)
+
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
