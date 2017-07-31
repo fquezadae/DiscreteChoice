@@ -34,7 +34,6 @@
 fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed = 300,
   scope = 1, quotas, scale = "scope", the_port = "ASTORIA / WARRENTON",
   catch_type = "type_clust_perc", prof_type = "avg_profit_fuel_only", objective){
-
   #Define initial cluster
   set.seed(seed)
   first_cluster <- input %>% filter(unq_clust == start_clust)
@@ -71,8 +70,11 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
   poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
 
   #values for probabilities
-  probs <- calc_probs(poss_clusts = poss_clusts, catch_type = catch_type, prof_type = prof_type,
-    objective = objective, in_cp_name = "poss_clusts")
+  probs <- calc_probs(poss_clusts1 = poss_clusts, catch_type = catch_type, prof_type = prof_type,
+    objective = objective, in_cp_name = "poss_clusts1")
+  
+  #make sure that the unq_clusts are the same
+  probs <- probs %>% filter(unq_clust %in% unique(poss_clusts$unq_clust))
 
   #Next Cluster
   next_clust <- probs %>% sample_n(1, weight = probs)
@@ -110,9 +112,11 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
     }
 
     poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
-    probs <- calc_probs(poss_clusts = poss_clusts, catch_type = catch_type, prof_type = prof_type,
+    probs <- calc_probs(poss_clusts1 = poss_clusts, catch_type = catch_type, prof_type = prof_type,
       objective = objective, in_cp_name = "poss_clusts")
-
+    #make sure that the unq_clusts are the same
+    probs <- probs %>% filter(unq_clust %in% unique(poss_clusts$unq_clust))
+    
     #Pick next cluster
     next_clust <- probs %>% sample_n(1, weight = probs)
     next_clust <- next_clust$unq_clust  
