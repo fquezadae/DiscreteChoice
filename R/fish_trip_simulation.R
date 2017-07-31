@@ -26,13 +26,14 @@
 
 fish_trip_simulation <- function(in_list){
   #---------------------------------
+
   #Run simulation
   start_time <- Sys.time()
   the_runs <- mclapply(1:in_list$nreps, 
     FUN = function(seeds) fish_trip(ntows = in_list$ntows, scope = in_list$scope, 
-      quotas = quotas, seed = seeds, scale = in_list$scale,
+      quotas = in_list$quotas, seed = seeds, scale = in_list$scale,
     the_port = in_list$the_port, catch_type = in_list$catch_type, prof_type = in_list$prof_type,
-    objective = in_list$objective), 
+    objective = in_list$objective, start_clust = in_list$start_clust), 
     mc.cores = in_list$ncores)
   run_time <- Sys.time() - start_time
 
@@ -65,6 +66,9 @@ fish_trip_simulation <- function(in_list){
 
   #Add in skew to catches
   catches <- left_join(catches, quotas %>% select(rep_id, skew), by = 'rep_id')
+
+  #make sure catches dimensions 
+  catches <- catches %>% distinct(rep_id, tow_num, species, .keep_all = T)
 
   return(list(catches = catches, quotas = quotas, run_time = run_time))
 }
