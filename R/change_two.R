@@ -9,6 +9,7 @@
 #' @export
 
 change_two <- function(in_list_start, to_change1, to_change2, values1, values2){
+
   #----------------------------------------------------------------
   #update in_list_start
   change_these <- expand.grid(values1, values2, stringsAsFactors = FALSE)
@@ -38,7 +39,6 @@ change_two <- function(in_list_start, to_change1, to_change2, values1, values2){
     names(tt)[which(names(tt) == "t2")] <- to_change2
     return(tt)
   })
-  
   catches <- ldply(catches)
   
   quotas <- lapply(1:length(the_results), FUN = function(dd){
@@ -51,6 +51,9 @@ change_two <- function(in_list_start, to_change1, to_change2, values1, values2){
   })
   quotas <- ldply(quotas)
 
+  #Compresss ratios into a "plus_ratio" for ratios greater than 1
+  quotas$plus_ratio <- quotas$ratio
+  quotas[which(quotas$plus_ratio >= 1), "plus_ratio"] <- 1.1
 
   run_time <- lapply(1:length(the_results), FUN = function(dd){
     tt <- the_results[[dd]][[3]]
