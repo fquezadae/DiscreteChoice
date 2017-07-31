@@ -251,17 +251,12 @@ load('output/quotas.Rdata')
 #Possible clusters are within one cell
 #Define the possible clusters based on the unique_bins
 
-#Specify quota pound amount; Base this on the median amount of catch per vessel per year
-filt_clusts %>% group_by(drvid, haul_id, set_year) %>% summarize(hpounds = sum(hpounds)) %>%
-  group_by(drvid, set_year) %>% summarize(hpounds = sum(hpounds, na.rm = T)) %>%
-  group_by(set_year) %>% summarize(med_hpounds = median(hpounds))
-qps <- 400000 #get to the point where you can catch at least one pound of yelloweye
-quotas$tac <- quotas$tac_prop * qps
-
-#Start with only clusters out of astoria, ten vessels, 
-# ast <- filt_clusts %>% filter(d_port == 'ASTORIA / WARRENTON')
-
-#Select different clusters based on proximity to current cluster...
+# #Specify quota pound amount; Base this on the median amount of catch per vessel per year
+# filt_clusts %>% group_by(drvid, haul_id, set_year) %>% summarize(hpounds = sum(hpounds)) %>%
+#   group_by(drvid, set_year) %>% summarize(hpounds = sum(hpounds, na.rm = T)) %>%
+#   group_by(set_year) %>% summarize(med_hpounds = median(hpounds))
+# qps <- 1200000 #get to the point where you can catch at least one pound of yelloweye
+# quotas$tac <- quotas$tac_prop * qps
 
 #Start of decision framework function
 #58 good
@@ -270,21 +265,38 @@ quotas$tac <- quotas$tac_prop * qps
 
 #Inputs are 
 #Start in a shitty cluster
-first_cluster <- ast %>% filter(unq_clust == 295)
+# first_cluster <- ast %>% filter(unq_clust == 295)
 
-#Tools to profile functions
-devtools::install_github("hadley/lineprof")
-library(lineprof)
-library(pryr)
-mem_used()
+# #Tools to profile functions
+# devtools::install_github("hadley/lineprof")
+# library(lineprof)
+# library(pryr)
+# mem_used()
 
-#Can start looking at how these things compare
-#Compare catch:TAC, cumulative profits
+#Risk pool quotas
+rp_quotas <- quotas
+rp_quotas$tac <- rp_quotas$tac_prop * 1600000
 
-xx <- fish_trip(ntows = 20, scope = 5, quotas = quotas1, seed = 300, scale = "port")
+# #Can start looking at how these things compare
+# #Compare catch:TAC, cumulative profits
+# quotas1 <- list(quo)
 
-yy <- fleet_trip(scope = 1, quotas = quotas, seed = 300, scale = 'fleet', prob_type = "type_clust_perc",
-  ntows = 20)
+# Rprof(“myFunction.out”)
+# y <- myFunction(x)  # this is the function to profile
+# Rprof(NULL)
+# summaryRprof(“myFunction.out”)
+
+# Rprof("weenie")
+# xx <- fish_trip(ntows = 20, scope = 0, quotas = quotas, seed = 300, scale = "scope")
+# Rprof(NULL)
+# summaryRprof("weenie")
+
+
+
+
+
+# yy <- fleet_trip(scope = 1, quotas = rp_quotas, seed = 300, scale = 'fleet', prob_type = "type_clust_perc",
+#   ntows = 20, risk_pool = TRUE)
 
 #---------------------------------------------------------------------------------
 #Figures used to compare things
@@ -296,95 +308,57 @@ yy <- fleet_trip(scope = 1, quotas = quotas, seed = 300, scale = 'fleet', prob_t
 #Test consistency of algorithm by fishing in the best cluster multiple times until
 # catch:TAC hit for something; baseline for expectations
 
-#---------------------------------------------------------------------------------
-#Specify arguments as a list
-in_list <- list(nreps = 6, ncores = 6, ntows = 20, scope = 5, 
-  scale = 'scope', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
-  quotas = quotas)
-
-run_trip_simulation <- function(in_list){
-  #Run simulation
-  start_time <- Sys.time()
-  the_runs <- mclapply(1:in_list$nreps, 
-    FUN = function(seeds) fish_trip(ntows = in_list$ntows, scope = in_list$scope, 
-      quotas = quotas, seed = seeds, scale = in_list$scale, prob_type = in_list$prob_type,
-    the_port = in_list$the_port), 
-    mc.cores = in_list$ncores)
-  run_time <- Sys.time() - start_time
-
-  #Store the catch results in a list
-  catches <- lapply(the_runs, FUN = function(x) x[[1]])
-  catches <- list_to_df(catches, ind_name = "rep", 
-    col_ind_name = 'rep_id')
-  catches$rep_id <- factor(catches$rep_id, 
-    levels = unique(catches$rep_id))
-  catches$tow <- as.numeric(substr(catches$tow_num, 4, 
-    nchar(catches$tow_num)))
-
-  #Store the quotas
-  quotas <- lapply(the_runs, FUN = function(x) x[[2]])
-  quotas <- list_to_df(quotas, ind_name = "rep", 
-    col_ind_name = 'rep_id')
-  quotas$rep_id <- factor(quotas$rep_id, 
-    levels = unique(quotas$rep_id))
-
-  return(list(catches = catches, quotas = quotas, run_time = run_time))
-}
 
 
-in_list1 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
-  scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_clust_perc",
-  quotas = quotas)
+# in_list2 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
+#   scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_prop_hauls",
+#   quotas = quotas)
 
-in_list2 <- list(nreps = 24, ncores = 6, ntows = 20, scope = 5, 
-  scale = 'port', the_port = "ASTORIA / WARRENTON", prob_type = "type_prop_hauls",
-  quotas = quotas)
+# #Make input list
+# in_list <- list(in_list1, in_list2)
 
-#Make input list
-in_list <- list(in_list1, in_list2)
+# #Run simulation with many replicates
+# res <- lapply(1:length(in_list), FUN = function(xx) run_trip_simulation(in_list[[xx]]))
 
-#Run simulation with many replicates
-res <- lapply(1:length(in_list), FUN = function(xx) run_trip_simulation(in_list[[xx]]))
+# #Compress and compare results with different strategies
+# catches <- lapply(1:length(res), FUN = function(xx) res[[xx]]$catches)
+# catches1 <- list_to_df(catches, ind_name = c("spp_perc", "prop_hauls"), col_ind_name = "prob_type") 
 
-#Compress and compare results with different strategies
-catches <- lapply(1:length(res), FUN = function(xx) res[[xx]]$catches)
-catches1 <- list_to_df(catches, ind_name = c("spp_perc", "prop_hauls"), col_ind_name = "prob_type") 
+# catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
+#   profits = sum(unique(profit_fuel_only)), med = median())
 
-catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
-  profits = sum(unique(profit_fuel_only)), med = median())
-
-catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
-  profits = sum(unique(profit_fuel_only))) %>% ggplot(aes(x = profits)) + 
-  geom_histogram() +  
-  facet_wrap(~ prob_type, ncol = 1) + geom_vline(aes(xintercept = median(profits)), col = 'red', lty = 2) 
+# catches1 %>% group_by(prob_type, rep_id) %>% summarize(ntows = length(unique(tow_num)), 
+#   profits = sum(unique(profit_fuel_only))) %>% ggplot(aes(x = profits)) + 
+#   geom_histogram() +  
+#   facet_wrap(~ prob_type, ncol = 1) + geom_vline(aes(xintercept = median(profits)), col = 'red', lty = 2) 
 
 
 
-str(res)
-res[[1]]$catches %>% distinct(rep_id, haul_id, .keep_all = TRUE) %>% group_by(rep_id) %>%
-  summarize(profit_fuel_only = sum(profit_fuel_only))
-distinct(rep_id, tow, .keep_all = TRUE)
+# str(res)
+# res[[1]]$catches %>% distinct(rep_id, haul_id, .keep_all = TRUE) %>% group_by(rep_id) %>%
+#   summarize(profit_fuel_only = sum(profit_fuel_only))
+# distinct(rep_id, tow, .keep_all = TRUE)
 
-issa <- res[[1]]$quotas
+# issa <- res[[1]]$quotas
 
-#compare strategies
+# #compare strategies
 
 
 
-#Maybe calculate the proportion below a certain number
-issa %>% ggplot() + geom_histogram(aes(x = ratio)) + facet_wrap(~ type)
+# #Maybe calculate the proportion below a certain number
+# issa %>% ggplot() + geom_histogram(aes(x = ratio)) + facet_wrap(~ type)
 
 
 
 
-#Do proportion less than 0.1 and skew
-issa %>% group_by(type) %>% summarize(skew = calc_skew(log(catch))) %>% as.data.frame
+# #Do proportion less than 0.1 and skew
+# issa %>% group_by(type) %>% summarize(skew = calc_skew(log(catch))) %>% as.data.frame
 
 
 
 
 
-lapply(res, FUN = function(xx) xx[[3]])
+# lapply(res, FUN = function(xx) xx[[3]])
 
 
 
@@ -392,145 +366,145 @@ lapply(res, FUN = function(xx) xx[[3]])
 
 
 
-xx <- run_trip_simulation(in_list)
+# xx <- run_trip_simulation(in_list)
 
-#At the port level, clusters should on average get to the same spot
-start_time <- Sys.time()
-catch_perc_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
-  quotas = quotas, seed = seeds, scale = 'port'), mc.cores = 6)
-run_time <- Sys.time() - start_time
+# #At the port level, clusters should on average get to the same spot
+# start_time <- Sys.time()
+# catch_perc_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
+#   quotas = quotas, seed = seeds, scale = 'port'), mc.cores = 6)
+# run_time <- Sys.time() - start_time
 
-#Look at catches
-the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[1]])
-the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
-  col_ind_name = 'rep_id')
-the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
-  levels = unique(the_catch_lists$rep_id))
-the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
-  nchar(the_catch_lists$tow_num)))
+# #Look at catches
+# the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[1]])
+# the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
+#   col_ind_name = 'rep_id')
+# the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
+#   levels = unique(the_catch_lists$rep_id))
+# the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
+#   nchar(the_catch_lists$tow_num)))
 
-the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
-  group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
-  ggplot() + geom_histogram(aes(profits))
+# the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+#   group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
+#   ggplot() + geom_histogram(aes(profits))
 
-the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
-  ggplot(aes(x = avg_long, y = avg_lat)) + geom_point(aes(colour = tow)) + 
-  facet_wrap(~ rep_id) + geom_map(data = states_map, map = states_map, 
-         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -123.5)) + 
-  scale_y_continuous(limits = c(45, 48))
+# the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+#   ggplot(aes(x = avg_long, y = avg_lat)) + geom_point(aes(colour = tow)) + 
+#   facet_wrap(~ rep_id) + geom_map(data = states_map, map = states_map, 
+#          aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -123.5)) + 
+#   scale_y_continuous(limits = c(45, 48))
 
-the_quotas <- the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[2]])
-the_quotas <- list_to_df(the_quotas, ind_name = "rep", 
-  col_ind_name = 'rep_id')
-the_quotas$rep_id <- factor(the_quotas$rep_id, 
-  levels = unique(the_quotas$rep_id))
+# the_quotas <- the_catch_lists <- lapply(catch_perc_reps, FUN = function(x) x[[2]])
+# the_quotas <- list_to_df(the_quotas, ind_name = "rep", 
+#   col_ind_name = 'rep_id')
+# the_quotas$rep_id <- factor(the_quotas$rep_id, 
+#   levels = unique(the_quotas$rep_id))
 
-#Some things go way over
-ggplot(the_quotas) + geom_histogram(aes(ratio)) + facet_wrap(~ rep_id)
+# #Some things go way over
+# ggplot(the_quotas) + geom_histogram(aes(ratio)) + facet_wrap(~ rep_id)
 
 
 
 #----------------------------------------------------------------------
 #Repeat for proportion of hauls
-start_time <- Sys.time()
-prop_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
-  quotas = quotas, seed = seeds, scale = 'port', prob_type = "type_prop_hauls"), 
-mc.cores = 6)
-run_time <- Sys.time() - start_time
+# start_time <- Sys.time()
+# prop_reps <- mclapply(1:48, FUN = function(seeds) fish_trip(ntows = 20, scope = 10, 
+#   quotas = quotas, seed = seeds, scale = 'port', prob_type = "type_prop_hauls"), 
+# mc.cores = 6)
+# run_time <- Sys.time() - start_time
 
-#Look at catches
-the_catch_lists <- lapply(prop_reps, FUN = function(x) x[[1]])
-the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
-  col_ind_name = 'rep_id')
-the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
-  levels = unique(the_catch_lists$rep_id))
-the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
-  nchar(the_catch_lists$tow_num)))
-the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
-  group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
-  ggplot() + geom_histogram(aes(profits))
-
-
-
-#Next step is to write this so 
-
-#Which was the most caught thing
-the_quotas <- lapply(reps, FUN = function(x) x[[2]])
-the_quotas <- list_to_df(the_quotas, ind_name = 'rep', col_ind_name = 'rep_id')
-
-the_quotas %>% filter(ratio >= 1)
+# #Look at catches
+# the_catch_lists <- lapply(prop_reps, FUN = function(x) x[[1]])
+# the_catch_lists <- list_to_df(the_catch_lists, ind_name = "rep", 
+#   col_ind_name = 'rep_id')
+# the_catch_lists$rep_id <- factor(the_catch_lists$rep_id, 
+#   levels = unique(the_catch_lists$rep_id))
+# the_catch_lists$tow <- as.numeric(substr(the_catch_lists$tow_num, 4, 
+#   nchar(the_catch_lists$tow_num)))
+# the_catch_lists %>% distinct(rep_id, tow_num, .keep_all = T) %>% 
+#   group_by(rep_id) %>% summarize(profits = sum(profit_fuel_only)) %>% 
+#   ggplot() + geom_histogram(aes(profits))
 
 
 
-the_catch_lists %>% group_by(rep_id) %>% summarize(ntows = length(unique(tow_num)))
+# #Next step is to write this so 
+
+# #Which was the most caught thing
+# the_quotas <- lapply(reps, FUN = function(x) x[[2]])
+# the_quotas <- list_to_df(the_quotas, ind_name = 'rep', col_ind_name = 'rep_id')
+
+# the_quotas %>% filter(ratio >= 1)
+
+
+
+# the_catch_lists %>% group_by(rep_id) %>% summarize(ntows = length(unique(tow_num)))
  
 
 
 
-ggplot()
-xx[[1]] %>% head
+# ggplot()
+# xx[[1]] %>% head
 
-xx[[2]]
+# xx[[2]]
 
-#Manipulate the amount of available clusters
+# #Manipulate the amount of available clusters
 
-#Start in a dope one
-yy <- fish_trip(ntows = 50, scope = 5, start_clust = 58, quotas = quotas)
-yys <- yy %>% distinct(haul_id, .keep_all = T)
+# #Start in a dope one
+# yy <- fish_trip(ntows = 50, scope = 5, start_clust = 58, quotas = quotas)
+# yys <- yy %>% distinct(haul_id, .keep_all = T)
 
-#
-zz <- fish_trip(ntows = 50, scope = 1, start_clust = 835)
-zzs <- zz %>% distinct(haul_id, .keep_all = T)
+# #
+# zz <- fish_trip(ntows = 50, scope = 1, start_clust = 835)
+# zzs <- zz %>% distinct(haul_id, .keep_all = T)
 
-ggplot(xxs, aes(x = avg_long, y = avg_lat))  + geom_point() + geom_line() + 
-  geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
-  geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
-  geom_point(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') +
-  geom_line(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') 
+# ggplot(xxs, aes(x = avg_long, y = avg_lat))  + geom_point() + geom_line() + 
+#   geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
+#   geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') +
+#   geom_point(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') +
+#   geom_line(data = zzs, aes(x = avg_long, y = avg_lat), col = 'green') 
 
-filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(unq_clust, d_port) %>%
-  summarize(avg_prof = mean(profit_fuel_only)) %>% arrange(desc(avg_prof))
+# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(unq_clust, d_port) %>%
+#   summarize(avg_prof = mean(profit_fuel_only)) %>% arrange(desc(avg_prof))
 
-#Pull out haul_id
-filt_clusts %>% distinct(haul_id, .keep_all = T) %>% filter(haul_id %in% 
-  xx$haul_id) %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat)) + 
-geom_line(aes(x = avg_long, y = avg_lat)) + 
-geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') + 
-geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red')
-
-
-unique(xx$set_long)
+# #Pull out haul_id
+# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% filter(haul_id %in% 
+#   xx$haul_id) %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat)) + 
+# geom_line(aes(x = avg_long, y = avg_lat)) + 
+# geom_point(data = yys, aes(x = avg_long, y = avg_lat), col = 'red') + 
+# geom_line(data = yys, aes(x = avg_long, y = avg_lat), col = 'red')
 
 
+# unique(xx$set_long)
 
-#Quantify risk based on 
-runtime <- lineprof(fish_trip(ntows = 50))
+
+
+# #Quantify risk based on 
+# runtime <- lineprof(fish_trip(ntows = 50))
 
 
 
 
 #---------------------------------------------------------------------------------
 #Start Developing movement rules
-ggplot(filt_clusts) + geom_histogram(aes(x = haul_profit)) + facet_wrap(~ set_year)
+# ggplot(filt_clusts) + geom_histogram(aes(x = haul_profit)) + facet_wrap(~ set_year)
 
-#Which are the most profitable clusters?
-filt_clusts %>% group_by(unq_clust) %>% summarize(avg_haul_profit = mean(unique(haul_profit),
-  na.rm = TRUE), avg_long_clust = unique(avg_long_clust), avg_lat_clust = unique(avg_lat_clust),
-avg_haul_value = mean(unique(haul_value), na.rm = T),
-avg_haul_profit_fuel = mean(unique(haul_profit_fuel), na.rm = T)) -> prof_clusts
+# #Which are the most profitable clusters?
+# filt_clusts %>% group_by(unq_clust) %>% summarize(avg_haul_profit = mean(unique(haul_profit),
+#   na.rm = TRUE), avg_long_clust = unique(avg_long_clust), avg_lat_clust = unique(avg_lat_clust),
+# avg_haul_value = mean(unique(haul_value), na.rm = T),
+# avg_haul_profit_fuel = mean(unique(haul_profit_fuel), na.rm = T)) -> prof_clusts
 
-prof_clusts_m <- melt(prof_clusts, id.vars = c("unq_clust", 'avg_long_clust', 
-  'avg_lat_clust'))
+# prof_clusts_m <- melt(prof_clusts, id.vars = c("unq_clust", 'avg_long_clust', 
+#   'avg_lat_clust'))
 
-#Plot 
-ggplot(prof_clusts_m) + geom_point(aes(x = avg_long_clust, y = avg_lat_clust, col = value),
-  alpha = .5) + 
-  scale_colour_gradient2(low = 'blue', mid = 'white', high = 'red') + facet_wrap(~ variable) +
-  geom_map(data = states_map, map = states_map, 
-         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
-  scale_y_continuous(limits = c(30, 49))
+# #Plot 
+# ggplot(prof_clusts_m) + geom_point(aes(x = avg_long_clust, y = avg_lat_clust, col = value),
+#   alpha = .5) + 
+#   scale_colour_gradient2(low = 'blue', mid = 'white', high = 'red') + facet_wrap(~ variable) +
+#   geom_map(data = states_map, map = states_map, 
+#          aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
+#   scale_y_continuous(limits = c(30, 49))
 
-# filt_clusts %>% arrange(haul_profit) %>% select(haul_id, haul_profit, d_port_clust_dist) %>% head
+# # filt_clusts %>% arrange(haul_profit) %>% select(haul_id, haul_profit, d_port_clust_dist) %>% head
 
 # filt_clusts %>% filter(haul_id == 133618) %>% as.data.frame %>% head 
 
@@ -551,34 +525,34 @@ ggplot(prof_clusts_m) + geom_point(aes(x = avg_long_clust, y = avg_lat_clust, co
 #cost per day, per port, in each year, fuel scaled by distance traveled,
 #like 3-64 of 5yr_review
 
-#Assume perfect knowledge of the three clusters
-filt_clusts %>% distinct(unq_clust) %>% group_by(unq_clust) %>% 
-  avg_profit
+# #Assume perfect knowledge of the three clusters
+# filt_clusts %>% distinct(unq_clust) %>% group_by(unq_clust) %>% 
+#   avg_profit
 
-prof_clusts %>% arrange(desc(avg_haul_profit))
+# prof_clusts %>% arrange(desc(avg_haul_profit))
 
-#Sample a tow in the shitty cluster
-first_clust <- filt_clusts %>% filter(unq_clust == 295) %>% 
-  select(unq_clust, d_port, haul_id, species, hpounds, apounds, 
-    haul_value, d_port_clust_dist, trip_id, haul_profit, profit_fuel_only)
-sample_tow <- base::sample(unique(first_clust$haul_id), size = 1)
+# #Sample a tow in the shitty cluster
+# first_clust <- filt_clusts %>% filter(unq_clust == 295) %>% 
+#   select(unq_clust, d_port, haul_id, species, hpounds, apounds, 
+#     haul_value, d_port_clust_dist, trip_id, haul_profit, profit_fuel_only)
+# sample_tow <- base::sample(unique(first_clust$haul_id), size = 1)
 
-#Has knowledge of nearby clusters...
-#Bin the clusters to be in 10x10 
-#Add cluster group column, can expand the cluster group
+# #Has knowledge of nearby clusters...
+# #Bin the clusters to be in 10x10 
+# #Add cluster group column, can expand the cluster group
 
-first_clust %>% group_by(species) %>% summarize()
+# first_clust %>% group_by(species) %>% summarize()
 
-filter(haul_id == sample_tow) %>% as.data.frame
+# filter(haul_id == sample_tow) %>% as.data.frame
 
-#
+# #
 
 
-#Look at catch
-first_clust %>% filter(trip_id %in% trip) %>% group_by(species) %>%
-  summarize(hpounds = sum(hpounds, na.rm = T), haul_value = sum(unique(haul_value), na_rm = T))
+# #Look at catch
+# first_clust %>% filter(trip_id %in% trip) %>% group_by(species) %>%
+#   summarize(hpounds = sum(hpounds, na.rm = T), haul_value = sum(unique(haul_value), na_rm = T))
 
-filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>% 
+# filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>% 
 
 
 
@@ -592,35 +566,35 @@ filt_clusts[which(filt_clusts$trip_id == '961620'), ] %>%
 #monterey - moss landing - san francisco - half moon bay
 
 
-#---------------------------------------------------------------------------------
-#Look at mean and se for haul_value in each cluster
-money_clusts <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>%
- group_by(unq_clust) %>% summarize(avg_value = mean(haul_value), sd_value = sd(haul_value), 
-  ntows = length(unique(haul_id)), avg_depth = mean(avg_depth), avg_long = mean(avg_long),
-  avg_lat = mean(avg_lat))
-money_clusts$se_value <- money_clusts$sd_value / sqrt(money_clusts$ntows)  
+# #---------------------------------------------------------------------------------
+# #Look at mean and se for haul_value in each cluster
+# money_clusts <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>%
+#  group_by(unq_clust) %>% summarize(avg_value = mean(haul_value), sd_value = sd(haul_value), 
+#   ntows = length(unique(haul_id)), avg_depth = mean(avg_depth), avg_long = mean(avg_long),
+#   avg_lat = mean(avg_lat))
+# money_clusts$se_value <- money_clusts$sd_value / sqrt(money_clusts$ntows)  
 
-#
-money_clusts %>% ggplot() + geom_point(aes(x = ntows, y = sd_value, fill = avg_depth), 
-  pch = 21) + scale_fill_gradient(low = 'white', high = 'red')
+# #
+# money_clusts %>% ggplot() + geom_point(aes(x = ntows, y = sd_value, fill = avg_depth), 
+#   pch = 21) + scale_fill_gradient(low = 'white', high = 'red')
 
-#Visualize location
-money_clusts %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat, colour = avg_value)) + 
-  scale_colour_gradient(low = 'white', high = 'red') + geom_map(data = states_map, map = states_map, 
-         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
-  scale_y_continuous(limits = c(30, 49))
+# #Visualize location
+# money_clusts %>% ggplot() + geom_point(aes(x = avg_long, y = avg_lat, colour = avg_value)) + 
+#   scale_colour_gradient(low = 'white', high = 'red') + geom_map(data = states_map, map = states_map, 
+#          aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
+#   scale_y_continuous(limits = c(30, 49))
 
-save(money_clusts, file = 'output/money_clusts.Rdata')
-money_clusts %>% filter(unq_clust %in% 
-  money_clusts$unq_clust[which(money_clusts$unq_clust %in% unique(ast$unq_clust))]) %>%
-arrange(desc(avg_value)) %>% select(unq_clust) %>% as.data.frame
+# save(money_clusts, file = 'output/money_clusts.Rdata')
+# money_clusts %>% filter(unq_clust %in% 
+#   money_clusts$unq_clust[which(money_clusts$unq_clust %in% unique(ast$unq_clust))]) %>%
+# arrange(desc(avg_value)) %>% select(unq_clust) %>% as.data.frame
 
-#Calculate costs of each trip
-filt_clusts %>% group_by(trip_id) %>% summarize(nclusts = length(unique(unq_clust)))
+# #Calculate costs of each trip
+# filt_clusts %>% group_by(trip_id) %>% summarize(nclusts = length(unique(unq_clust)))
 
-#Look at trip 6219
-filt_clusts %>% filter(trip_id == 6219) %>% distinct(haul_id, .keep_all = TRUE) %>%
-  as.data.frame %>% head
+# #Look at trip 6219
+# filt_clusts %>% filter(trip_id == 6219) %>% distinct(haul_id, .keep_all = TRUE) %>%
+#   as.data.frame %>% head
 
 
 
@@ -634,18 +608,39 @@ filt_clusts %>% filter(trip_id == 6219) %>% distinct(haul_id, .keep_all = TRUE) 
 
 
 
+#Scraps
+
+# #Calculate number of days per boat
+# ndays_fishing <- filt_clusts %>% distinct(trip_id, .keep_all = T) %>% 
+#   group_by(ryear, drvid) %>% summarize(ndays_fishing = sum(trip_duration_days)) %>% 
+#   group_by(ryear) %>% mutate(avg_days_per_year = mean(ndays_fishing))
+
+# filt_clusts <- filt_clusts %>% left_join(ndays_fishing, by = c('ryear', 'drvid'))
+
+# #Pretty close I think
+# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% group_by(drvid, ryear) %>%   
+#   summarize(ndays = length(unique(set_date)))
+
+# filt_clusts %>% group_by(drvid, ryear) %>% summarize(ndays = length(unique(set_date)))
 
 
+# #Calculate profits per boat
+# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear) %>%
+#   mutate(value = sum(haul_value), 
+#     cost = sum(buyback_per_tow, captain_per_tow, crew_per_tow, 
+#       observer_per_tow, scaled_fuel_per_clust_per_tow, na.rm = TRUE),
+#     profit = value - cost) %>% 
+#   group_by(ryear) %>% summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)),
+#     avg_profit_per_boat_per_day = avg_profit_per_boat / unique(avg_days_per_year))
+  
 
 
-
-
-
-
-
-
-
-
+#   group_by(drvid, ryear, trip_id) %>% mutate(unq_days_per_trip = unique(trip_duration_days)) %>% 
+#   group_by(drvid, ryear) %>% mutate(ndays_per_boat = sum(unq_days_per_trip)) %>% 
+#   select(ndays_per_boat)
+#   group_by(ryear) %>% 
+#   summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)) / )
+# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear)
 
 
 
@@ -680,42 +675,4 @@ filt_clusts %>% filter(trip_id == 6219) %>% distinct(haul_id, .keep_all = TRUE) 
 # filt_clusts
 
 
-
-
-
-
-
-#Scarps
-
-# #Calculate number of days per boat
-# ndays_fishing <- filt_clusts %>% distinct(trip_id, .keep_all = T) %>% 
-#   group_by(ryear, drvid) %>% summarize(ndays_fishing = sum(trip_duration_days)) %>% 
-#   group_by(ryear) %>% mutate(avg_days_per_year = mean(ndays_fishing))
-
-# filt_clusts <- filt_clusts %>% left_join(ndays_fishing, by = c('ryear', 'drvid'))
-
-# #Pretty close I think
-# filt_clusts %>% distinct(haul_id, .keep_all = T) %>% group_by(drvid, ryear) %>%   
-#   summarize(ndays = length(unique(set_date)))
-
-# filt_clusts %>% group_by(drvid, ryear) %>% summarize(ndays = length(unique(set_date)))
-
-
-# #Calculate profits per boat
-# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear) %>%
-#   mutate(value = sum(haul_value), 
-#     cost = sum(buyback_per_tow, captain_per_tow, crew_per_tow, 
-#       observer_per_tow, scaled_fuel_per_clust_per_tow, na.rm = TRUE),
-#     profit = value - cost) %>% 
-#   group_by(ryear) %>% summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)),
-#     avg_profit_per_boat_per_day = avg_profit_per_boat / unique(avg_days_per_year))
-  
-
-
-#   group_by(drvid, ryear, trip_id) %>% mutate(unq_days_per_trip = unique(trip_duration_days)) %>% 
-#   group_by(drvid, ryear) %>% mutate(ndays_per_boat = sum(unq_days_per_trip)) %>% 
-#   select(ndays_per_boat)
-#   group_by(ryear) %>% 
-#   summarize(avg_profit_per_boat = sum(profit) / length(unique(drvid)) / )
-# filt_clusts %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(drvid, ryear)
 
