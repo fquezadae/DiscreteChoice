@@ -15,11 +15,11 @@ rum_data <- function(the_input, the_quotas  = quotas, risk_aversion,
   weak_value = "hpounds"){  
   
   #Filter data
-  rum_dat <- the_input %>% select(unq_clust, species, hpounds, d_port_clust_dist,
+  rum_dat <- the_input %>% select(unq_clust, species, hpounds, apounds, d_port_clust_dist,
     type, exval_pound, drvid, haul_id, prop_hauls_w_spp, prop_hauls_by_type,
     avg_quota_price, haul_num) %>% 
     as.data.frame
-  
+
   #------------------------------------------------------
   #Calculate targets and groundfish revenues for each haul
   #Calculate Revenues based on exvessel price - quota pound costs
@@ -32,28 +32,32 @@ rum_data <- function(the_input, the_quotas  = quotas, risk_aversion,
 
   #------------------------------------------------------ 
   #Quantify bycatch in each haul 
-# quotas[quotas$species == "Canary Rockfish", 'catch'] <- 30
+
   #calculate bycatch expectations
   quotas$available <- quotas$tac - quotas$catch
   
-  bycatch <- rum_dat %>% left_join(quotas %>% select(species, available, tac), 
-    by = 'species')
-  bycatch <- bycatch %>% filter(type == 'weaks')
+  ###All this commented out stuff used to calculate how close to TACs we are
+  # bycatch <- rum_dat %>% left_join(quotas %>% select(species, available, tac), 
+  #   by = 'species')
+  # bycatch <- bycatch %>% filter(type == 'weaks')
   
   #add underscore to species names
-  bycatch$species <- gsub(" ", "_", bycatch$species)
+  # bycatch$species <- gsub(" ", "_", bycatch$species)
 
-  bycatch <- bycatch %>% group_by(unq_clust, species) %>% 
-    mutate(avg_hpounds = mean(hpounds, na.rm = T)) %>% 
-    distinct(unq_clust, .keep_all = T) %>% as.data.frame
-  bycatch$quota_over <- bycatch$avg_hpounds - bycatch$available  
-  bycatch[which(bycatch$quota_over < 0), 'quota_over'] <- 0  
-  bycatch <- bycatch %>% filter(quota_over != 0)
+  # bycatch <- bycatch %>% group_by(unq_clust, species) %>% 
+  #   mutate(avg_hpounds = mean(hpounds, na.rm = T)) %>% 
+  #   distinct(unq_clust, .keep_all = T) %>% as.data.frame
+  # bycatch$quota_over <- bycatch$avg_hpounds - bycatch$available  
+  # bycatch[which(bycatch$quota_over < 0), 'quota_over'] <- 0  
+  # bycatch <- bycatch %>% filter(quota_over != 0)
   
   #Adjust quota over amounts
   #Adjust by risk_aversion value
-  bycatch$quota_over <- bycatch$quota_over * risk_aversion
-
+  # bycatch$quota_over <- bycatch$quota_over * risk_aversion
+  
+  bycatch <- rum_dat %>% filter(type == 'weaks')
+  bycatch$species <- gsub(" ", "_", bycatch$species)
+  
   bycatch <- bycatch %>% dcast(unq_clust + haul_id ~ species, value.var = weak_value, 
     fill = 0) 
 
