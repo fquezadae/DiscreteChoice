@@ -44,7 +44,7 @@
 
 #---------------------------------------------------------------------------------
 #Can load filt_clusts here
-load('output/filt_clusts.Rdata')
+# load('output/filt_clusts.Rdata')
 
 #Add in the value of each tow
 #Load exvessel info
@@ -158,6 +158,17 @@ bin_clusts <- bin_data(data = filt_clusts %>% distinct(unq_clust, .keep_all = TR
   x_col = "avg_long_clust", "avg_lat_clust", group = "dyear", 
   grid_size = c(.0909, .11), group_vec = 2007:2014)
 
+bin_clusts %>% ggplot() + geom_tile(aes(x = x, y = y, fill = count)) + geom_map(data = states_map, map = states_map, 
+         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -120)) + 
+  scale_y_continuous(limits = c(34, 49)) + scale_fill_gradient(low = "white", high = "red") + 
+  ggsave(file = "figs/binned_clusts_on_coast.png", width = 5, height = 9)
+
+   
+
+   + ggsave(file = 'figs/clusts_on_coast.png', width = 5,
+    height = 9.3)
+
+
 #Condense the data frame to remove year values
 dim(bin_clusts)
 bin_clusts <- bin_clusts %>% group_by(unq) %>% mutate(count = sum(count)) 
@@ -210,9 +221,30 @@ filt_clusts <- filt_clusts %>% group_by(unq_clust, type) %>%
 filt_clusts <- filt_clusts[-which(filt_clusts$d_port == "WASHINGTON STATE"), ] 
 
 #---------------------------------------------------------------------------------
-#See scripts/quota_props.R for details of quota formatting
-load('output/quotas.Rdata')
+#Add in averaged quota prices to filt_clusts
+#Load quota pounds datat
+load("output/qps1.Rdata")
+names(qps1)[2] <- "avg_quota_price"
+filt_clusts <- filt_clusts %>% left_join(qps1[, c('avg_quota_price', "species")], by = 'species')
 
+#Sum the hpounds and apounds for each tow
+# hpounds, apounds can be different
+# haul_pounds <- filt_clusts %>% group_by(haul_id, species) %>% summarize(hpounds = sum(hpounds, na.rm = T), 
+#   apounds = sum(apounds, na.rm = T))
+
+# filt_clusts_dist <- filt_clusts %>% distinct(haul_id, species, .keep_all = T) 
+# filt_clusts_dist <- left_join(haul_pounds, filt_clusts_dist, by = c("haul_id", 'species'))
+# save(filt_clusts_dist, file = 'output/file_clusts_dist.Rdata')
+
+# load("output/filt_clusts_dist.Rdata")
+# # load_filt_clusts_dist
+filt_clusts <- filt_clusts_dist
+rm(filt_clusts_dist)
+
+#---------------------------------------------------------------------------------
+#See scripts/quota_props.R for details of quota formatting
+# load('output/quotas.Rdata')
+# quotas$tac <- quotas$tac_prop * 100000
 #---------------------------------------------------------------------------------
 #Average number of tows per vessel
 # filt_clusts %>% filter(type %in% c('targets', 'weaks')) %>% group_by(set_year, species) %>% 

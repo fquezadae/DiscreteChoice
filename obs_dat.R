@@ -13,7 +13,7 @@ library(maps)
 library(doParallel)
 library(lubridate)
 library(GGally)
-
+library(nnet)
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
@@ -25,8 +25,123 @@ library(ch2vms)
 
 #States Map
 states_map <- map_data("state")
-#---------------------------------------------------------------------------------
 
+#---------------------------------------------------------------------------------
+#Load and format data
+#More formatting in ch4_movement
+load("output/file_clusts_dist.Rdata")
+filt_clusts <- filt_clusts_dist
+rm(filt_clusts_dist)
+names(filt_clusts)[grep('hpounds', names(filt_clusts))]
+filt_clusts$hpounds.y <- NULL
+filt_clusts$apounds.y <- NULL
+
+names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
+names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
+load('output/quotas.Rdata')
+quotas$tac <- quotas$tac_prop * 100000
+
+#---------------------------------------------------------------------------------
+#Proportion of hauls that catch each species
+filt_clusts %>% filter(type == 'weaks') %>% ggplot() + 
+  geom_histogram(aes(x = prop_hauls_w_spp)) + facet_wrap(~ species)
+
+#Histograms of hpound amounts for each species in each haul
+filt_clusts %>% filter(type == 'weaks') %>% group_by(species) %>% 
+  summarize(max_val = max(hpounds))
+
+
+filt_clusts %>% filter(type == 'weaks') %>% ggplot() + 
+  geom_histogram(aes(x = hpounds)) + xlim(limits = c(0, 15000)) + 
+  facet_wrap(~ species)
+
+#---------------------------------------------------------------------------------
+#Maybe fit frequency of encounters, not much contrast in the hpound values
+rum_dat <- rum_data(the_input = filt_clusts %>% filter(drvid %in% c("605206")),
+  risk_aversion = 1, the_quotas = quotas, weak_value = 'prop_hauls_w_spp')
+
+res1 <- fit_rum(haul_dat = rum_dat, print_trace = T)
+hist(coef(res1)[, "d_port_clust_dist"], breaks = 30)
+
+#Find sites that have positive coefficients for distance
+coef(res1)[which(coef(res1)[, "d_port_clust_dist"] >= 0), ]
+
+#Create data frame with coefficients to compare predictions
+coefs <- as.data.frame(coef(res1))
+coefs$unq_clust <- rownames(coefs)
+
+
+unique(rum_dat$Canary_Rockfish)
+unique(rum_dat$Darkblotched_Rockfish)
+unique(rum_dat$Pacific_Ocean_Perch)
+unique(rum_dat$Yelloweye_Rockfish)
+
+
+rum_dat %>% group_by(unq_clust) %>% summarize(ntows = length(unique(haul_id)))
+
+
+
+#Predict with risk_aversion of 1, then multiply by bigger number to 
+#see if predictions change
+
+#risk aversion value of 1
+ra1 <- summary(predict(res1, rum_dat %>% filter(drvid == "605206")))
+preds <- data.frame(unq_clust = names(ra1), preds_1 = ra1) 
+preds$unq_clust <- as.character(preds$unq_clust)
+
+#Multiply some of the expected values to see if I can get different probabilities
+ra100 <- rum_dat %>% filter(drvid == "605206") 
+# ra100$Canary_Rockfish <- ra100$Canary_Rockfish * 100
+ra100$d_port_clust_dist <- ra100$d_port_clust_dist * 1.5
+ra2 <- summary(predict(res1, ra100))
+preds2 <- data.frame(unq_clust = names(ra2), preds_2 = ra2) 
+preds2$unq_clust <- as.character(preds2$unq_clust)
+
+#Add in prediction twos
+preds <- left_join(preds, preds2, by = 'unq_clust')
+
+#Where was the biggest difference
+preds$preds_1 - preds$preds_2.y
+which(preds$preds_2.y / sum(preds$preds_2.y, na.rm = T) >= .16)
+preds[56, ]
+
+rum_dat[rum_dat$unq_clust == 83, ]
+
+
+
+#Do this so that quoa changes
+
+
+
+
+
+obs <- rum_dat %>% group_by(unq_clust) %>% summarize(obs = length(unique(haul_id))) 
+obs$unq_clust <- as.character(obs$unq_clust)
+
+
+
+
+
+preds %>% left_join(obs, by = 'unq_clust')
+
+
+#---------------------------------------------------------------------------------
+#Plot some maps of clusters
+filt_clusts %>% distinct(haul_id, .keep_all = T) %>% ggplot() + 
+  geom_point(aes(x = avg_long, y = avg_lat, colour = unq_clust), alpha = 0.2) + 
+  geom_map(data = states_map, map = states_map, 
+         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -118)) + 
+  scale_y_continuous(limits = c(30, 49)) + ggsave(file = 'figs/clusts_on_coast.png', width = 5,
+    height = 9.3)
+
+bin_clusts <- bin_data(data = filt_clusts %>% distinct(unq_clust, .keep_all = TRUE), 
+  x_col = "avg_long_clust", "avg_lat_clust", group = "dyear", 
+  grid_size = c(.0909, .11), group_vec = 2007:2014)
+
+bin_clusts %>% ggplot() + geom_tile(aes(x = x, y = y, fill = count)) + geom_map(data = states_map, map = states_map, 
+         aes(x = long, y = lat, map_id = region)) + scale_x_continuous(limits = c(-126, -120)) + 
+  scale_y_continuous(limits = c(34, 49)) + scale_fill_gradient(low = "white", high = "red") + 
+  ggsave(file = "figs/binned_clusts_on_coast.png", width = 5, height = 9)
 
 
 #---------------------------------------------------------------------------------

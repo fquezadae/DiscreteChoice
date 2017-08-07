@@ -1,14 +1,18 @@
 #' Format Data for Random Utility Model
 #' Function to format data for random utility model. Each row should be a cluster
-#' and columns represent arguments for each coefficient
+#' and columns represent arguments for each coefficient. Only consider canary,
+#' darkblotched, POP, and yelloweye to be weak stock species
 
 #' @param the_input Data for input
 #' @param the_quotas Quota amounts, used to determine how close to quota a vessel is
 #' @param risk_aversion The extent to which vessel avoids weak stock species
+#' @param weak_value Value of interest; could expected values for:
+#'                   hpounds or quota_over
 
 #' @export
 
-rum_data <- function(the_input, the_quotas = quotas, risk_aversion){  
+rum_data <- function(the_input, the_quotas  = quotas, risk_aversion, 
+  weak_value = "hpounds"){  
   
   #Filter data
   rum_dat <- the_input %>% select(unq_clust, species, hpounds, d_port_clust_dist,
@@ -50,7 +54,7 @@ rum_data <- function(the_input, the_quotas = quotas, risk_aversion){
   #Adjust by risk_aversion value
   bycatch$quota_over <- bycatch$quota_over * risk_aversion
 
-  bycatch <- bycatch %>% dcast(unq_clust + haul_id ~ species, value.var = 'quota_over', 
+  bycatch <- bycatch %>% dcast(unq_clust + haul_id ~ species, value.var = weak_value, 
     fill = 0) 
 
   # rum_dat$quota_over <- rum_dat$hpounds - rum_dat$available
@@ -71,6 +75,7 @@ rum_data <- function(the_input, the_quotas = quotas, risk_aversion){
   
   #Fill NA values with zeroes  
   haul_dat[is.na(haul_dat)] <- 0
+  haul_dat <- haul_dat %>% as.data.frame
   return(haul_dat)
 
 }

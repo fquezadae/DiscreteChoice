@@ -27,7 +27,7 @@ calc_probs <- function(prof_type = "avg_profit_fuel_only", catch_type, objective
   #1. fish in places with the biggest difference between target and weaks
   #2. fish in places with the most targets
   #3. fish in places with the least weak stock species
-
+# browser()  
   statement <- paste0("probs <- ", in_cp_name, " %>% distinct(type, unq_clust, type_clust_catch, type_clust_perc, 
     type_prop_hauls, avg_haul_profit, avg_profit_fuel_only) %>% dcast(unq_clust + ", 
     prof_type, " ~ type, value.var = ", "'", catch_type, "')")
@@ -61,10 +61,6 @@ calc_probs <- function(prof_type = "avg_profit_fuel_only", catch_type, objective
   #Highest profits and lowest amount of weak stock species
   if(objective ==  "lowest"){
     eval(parse(text = statement))
-    # probs <- poss_clusts %>% 
-    #   distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
-    #     avg_profit_fuel_only) %>%
-    #   dcast(unq_clust +  avg_profit_fuel_only ~ type, value.var = prob_type)
     probs <- probs %>% filter(is.na(weaks) == FALSE)
     probs[, 2] <- probs[, 2] + abs(min(probs[, 2])) + 1
     

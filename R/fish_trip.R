@@ -83,6 +83,7 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
   #------------------------------------------------------------
   #Start of for loop
   for(ii in 2:ntows){
+
     next_cluster <- input %>% filter(unq_clust == next_clust)
     next_tow <- base::sample(unique(next_cluster$haul_id), size = 1)
 
@@ -111,12 +112,13 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_clust = 295, seed =
       poss_clusts <- unique(poss_clusts$unq_clust)
     }
 
+# if(ii == 2) browser()    
     poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
     probs <- calc_probs(poss_clusts1 = poss_clusts, catch_type = catch_type, prof_type = prof_type,
-      objective = objective, in_cp_name = "poss_clusts")
+      objective = objective, in_cp_name = "poss_clusts1")
     #make sure that the unq_clusts are the same
     probs <- probs %>% filter(unq_clust %in% unique(poss_clusts$unq_clust))
-    
+
     #Pick next cluster
     next_clust <- probs %>% sample_n(1, weight = probs)
     next_clust <- next_clust$unq_clust  

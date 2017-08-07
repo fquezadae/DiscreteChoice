@@ -4,9 +4,11 @@
 \alias{rum_data}
 \title{Format Data for Random Utility Model
 Function to format data for random utility model. Each row should be a cluster
-and columns represent arguments for each coefficient}
+and columns represent arguments for each coefficient. Only consider canary,
+darkblotched, POP, and yelloweye to be weak stock species}
 \usage{
-rum_data(the_input, the_quotas = quotas, risk_aversion)
+rum_data(the_input, the_quotas = quotas, risk_aversion,
+  weak_value = "hpounds")
 }
 \arguments{
 \item{the_input}{Data for input}
@@ -14,9 +16,13 @@ rum_data(the_input, the_quotas = quotas, risk_aversion)
 \item{the_quotas}{Quota amounts, used to determine how close to quota a vessel is}
 
 \item{risk_aversion}{The extent to which vessel avoids weak stock species}
+
+\item{weak_value}{Value of interest; could expected values for:
+hpounds or quota_over}
 }
 \description{
 Format Data for Random Utility Model
 Function to format data for random utility model. Each row should be a cluster
-and columns represent arguments for each coefficient
+and columns represent arguments for each coefficient. Only consider canary,
+darkblotched, POP, and yelloweye to be weak stock species
 }

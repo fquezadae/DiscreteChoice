@@ -14,6 +14,7 @@
 #' or type_clust_catch (proportion of catches)
 #' @param ntows Number of tows
 
+
 # clusts <- c(295, 58, 265)
 # quotas1 <- quotas
 
@@ -22,8 +23,10 @@
 # scope <- 1
 # prob_type = "type_clust_perc"
 
-fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300, quotas,
-  scale = "fleet", scope = 1, prob_type = "type_clust_perc", ntows){
+fleet_trip <- function(input = filt_clusts, ntows = 20, clusts = c(295, 58, 265), 
+  seed = 300, scope = 1, quotas, scale = "fleet", the_port = "ASTORIA / WARRENTON",
+  catch_type = "type_clust_perc", prof_type = "avg_profit_fuel_only", objective, 
+  risk_pool){
 
   #------------------------------------------------------------
   #Define first catches
@@ -39,7 +42,8 @@ fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300
 
   #Track catches by vessel
   catch_list <- lapply(1:length(clusts), FUN = function(xx) summarize_catch(clust = input %>% 
-    filter(clust == tows[xx, "unq_clust"]), haul_id1 = tows[xx, "haul_id"]))
+    filter(unq_clust == tows[xx, "unq_clust"]), haul_id1 = tows[xx, "haul_id"]))
+
   catch_list <- lapply(catch_list, FUN = function(xx){
     temp <- xx
     temp$tow <- "tow1"
@@ -48,22 +52,44 @@ fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300
 
   #------------------------------------------------------------
   #update quotas
-  quotas <- lapply(1:length(clusts), FUN = function(xx){
-    temp <- quotas[[xx]] %>% left_join(catch_list[[xx]] %>% select(species, hpounds), by = "species")
-    temp[is.na(temp$hpounds), 'hpounds'] <- 0
-    temp$catch <- temp$catch + temp$hpounds
-    temp$hpounds <- NULL
-    return(temp)
-  })  
+  if(risk_pool != TRUE){
+    quotas <- lapply(1:length(clusts), FUN = function(xx){
+      temp <- quotas[[xx]] %>% left_join(catch_list[[xx]] %>% select(species, hpounds), by = "species")
+      temp[is.na(temp$hpounds), 'hpounds'] <- 0
+      temp$catch <- temp$catch + temp$hpounds
+      temp$hpounds <- NULL
+      return(temp)
+    })    
+  }
+
+  if(risk_pool == TRUE){
+    quotas <- catch_list %>% melt() %>% group_by(species) %>% summarize(hpounds = sum(value)) %>% 
+      right_join(quotas, by = 'species')
+    quotas[is.na(quotas$hpounds), 'hpounds'] <- 0
+    quotas$catch <- quotas$catch + quotas$hpounds
+    quotas$hpounds <- NULL
+  }
 
   #------------------------------------------------------------
+browser()  
   #Pick next cluster
   #Nearby clusters only
   if(scale == "scope"){
-    poss_clusts <- lapply(1:length(clusts), FUN = function(xx){
+    pc1 <- lapply(1:length(clusts), FUN = function(xx){
       clust_scope(catch_input = catch_list[[xx]], input_cs = input, clust_scope = scope)
     })
-    poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
+    
+     poss_clusts <- lapply(pc1, FUN = function(xx){
+       temp <- values_for_probs(poss_clusts = xx, input_vfb = input)
+       probs <- calc_probs(poss_clusts1 = temp, catch_type = catch_type,
+        prof_type = prof_type, objective = objective, in_cp_name = "poss_clusts1")
+       next_clust <- probs %>% sample_n(1, weight = probs)
+       next_clust <- next_clust$unq_clust
+       return(next_clust)
+     })
+
+     new_clusts <- as.vector(ldply(poss_clusts))$V1
+
   }
 
   if(scale == "port"){
@@ -76,45 +102,28 @@ fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300
   if(scale == "fleet"){
     poss_clusts <- unique(ldply(catch_list)$unq_clust)
     haul_specific_input <- input %>% filter(haul_id %in% unique(ldply(catch_list)$haul_id))
+#Check that haul_specific input and input are different    
+# pc_check <- values_for_probs(poss_clusts = poss_clusts, input_vfb = input)
     poss_clusts <- values_for_probs(poss_clusts = poss_clusts, input_vfb = haul_specific_input)
+
+    #Lose clusters that didn't catch a target 
+    probs <- calc_probs(poss_clusts1 = poss_clusts, catch_type = catch_type, prof_type = prof_type,
+      objective = objective, in_cp_name = "poss_clusts1")
+
+    #make sure that the unq_clusts are the same
+    probs <- probs %>% filter(unq_clust %in% unique(poss_clusts$unq_clust))
+  
+    #Next Cluster
+    next_clust <- probs %>% sample_n(1, weight = probs)
+    next_clust <- next_clust$unq_clust
   }
-  #Start by looking at the average catch proportions of weak stock species
   
-  #Start with proportion of hauls, go to the place with the biggest difference between 
-  #targets and weaks; change value.var to use a different column
   
-  #Catch composition; where do you catch most targets and least weak stock
-  probs <- poss_clusts %>% 
-    distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
-      avg_profit_fuel_only) %>%
-    dcast(unq_clust +  avg_profit_fuel_only ~ type, 
-      value.var = prob_type) %>% mutate(targ_weak_diff = targets - weaks) %>%
-    select(-targets, -weaks)
 
-  #Encounter frequency; how often do you catch a target and a weak stock species
-  # probs <- poss_clusts %>% 
-  #   distinct(type, unq_clust, type_clust_catch, type_clust_perc, type_prop_hauls,
-  #     avg_profit_fuel_only) %>%
-  #   dcast(unq_clust +  avg_profit_fuel_only ~ type, 
-  #     value.var = 'type_prop_hauls') %>% mutate(targ_weak_diff = targets - weaks) %>%
-  #   select(-targets, - weaks)
-
-  #Remove any NA values from targ_weak_diff
-  probs <- probs %>% filter(is.na(targ_weak_diff) == FALSE)
-
-  #Transform the values so that there are no negative numbers
-  probs[, 2] <- probs[, 2] + abs(min(probs[, 2])) + 1
-  probs[, 3] <- probs[, 3] + abs(min(probs[, 3])) + 1
-  
-  probs$probs <- (probs[, 2] / sum(probs[, 2]) + probs[, 3] / sum(probs[, 3])) / 2
-
-  #Next Cluster
-  next_clusts <- base::sample(probs$unq_clust, prob = probs$probs, size = length(clusts), replace = T)
-  # next_clust <- base::sample(probs$unq_clust, prob = probs$probs, size = 1, replace = T)
-   
   #------------------------------------------------------------
   #Start of for loop
   for(ii in 2:ntows){
+    if(sum(quotas$catch > quotas$tac) != 0) break 
     tows <- ldply(lapply(1:length(next_clusts), FUN = function(x){
           input %>% filter(unq_clust %in% next_clusts[x]) %>% ungroup %>% distinct(haul_id, unq_clust) %>% 
             sample_n(1)
@@ -135,15 +144,26 @@ fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300
       return(temp)
     })
 
-    #------------------------------------------------------------
+    #------------------------------------------------------------  
     #update quotas
-    quotas <- lapply(1:length(clusts), FUN = function(xx){
-      temp <- quotas[[xx]] %>% left_join(catch_list_new[[xx]] %>% select(species, hpounds), by = "species")
-      temp[is.na(temp$hpounds), 'hpounds'] <- 0
-      temp$catch <- temp$catch + temp$hpounds
-      temp$hpounds <- NULL
-      return(temp)
-    })  
+    if(risk_pool != TRUE){
+      quotas <- lapply(1:length(clusts), FUN = function(xx){
+        temp <- quotas[[xx]] %>% left_join(catch_list[[xx]] %>% select(species, hpounds), by = "species")
+        temp[is.na(temp$hpounds), 'hpounds'] <- 0
+        temp$catch <- temp$catch + temp$hpounds
+        temp$hpounds <- NULL
+        return(temp)
+      })    
+    }
+  
+    if(risk_pool == TRUE){
+      quotas <- catch_list %>% melt() %>% group_by(species) %>% summarize(hpounds = sum(value)) %>% 
+        right_join(quotas, by = 'species')
+      quotas[is.na(quotas$hpounds), 'hpounds'] <- 0
+      quotas$catch <- quotas$catch + quotas$hpounds
+      quotas$hpounds <- NULL
+    }
+
   
     #------------------------------------------------------------
     #Pick next cluster
@@ -200,16 +220,23 @@ fleet_trip <- function(input = filt_clusts, clusts = c(295, 58, 265), seed = 300
     #Next Cluster
     next_clusts <- base::sample(probs$unq_clust, prob = probs$probs, size = length(clusts), replace = T)    
   }
-  
+
   names(catch_list) <- paste0("vessel", 1:length(catch_list))
   catch_list <- ldply(catch_list)
   names(catch_list)[1] <- 'vessel'
 
   #Add catch:quota 
-  names(quotas) <- paste0("vessel", 1:length(quotas))
-  quotas <- ldply(quotas)
-  names(quotas)[1] <- 'vessel'
-  quotas$ratio <- round(quotas$catch / quotas$tac, digits = 3)
+  if(risk_pool != TRUE){
+    names(quotas) <- paste0("vessel", 1:length(quotas))
+    quotas <- ldply(quotas)
+    names(quotas)[1] <- 'vessel'
+    quotas$ratio <- round(quotas$catch / quotas$tac, digits = 3)  
+  }
+
+  if(risk_pool == TRUE){
+    quotas$ratio <- round(quotas$catch / quotas$tac, digits = 3)  
+  }
+  
 
   #Return output
   return(list(catches = catch_list, quotas = quotas))

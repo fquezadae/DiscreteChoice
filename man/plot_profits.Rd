@@ -5,7 +5,7 @@
 \title{Plot Profits
 Function to plot profits associated with replicates. Currently configured to run with fish_trip}
 \usage{
-plot_profits(results_in)
+plot_profits(results_in, things)
 }
 \arguments{
 \item{result_in}{Results of fish_trip_simulation}

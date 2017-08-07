@@ -7,6 +7,7 @@
 #' @param add_map Add map to the figure?
 #' @param xlims x axis limits for map
 #' @param ylims y axis limits for map
+
 #' @export
 
 plot_paths <- function(results_in, facet = FALSE, remove_legend = TRUE, add_map = FALSE,

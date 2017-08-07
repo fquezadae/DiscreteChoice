@@ -5,29 +5,30 @@
 \title{Function to start some number of vessels in a number of clusters
 Stop at each time step and allow vessels to share recent catch information}
 \usage{
-fleet_trip(input = filt_clusts, clusts = c(295, 58, 265), seed = 300,
-  quotas, scale = "fleet", scope = 1, prob_type = "type_clust_perc",
-  ntows, risk_pool = TRUE)
+fleet_trip(input = filt_clusts, ntows = 20, clusts = c(295, 58, 265),
+  seed = 300, scope = 1, quotas, scale = "fleet",
+  the_port = "ASTORIA / WARRENTON", catch_type = "type_clust_perc",
+  prof_type = "avg_profit_fuel_only", objective, risk_pool)
 }
 \arguments{
 \item{input}{Input; default to filt_clusts}
+
+\item{ntows}{Number of tows}
 
 \item{clusts}{Starting clusters; equal to the number of vessels}
 
 \item{seed}{Seed to get reproducible results}
 
+\item{scope}{Scope of movement}
+
 \item{quotas}{Quotas; can be a list for each vessel or a single data frame if risk pool}
 
 \item{scale}{If scale == "fleet"; can only look at clusters that others are fishing in}
 
-\item{scope}{Scope of movement}
+\item{risk_pool}{If TRUE, quotas can only be a data frame and everything held to the same standard}
 
 \item{prob_type}{Type of probability to use; type_clust_perc (proportion of tows with species group)
 or type_clust_catch (proportion of catches)}
-
-\item{ntows}{Number of tows}
-
-\item{risk_pool}{If TRUE, quotas can only be a data frame and everything held to the same standard}
 }
 \description{
 Function to start some number of vessels in a number of clusters
