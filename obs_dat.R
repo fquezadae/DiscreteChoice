@@ -1,7 +1,12 @@
 #---------------------------------------------------------------------------------
-#Start of obs_dat, work off this script
+#Specify Computer
 setwd('/Users/peterkuriyama/School/Research/ch4')
+setwd('c://Users//Peter//ch4')
 
+list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
+
+#---------------------------------------------------------------------------------
+#Start of obs_dat, work off this script
 #Load Packages
 library(ggplot2)
 library(plyr)
@@ -29,7 +34,9 @@ states_map <- map_data("state")
 #---------------------------------------------------------------------------------
 #Load and format data
 #More formatting in ch4_movement
+load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 load("output/file_clusts_dist.Rdata")
+
 filt_clusts <- filt_clusts_dist
 rm(filt_clusts_dist)
 names(filt_clusts)[grep('hpounds', names(filt_clusts))]
@@ -38,11 +45,20 @@ filt_clusts$apounds.y <- NULL
 
 names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
 names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
+data_table(filt_clusts) %>% head
+
+load("//udrive.uw.edu//udrive//quotas.Rdata")
 load('output/quotas.Rdata')
 quotas$tac <- quotas$tac_prop * 100000
 
+filt_clusts %>% group_by(unq_clust) %>% summarize(ntows = length(unique(haul_id)))
+filt_clusts <- as.data.frame(filt_clusts)
+
 #---------------------------------------------------------------------------------
 #Proportion of hauls that catch each species
+filt_clusts %>% filter(dport_desc == "EUREKA") %>% head
+
+
 filt_clusts %>% filter(type == 'weaks') %>% ggplot() + 
   geom_histogram(aes(x = prop_hauls_w_spp)) + facet_wrap(~ species)
 
@@ -57,6 +73,100 @@ filt_clusts %>% filter(type == 'weaks') %>% ggplot() +
 
 #---------------------------------------------------------------------------------
 #Maybe fit frequency of encounters, not much contrast in the hpound values
+#Make rum_data for all the ports
+ports <- unique(filt_clusts$dport_desc)
+
+#Remove neah bay
+ports <- ports[-which(ports %in% c("NEAH BAY", "PRINCETON / HALF MOON BAY", 
+                                   "BODEGA BAY"))]
+
+port_rum_data <- lapply(unique(filt_clusts$dport_desc), FUN = function(x){
+  temp <- filt_clusts %>% filter(dport_desc == x)
+
+  rum_dat <- rum_data(the_input = temp, risk_aversion = 1, the_quotas = quotas,
+                      weak_value = "hpounds")
+  print(x)
+  return(rum_dat)
+})
+
+#Fit model for Astoria
+#Look at the data
+ast_res <- fit_rum(haul_dat = port_rum_data[[1]], print_trace = T)
+
+the_coefs <- as.data.frame(coef(ast_res))
+the_coefs$unq_clust <- rownames(the_coefs)
+
+#------------------------------------------------------------------------
+
+#Predictions for one vessel
+all_preds <- summary(predict(ast_res))
+all_preds <- data.frame(unq_clust = names(all_preds), all_preds = all_preds)
+all_preds$unq_clust <- as.character(all_preds$unq_clust)
+
+obs <- port_rum_data[[1]] %>% group_by(unq_clust) %>% summarize(obs = length(unique(haul_id))) %>% 
+  as.data.frame
+obs$unq_clust <- as.character(obs$unq_clust)
+
+all_preds <- left_join(obs, all_preds, by = 'unq_clust', fill = 0)
+all_preds[is.na(all_preds$all_preds), "all_preds"] <- 0
+
+#Start manipulating shit to see if things change
+#Double distance
+dd <- port_rum_data[[1]]
+
+###Manipulate shit here
+# dd$d_port_clust_dist <- dd$d_port_clust_dist * 1.1
+# dd$Darkblotched_Rockfish <- dd$Darkblotched_Rockfish * 100
+# dd$Pacific_Ocean_Perch <- dd$Pacific_Ocean_Perch * 100
+
+#When working with revenue, look at only one
+dd[dd$unq_clust == 3, 'revenue'] <- dd[dd$unq_clust == 3, 'revenue'] / 100
+# dd[dd$unq_clust == 3, 'Darkblotched_Rockfish'] <- dd[dd$unq_clust == 3, 'Darkblotched_Rockfish'] * 100
+###
+
+dd_preds <- summary(predict(ast_res, dd))
+dd_preds <- data.frame(unq_clust = names(dd_preds), dd_preds)
+dd_preds$unq_clust <- as.character(dd_preds$unq_clust)
+dd_preds[order(dd_preds$unq_clust), ]
+
+all_preds <- all_preds %>% inner_join(dd_preds, by = 'unq_clust', fill = 0, all = T)
+#Now they seem to add up
+
+#Plot them to see how they compare
+melt(all_preds, id = c('unq_clust', "obs")) %>% ggplot() + geom_point(aes(x = obs, y = value,
+                                                                          colour = variable)) 
+
+
+the_coefs %>% filter(unq_clust == 3)
+all_preds %>% filter(unq_clust == 3)
+
+melt(all_preds, id = c('unq_clust', "obs")) %>% ggplot() + geom_point(aes(x = obs, y = value)) +
+  facet_wrap(~ variable)
+  
+
+#------------------------------------------------------------------------
+
+
+
+all_preds$unq_clustdd_preds$unq_clust
+dd_preds$unq_clust
+sum(all_preds$dd_preds, na.rm = T)
+
+#Find a cluster of interest that changed a lot
+the_coefs[which(the_coefs$unq_clust == "110"), ]
+
+#Which clusters had the biggest changes?
+
+
+#Try to see if it makes sense why it changed
+#I doubled the distance, so presumably the coefficients suggest that?
+
+
+dd %>% filter(unq_clust == "110") %>% ungroup %>% distinct(d_port_clust_dist)
+dd %>% distinct(unq_clust, .keep_all = T) %>% ggplot() + geom_histogram(aes(x = d_port_clust_dist))
+
+quantile(the_coefs$d_port_clust_dist)
+
 rum_dat <- rum_data(the_input = filt_clusts %>% filter(drvid %in% c("605206")),
   risk_aversion = 1, the_quotas = quotas, weak_value = 'prop_hauls_w_spp')
 
