@@ -87,6 +87,11 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_vess = 295, seed = 
   clust_probs <- apply(predict(rum_res, X, type = 'probs'), 2, mean)
 
   #-----------------------------------------------------------------------------------
+  #Define catch and quota lists
+  catch_list <- vector('list', length = unique(ntrips$avg_ntrips))
+  quota_list <- vector('list', length = unique(ntrips$avg_ntrips))
+
+  #-----------------------------------------------------------------------------------
   #Start first fishing trip
   
   #Sample first cluster
@@ -102,11 +107,42 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_vess = 295, seed = 
   avg_ntows <- ntows$ntows
   ntows_to_sample <- min(nhauls$nhauls, avg_ntows)
 
-  first_trip <- one_trip(filt_data = the_dat, cluster_value = first_cluster$unq_clust, 
+  #Use filt_clusts to use all the data in an area
+  #Filter the data before inputting
+  unq_bin <- input %>% filter(unq_clust == first_cluster$unq_clust) %>% ungroup %>% 
+    distinct(unq_clust_bin) %>% as.data.frame 
+  
+  # #Quickly take a unq_clust and determine which bin it's in
+  # bin_clust_lookup <- filt_clusts %>% ungroup %>% distinct(unq_clust_bin, unq_clust)
+  # the_bin <- bin_clust_lookup %>% filter(unq_clust == first_cluster$unq_clust) %>% select(unq_clust_bin)
+  # filt_data_bybin <- filt_clusts %>% ungroup %>% filter(unq_clust_bin == the_bin$unq_clust_bin)
+  
+  first_trip <- one_trip(filt_data = input, cluster_value = first_cluster$unq_clust, 
     num_hauls = ntows_to_sample, unq_bin_scope = 1, quotas = quotas)
 
+browser()  
+
   #Pick a new cluster based on catches
-browser()
+  #Adjust risk for certain species
+  catch_list[[1]] <- first_trip[[1]]
+  quotas <- first_trip[[2]] #update quotas
+
+  quotas$prop <- round(quotas$catch / quotas$tac, digits = 4)
+
+  #-----------------------------------------------------------------------------------
+  #Reformat quotas to adjust probabilities up or down; only adjust for weak stock species
+  
+
+  # quota_list[[1]] <- first_trip[[2]]
+  
+  #See how close to TAC and adjust site probabilities accordingly
+  quota_list[[1]]
+
+  
+
+  X <- model.matrix(rum_res)
+  X[, 4:7] <- X[, 4:7] * risk_coefficient
+  clust_probs <- apply(predict(rum_res, X, type = 'probs'), 2, mean)
 
 
 
