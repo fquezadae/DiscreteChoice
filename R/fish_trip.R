@@ -4,15 +4,21 @@
 
 #' @param input Overall input to the function; defaults to filt_clusts which is the data with clusters
 #' filtered to include clusters with the most tows
-#' @param ntows Number of tows in the fishing trip
-#' @param start_vess Vessel to sample with
+#' @param start_vess Vessel to sample with, number of tows calculated based on average for each vessel
 #' @param seed Seed for random sampling
-#' @param scope Scope of available information; probably will be taken out
+## ' @param scope Scope of available information; probably will be taken out
 #' @param quotas Data frame of quota for target and weak stock species
-#' @param scale Scale of movement; if scale == 'port', specify a d_port; if scale == 'scope', 
-#' specify scale
-#' @param prob_type Probability type; type_prop_hauls -- frequency of encounter 
-#' or type_clust_perc -- proportion of catch in each cluster
+##' @param scale Scale of movement; if scale == 'port', specify a d_port; if scale == 'scope', 
+##' specify scale
+##' @param prob_type Probability type; type_prop_hauls -- frequency of encounter 
+##' or type_clust_perc -- proportion of catch in each cluster
+#' @param the_port Specify the port; currently deprecated but might include for boats that moved a lot
+#' @param risk_coefficient Risk coefficient; used in adjust_probs function
+#'risk coefficients;
+#' -1 -- blind fishing
+#' 0-- only use original data values
+#' 1--take catches into account; will eventually get towards 10
+#' 10 -- avoid risk fishing
 
 #' @export
 
@@ -31,9 +37,8 @@
 #Perfect knowledge of all clusters in port is its own function
 
 #Cluster, number of samples, catch_list, 
-fish_trip <- function(input = filt_clusts, ntows = 10, start_vess = 295, seed = 300,
-  scope = 1, quotas, scale = "scope", the_port = "ASTORIA / WARRENTON",
-  catch_type = "type_clust_perc", prof_type = "avg_profit_fuel_only", risk_coefficient = 2){
+fish_trip <- function(input = filt_clusts, start_vess = 295, seed = 300,
+  quotas, the_port = "ASTORIA / WARRENTON", risk_coefficient = 2){
   
   #-----------------------------------------------------------------------------------
   input$revenue <- input$hpounds * (input$exval_pound - input$avg_quota_price)
@@ -80,7 +85,7 @@ fish_trip <- function(input = filt_clusts, ntows = 10, start_vess = 295, seed = 
   rum_res <- multinom(unq_clust_fact ~ revenue + d_port_clust_dist + Canary_Rockfish +
       Darkblotched_Rockfish + Pacific_Ocean_Perch + Yelloweye_Rockfish,
       data = rum_dat, 
-      maxit = 30000, MaxNWts = 1000, trace = T)  
+      maxit = 30000, MaxNWts = 1000, trace = F)  
 
   #-----------------------------------------------------------------------------------
   #Calculate probabilities in each cluster based on risk_coefficient

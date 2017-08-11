@@ -5,24 +5,27 @@
 \title{Function to conduct a fishing trip
 Function to conduct a fishing trip}
 \usage{
-fish_trip(input = filt_clusts, ntows = 10, start_clust = 295,
-  seed = 300, scope = 1, quotas, scale = "scope",
-  the_port = "ASTORIA / WARRENTON", catch_type = "type_clust_perc",
-  prof_type = "avg_profit_fuel_only", objective)
+fish_trip(input = filt_clusts, start_vess = 295, seed = 300, quotas,
+  the_port = "ASTORIA / WARRENTON", risk_coefficient = 2)
 }
 \arguments{
 \item{input}{Overall input to the function; defaults to filt_clusts which is the data with clusters
 filtered to include clusters with the most tows}
 
-\item{ntows}{Number of tows in the fishing trip}
-
-\item{start_clust}{Starting cluster to fish in}
+\item{start_vess}{Vessel to sample with, number of tows calculated based on average for each vessel}
 
 \item{seed}{Seed for random sampling}
 
-\item{scope}{Scope of available information; probably will be taken out}
-
 \item{quotas}{Data frame of quota for target and weak stock species}
+
+\item{the_port}{Specify the port; currently deprecated but might include for boats that moved a lot}
+
+\item{risk_coefficient}{Risk coefficient; used in adjust_probs function
+risk coefficients;
+-1 -- blind fishing
+0-- only use original data values
+1--take catches into account; will eventually get towards 10
+10 -- avoid risk fishing}
 
 \item{scale}{Scale of movement; if scale == 'port', specify a d_port; if scale == 'scope', 
 specify scale}
