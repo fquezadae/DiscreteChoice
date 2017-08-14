@@ -72,7 +72,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   dist_hauls$prev_date <- dist_hauls$set_date - days(ndays)
 
   dates <- data.frame(set_date = unique(dist_hauls$set_date), 
-  date_id = 1:length(unique(dist_hauls$set_date)))
+    date_id = 1:length(unique(dist_hauls$set_date)))
 
   dist_hauls <- dist_hauls %>% left_join(dates, by = "set_date")
 
@@ -88,6 +88,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     temp$date_id <- xx
     return(temp)
   })
+  
   #Add in the periods
   rum_vals <- ldply(rum_vals)
 
@@ -161,29 +162,33 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   hauls_max_year <- dist_hauls1 %>% filter(haul_id %in% hauls_max_year$haul_id)
 
   #Cast the data into the right format
-  #revenues
+  #Distances, keep only values that are have a tow_clust value
   dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
     value.var = "btw_clust_dist") 
+  dists_keeps <- c(1, 2, which(names(dists) %in% as.character(unique(dists$tow_clust))))
+  dists <- dists[, dists_keeps]
   names(dists)[3:ncol(dists)] <- paste("dist", names(dists)[3:ncol(dists)], sep = ".")
+  dists <- dists %>% filter(is.na(tow_clust) == FALSE)
+  
+  #Revenues, keep only values that are have a tow_clust value
   revs <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
     value.var = "avg_revenue") 
+  revs_keeps <- c(1, 2, which(names(revs) %in% as.character(unique(revs$tow_clust))))
+  revs <- revs[, revs_keeps]
   names(revs)[3:ncol(revs)] <- paste("revs", names(revs)[3:ncol(revs)], sep = ".")
-
+  revs <- revs %>% filter(is.na(tow_clust) == FALSE)
+  #---------------------------------------------------------------------------------
+  #Join the two data sets
   rum_dat <- dists %>% left_join(revs, by = c('haul_id_id', 'tow_clust'))
   rum_dat <- rum_dat %>% filter(is.na(tow_clust) == FALSE)
 
   #Fill NA values with zeroes in rum_2012
   rum_dat[is.na(rum_dat)] <- 0
 
-  #Remove columns that have are never fished in
-  tow_clust_columns <- names(rum_dat)[grep("revs.", names(rum_dat))]
-  col_values <- as.numeric(gsub("revs.", "", tow_clust_columns))
-  rm_cols <- as.character(col_values[which(col_values %in% unique(rum_dat$tow_clust) == FALSE)])
-  rm_cols <- paste0(rm_cols, collapse = "|")
-  rum_dat <- rum_dat[, -grep(rm_cols, names(rum_dat))]
-
+  #Return the data
   rum_dat_out <- mlogit.data(rum_dat, shape = 'wide', choice = "tow_clust",
     varying = 3:ncol(rum_dat), id = "haul_id_id")
+
   return(rum_dat_out)
 }
 
@@ -452,3 +457,68 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
 
 # dist_hauls1_inner <- dist_hauls1 %>% inner_join(hh, by = 'haul_id')
 # dist_hauls1_inner %>% filter(haul_id_id == 1) %>% 
+
+
+# browser()
+#Seems like many tow values were dropped somewhere
+# apply(rum_dat, MAR = 2, FUN = function(x) unique(x))
+
+#Find unique values
+# unqs <- lapply(rum_dat, FUN = function(xx) unique(xx))
+# fished_clusts <- unique(rum_dat$tow_clust)
+# fished_clusts[order(fished_clusts)]
+
+# #Make sure that revs and dists have the same dimensions
+# rev_names <- names(rum_dat)[grep("revs", names(rum_dat))]
+# rev_names <- gsub('revs.', "", rev_names)
+
+# rev_keeps <- rev_names[rev_names %in% as.character(fished_clusts)]
+# rev_keeps <- paste0(rev_keeps, collapse = "|")
+# length(grep(rev_keeps, names(rum_dat)))
+
+# rum_dat <- rum_dat[, c(1, 2, grep(rev_keeps, names(rum_dat) ))]
+
+
+
+# as.character(fished_clusts) %in% rev_names
+# dist_names <- names(rum_dat)[grep("dist", names(rum_dat))]
+# dist_names <- gsub('dist.', "", dist_names)
+# the_names <- unique(c(rev_names, dist_names))
+
+# the_names[which(the_names %in% as.character(fished_clusts) == FALSE)]
+
+# the_names[which(the_names %in% as.character(fished_clusts) == FALSE)]
+
+# rm_cols <- the_names[which(the_names %in% as.character(fished_clusts) == FALSE)]
+# rm_cols <- paste(rm_cols, collapse = "|")
+
+#Keep columns that are not in rm_cols
+# keepers <- names(rum_dat)[which(grepl(rm_cols, names(rum_dat)) == FALSE)]
+#keep haul_id_id and tow_clust in there
+
+# rum_dat <- rum_dat[, names(rum_dat)[which(grepl(rm_cols, names(rum_dat)) == FALSE)]]
+ 
+#Check to make sure that all the tow_clusts have values
+# names(rum_dat)[-c(1, 2)]
+# length(unique(rum_dat$tow_clust))
+
+# rum_dat$
+
+ # names(rum_dat)[which(grepl(rm_cols, names(rum_dat)) == FALSE)]
+# as.character(fished_clusts) %in% the_names
+  # fished_clusts <- paste0(as.character(unique(rum_dat$tow_clust)), collapse = "|")
+  # rm_cols <- which(grepl(fished_clusts, names(rum_dat)) == FALSE)
+  # rum_dat <- rum_dat[, -rm_cols[which(rm_cols > 3)]]
+  #Remove columns that have are never fished in
+  # tow_clust_columns <- names(rum_dat)[grep("revs.", names(rum_dat))]
+  # col_values <- as.numeric(gsub("revs.", "", tow_clust_columns))
+  
+  # rm_cols <- as.character(col_values[which(col_values %in% unique(rum_dat$tow_clust) == FALSE)])
+  # rm_cols <- paste0(rm_cols, collapse = "|")
+  # rum_dat <- rum_dat[, -grep(rm_cols, names(rum_dat))]
+
+#factor levels are different somewhere
+# grepl(paste0(as.character(unique(rum_dat$tow_clust)) , collapse = "|"), names(rum_dat) )
+# data_frame(dist = names(rum_dat)[grep("dist", names(rum_dat))], 
+#   revs = names(rum_dat)[grep("revs", names(rum_dat))]) %>% as.data.frame
+# find_zeros <- lapply(rum_dat, FUN = function(xx) unique(xx))
