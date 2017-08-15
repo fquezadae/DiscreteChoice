@@ -40,7 +40,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   ##Filter the data
   dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
     set_year <= max_year, haul_num >= tow_num_range[1], haul_num <= tow_num_range[2])
-
+  if(nrow(dat) == 0) stop("no values")
   #---------------------------------------------------------------
   #Calculate haul revenues
   #Turn NA prices into zeroes
@@ -60,8 +60,8 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust) %>% as.data.frame
 
   #Add in the trip distances
-  dist_hauls <- dist_hauls %>% left_join(trip_dists1[, c('trip_id', "dist")], 
-    by = "trip_id") %>% plyr::rename(c("dist" = "trip_dist"))
+  # dist_hauls <- dist_hauls %>% left_join(trip_dists1[, c('trip_id', "dist")], 
+  #   by = "trip_id") %>% plyr::rename(c("dist" = "trip_dist"))
 
   #---------------------------------------------------------------
   #Filter the data by times
@@ -97,29 +97,82 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   #
   #Calculate distances between each cluster; I know the distances between each port
   #All combinations of clusters
-  clust_combs <- expand.grid(unique(dat$unq_clust), unique(dat$unq_clust))
-  names(clust_combs) <- c('clust1', 'clust2')
+  if(1 %in% tow_num_range){
+    # browser()
+
+    port_combs <- dat %>% ungroup %>% select(dport_desc, unq_clust,
+      d_port_long, d_port_lat, avg_long_clust, avg_lat_clust) %>%
+      distinct(unq_clust, .keep_all = T)
   
-  clust_coords <- dist_hauls %>% distinct(unq_clust, .keep_all = T) %>% 
-    select(unq_clust, avg_long_clust, avg_lat_clust) 
+    port_combs$d_port_long <- deg2rad(port_combs$d_port_long)
+    port_combs$d_port_lat <- deg2rad(port_combs$d_port_lat)
+    port_combs$avg_long_clust <- deg2rad(port_combs$avg_long_clust)
+    port_combs$avg_lat_clust <- deg2rad(port_combs$avg_lat_clust)
+
+    port_combs$btw_clust_dist <- gcd_slc(port_combs$d_port_long, 
+      port_combs$d_port_lat, port_combs$avg_long_clust, 
+      port_combs$avg_lat_clust)
+
+    port_combs$btw_clust_dist <- round(port_combs$btw_clust_dist, digits = 6)
+    port_combs <- port_combs %>% as.data.frame
+    names(port_combs)[2] <- 'alt_clust'
+    # clust_combs <- port_combs
+    # names(clust_combs)[1:2] <- c('dport_desc', 'alt_clust')
+    
+    
+#Different clusters if it's the first tow
+    clust_combs <- expand.grid(unique(dat$unq_clust), unique(dat$unq_clust))
+    names(clust_combs) <- c('tow_clust', 'alt_clust')
+    clust_combs <- clust_combs %>% left_join(port_combs %>% select(alt_clust, btw_clust_dist),
+      by = 'alt_clust')
+
+    # clust_coords <- dist_hauls %>% distinct(unq_clust, .keep_all = T) %>% 
+    #   select(unq_clust, avg_long_clust, avg_lat_clust) 
+    
+    #Add clust1 Values
+    # clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust1' = 'unq_clust'))
+    # names(clust_combs)[3:4] <- c('long_clust1', 'lat_clust1')
+    # clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust2' = 'unq_clust'))
+    # names(clust_combs)[5:6] <- c('long_clust2', 'lat_clust2')
+    # clust_combs$long_clust1 <- deg2rad(clust_combs$long_clust1)
+    # clust_combs$long_clust2 <- deg2rad(clust_combs$long_clust2)
+    # clust_combs$lat_clust1 <- deg2rad(clust_combs$lat_clust1)
+    # clust_combs$lat_clust2 <- deg2rad(clust_combs$lat_clust2)
+    
+    # clust_combs$btw_clust_dist <- gcd_slc(clust_combs$long_clust1, 
+    #   clust_combs$lat_clust1, clust_combs$long_clust2, clust_combs$lat_clust2)
+    
+    # clust_combs <- clust_combs %>% filter(clust1 != clust2)
+    clust_combs$btw_clust_dist <- round(clust_combs$btw_clust_dist, digits = 6)
+    # names(clust_combs)[1:2] <- c('tow_clust', 'alt_clust')
+  } 
   
-  #Add clust1 Values
-  clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust1' = 'unq_clust'))
-  names(clust_combs)[3:4] <- c('long_clust1', 'lat_clust1')
-  clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust2' = 'unq_clust'))
-  names(clust_combs)[5:6] <- c('long_clust2', 'lat_clust2')
-  clust_combs$long_clust1 <- deg2rad(clust_combs$long_clust1)
-  clust_combs$long_clust2 <- deg2rad(clust_combs$long_clust2)
-  clust_combs$lat_clust1 <- deg2rad(clust_combs$lat_clust1)
-  clust_combs$lat_clust2 <- deg2rad(clust_combs$lat_clust2)
+  #If not looking at the first tows, calculate the distance between different clusters at sea
+  if(1 %in% tow_num_range == FALSE){
+    clust_combs <- expand.grid(unique(dat$unq_clust), unique(dat$unq_clust))
+    names(clust_combs) <- c('clust1', 'clust2')
   
-  clust_combs$btw_clust_dist <- gcd_slc(clust_combs$long_clust1, 
-    clust_combs$lat_clust1, clust_combs$long_clust2, clust_combs$lat_clust2)
-  
-  # clust_combs <- clust_combs %>% filter(clust1 != clust2)
-  clust_combs$btw_clust_dist <- round(clust_combs$btw_clust_dist, digits = 6)
-  names(clust_combs)[1:2] <- c('tow_clust', 'alt_clust')
-  
+    clust_coords <- dist_hauls %>% distinct(unq_clust, .keep_all = T) %>% 
+      select(unq_clust, avg_long_clust, avg_lat_clust) 
+    
+    #Add clust1 Values
+    clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust1' = 'unq_clust'))
+    names(clust_combs)[3:4] <- c('long_clust1', 'lat_clust1')
+    clust_combs <- clust_combs %>% left_join(clust_coords, by = c('clust2' = 'unq_clust'))
+    names(clust_combs)[5:6] <- c('long_clust2', 'lat_clust2')
+    clust_combs$long_clust1 <- deg2rad(clust_combs$long_clust1)
+    clust_combs$long_clust2 <- deg2rad(clust_combs$long_clust2)
+    clust_combs$lat_clust1 <- deg2rad(clust_combs$lat_clust1)
+    clust_combs$lat_clust2 <- deg2rad(clust_combs$lat_clust2)
+    
+    clust_combs$btw_clust_dist <- gcd_slc(clust_combs$long_clust1, 
+      clust_combs$lat_clust1, clust_combs$long_clust2, clust_combs$lat_clust2)
+    
+    # clust_combs <- clust_combs %>% filter(clust1 != clust2)
+    clust_combs$btw_clust_dist <- round(clust_combs$btw_clust_dist, digits = 6)
+    names(clust_combs)[1:2] <- c('tow_clust', 'alt_clust')
+  }
+
   #---------------------------------------------------------------------------------
   #Add the rum_vals into dist_hauls
   dist_hauls1 <- dist_hauls %>% full_join(rum_vals, by = 'date_id') %>%
@@ -165,6 +218,23 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   #Distances, keep only values that are have a tow_clust value
   dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
     value.var = "btw_clust_dist") 
+
+  #Fill in the dists columns if looking at first tows
+  if(1 %in% tow_num_range){
+    temp_dists <- dists[, 3:ncol(dists)]
+    temp_dists[is.na(temp_dists)] <- 0
+    temp_dists1 <- lapply(temp_dists, FUN = function(xx){
+      out <- rep(max(xx), length(xx))
+      return(out)
+    })
+  
+    for(zz in 1:length(temp_dists1)){
+      temp_dists[, zz] <- temp_dists1[[zz]]
+    }
+    
+    dists[, 3:ncol(dists)] <- temp_dists
+  }
+
   dists_keeps <- c(1, 2, which(names(dists) %in% as.character(unique(dists$tow_clust))))
   dists <- dists[, dists_keeps]
   names(dists)[3:ncol(dists)] <- paste("dist", names(dists)[3:ncol(dists)], sep = ".")
