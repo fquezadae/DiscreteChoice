@@ -14,9 +14,9 @@
 
 #' @export
 
-format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the_port = "ASTORIA / WARRENTON",
+format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1, tow_num_range = c(1, 1),
-  ndays = 60, quantile_cut = NA){
+  ndays = 60){
 
   ##Filter the data
   dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
@@ -103,6 +103,14 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     names(clust_combs) <- c('tow_clust', 'alt_clust')
     clust_combs <- clust_combs %>% left_join(port_combs %>% select(alt_clust, haul_id,
       btw_clust_dist, set_dist), by = 'alt_clust')    
+
+    #Add the rum_vals into dist_hauls
+    dist_hauls1 <- dist_hauls %>% full_join(rum_vals, by = 'date_id') %>%
+      plyr::rename(c('unq_clust.x' = "tow_clust",
+      "unq_clust.y" = "alt_clust"))
+  
+    #Expand so that each haul has all alternative clusters
+    dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
   } 
   
   #If not looking at the first tows, calculate the distance between different clusters at sea
@@ -129,17 +137,20 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     # clust_combs <- clust_combs %>% filter(clust1 != clust2)
     clust_combs$btw_clust_dist <- round(clust_combs$btw_clust_dist, digits = 6)
     names(clust_combs)[1:2] <- c('tow_clust', 'alt_clust')
+
+    #Add the rum_vals into dist_hauls
+    dist_hauls1 <- dist_hauls %>% full_join(rum_vals, by = 'date_id') %>%
+      plyr::rename(c('unq_clust.x' = "tow_clust",
+      "unq_clust.y" = "alt_clust"))
+  
+    #Expand so that each haul has all alternative clusters
+    dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
   }
 
   #---------------------------------------------------------------------------------
-  #Add the rum_vals into dist_hauls
-  dist_hauls1 <- dist_hauls %>% full_join(rum_vals, by = 'date_id') %>%
-    plyr::rename(c('unq_clust.x' = "tow_clust",
-    "unq_clust.y" = "alt_clust"))
   
-  #Expand so that each haul has all alternative clusters
-  dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
 
+  #---------------------------------------------------------------------------------
   # If dealing with the first tow only
   if(1 %in% tow_num_range){
 
@@ -193,7 +204,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
 
   #--------------------------------------------------
   #IF dealing with second + tows
-  if(1 %in% tow_num_range == FALSE){    
+  if(1 %in% tow_num_range == FALSE){        
     dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
       right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
     dist_hauls1 <- dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust)
@@ -218,17 +229,18 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     dist_hauls1 <- dist_hauls1 %>% left_join(hh, by = 'haul_id')
     dist_hauls1 <- dist_hauls1 %>% as.data.frame
   
+    # dist_hauls1 <- dist_hauls1 %>% filter(is.na(tow_clust) == FALSE)
     #Filter so that dist_hauls1 is distinct
-    dist_hauls1 <- dist_hauls1 %>% distinct(tow_clust, alt_clust, .keep_all = T)
-    # row.names(dist_hauls2) <- paste(dist_hauls2$haul_id_id, 
-    #   dist_hauls2$alt_clust, sep = '.')
+    # dist_hauls2 <- dist_hauls1 %>% distinct(tow_clust, alt_clust, .keep_all = T)
   
     row.names(dist_hauls1) <- paste(dist_hauls1$haul_id_id, 
       dist_hauls1$alt_clust, sep = '.')
   
     #Filter to only look at one year
     hauls_max_year <- dist_hauls1 %>% filter(set_year == max_year) %>% distinct(haul_id)
+    
     hauls_max_year <- dist_hauls1 %>% filter(haul_id %in% hauls_max_year$haul_id)
+# hauls_max_year <- hauls_max_year %>% filter(is.na(tow_clust) == FALSE)
   
     dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
       value.var = "btw_clust_dist") 
@@ -267,8 +279,6 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   #Join the two data sets
   rum_dat <- dists %>% left_join(revs, by = c('haul_id_id', 'tow_clust'))
   rum_dat <- rum_dat %>% filter(is.na(tow_clust) == FALSE)
-
-
 
   #Return the data  
   rum_dat_out <- mlogit.data(rum_dat, shape = 'wide', choice = "tow_clust",
