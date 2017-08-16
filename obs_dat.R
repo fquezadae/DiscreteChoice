@@ -20,6 +20,7 @@ library(lubridate)
 library(GGally)
 library(nnet)
 library(tidyr)
+library(mlogit)
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
@@ -52,6 +53,116 @@ load("//udrive.uw.edu//udrive//quotas.Rdata")
 load('output/quotas.Rdata')
 quotas$tac <- quotas$tac_prop * 100000
 filt_clusts <- filt_clusts %>% ungroup
+
+source('R/dist_funcs.R')
+
+#---------------------------------------------------------------------------------
+#RUM Data for all the ports
+the_ports <- unique(filt_clusts$dport_desc)
+the_port = "MORRO BAY"
+
+#Try adding in dummy variables
+
+mb_firsts <- format_rum_data(the_port = "MORRO BAY", 
+  min_year = 2012, max_year = 2013)
+mb_seconds <- format_rum_data(the_port = "MORRO BAY", 
+  min_year = 2012, max_year = 2013, tow_num_range = c(2, 30))
+
+
+
+xx <- rum_probs(rc = 1, port = "MORRO BAY", years = c(2012, 2013), 
+  fc = filt_clusts, ndays1 = 60)
+
+
+#Currently estimate a dummy 
+
+
+mb_firsts$dummy$di
+head(mb_firsts)
+
+res1 <- mlogit(tow_clust ~ revs + dist | dummy - 1, mb_firsts)
+model.matrix(res1) %>% head
+
+res2 <- mlogit(tow_clust ~ revs + dist - 1, mb_firsts)
+AIC(res2)
+
+res1 <- mlogit(tow_clust ~ revs | dist - 1, mb_firsts)
+res1 <- mlogit(tow_clust ~ revs | dist - 1, mb_firsts)
+
+res2 <- mlogit(tow_clust ~ dist + revs - 1, mb_firsts)
+
+AIC(res1)
+AIC(res2)
+
+str(mb_firsts)
+
+
+#See how the risk coefficient affects numbers
+ast_firsts <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
+  min_year = 2012, max_year = 2013, quantile_cut = 2)
+ast_firsts_risk5 <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
+  min_year = 2012, max_year = 2013, quantile_cut = 2, risk_coefficient = 5)
+
+ast_res <- mlogit(tow_clust ~ dist + revs - 1 , ast_firsts)
+ast_res_risk5 <- mlogit(tow_clust ~ dist + revs - 1 , ast_firsts_risk5)
+coef(ast_res_risk10)
+predict(ast_res)
+predict(ast_res_risk10)
+
+ast_firsts %>% ggplot(aes(x = alt, y = revs)) + geom_point()
+
+avg_revs <- ast_firsts %>% group_by(alt) %>% summarize(avg_revs = mean(revs)) 
+cut_point <- quantile(avg_revs$avg_revs)[2]
+cut_alts <- avg_revs %>% filter(avg_revs >= cut_point) %>% select(alt)
+str(ast_firsts_cut)
+ast_firsts_cut <- ast_firsts %>% filter(alt %in% cut_alts$alt)
+
+%>% 
+  arrange(desc(avg_revs)) %>% ggplot() +
+  geom_histogram(aes(avg_revs), bins = 40) + xlab("average rev. in each cluster")
+
+
+
+#Remove some of the options to scope the choice set a little better
+
+
+
+#Estimate with only one slope
+xx <- model.matrix(tow_clust ~ revs + dist , data = ast_firsts)
+ast_firsts_res <- mlogit(tow_clust ~ revs, data = ast_firsts)
+
+ast_firsts %>% ggplot() + geom_point(aes(x = dist, y = revs))
+
+ast_seconds <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
+  min_year = 2011, max_year = 2012,
+  tow_num_range = c(2, 30))
+mb_seconds_res <- mlogit(tow_clust ~ dist + revs, mb_seconds)
+
+#Only the first tows
+tp <- vector('list', length = length(the_ports))
+for(ii in 1:length(the_ports)){
+  temp_port <- the_ports[ii]
+  tp[[ii]] <- format_rum_data(the_port = temp_port, max_year = 2012)
+  print(temp_port)
+}
+
+
+cc <- format_rum_data(the_port = the_ports[5], max_year = 2012)
+
+
+cc_res <- mlogit(tow_clust ~ dist + revs, cc)
+apply(cc_res$probabilities, MAR = 2, mean)
+probabilities(cc_res)
+
+cc2 <- format_rum_data(the_port = the_ports[1], max_year = 2012, tow_num_range = c(2, 30))
+
+
+rum_data_first_tows <- mclapply(the_ports, FUN = function(xx){
+  tt <- format_rum_data(the_port = xx)
+  return(tt)
+}, mc.cores = 6)
+
+
 #---------------------------------------------------------------------------------
 #Proportion of hauls that catch each species
 filt_clusts %>% filter(type == 'weaks') %>% ggplot() + 
@@ -67,7 +178,7 @@ filt_clusts %>% filter(type == 'weaks') %>% ggplot() +
 
 #---------------------------------------------------------------------------------
 #Try fish_trip
-
+#Might have to play with risk_coefficient shit in 
 
 xx <- fish_trip(input = filt_clusts, ntows = 10, start_vess = "618440", seed = 250, 
   scope = 1, quotas = quotas, scale = 'scope', the_port = "ASTORIA / WARRENTON",
@@ -301,6 +412,12 @@ ggplot(obs_deltas, aes(x = prop_zero, y = skew)) + geom_point() + facet_wrap(~ y
 #Should look like this, attached this file in the email
 
 load('output/survey_deltas.Rdata')
+
+
+
+
+
+
 
 
 
