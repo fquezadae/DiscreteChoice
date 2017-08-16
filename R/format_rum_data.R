@@ -140,7 +140,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   #Expand so that each haul has all alternative clusters
   dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
 
-  #If dealing with the first tow only
+  # If dealing with the first tow only
   if(1 %in% tow_num_range){
 
     #Combine dist_hauls1 and clust_combs
@@ -161,7 +161,7 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
     
     #Replace the btw_clust_dist values if alt_clust and tow_clust are the same
     same_inds <- which(dh2$tow_clust == dh2$alt_clust)
-    dh2[same_inds, "btw_clust_dist"] <- dh2[same_inds, "set_dist"]
+    dh2[same_inds, "btw_clust_dist"] <- dh2[same_inds, "btw_clust_dist"]
      
     #Add column indicating if the cluster was fished or not 
     dh2$fished <- FALSE
@@ -194,44 +194,44 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   #--------------------------------------------------
   #IF dealing with second + tows
   if(1 %in% tow_num_range == FALSE){    
-  dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
-    right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
+    dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
+      right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
     dist_hauls1 <- dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust)
-
-  #Re add the btw_clust_distances
-  dist_hauls1$btw_clust_dist <- NULL
-  dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
-    right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
-
-  #Set distances in the same cluster to 0
-  dist_hauls1[which(dist_hauls1$tow_clust == dist_hauls1$alt_clust), 
-    "btw_clust_dist"] <- 0
- 
-  #Add column indicating if the cluster was fished or not 
-  dist_hauls1$fished <- FALSE
-  dist_hauls1[which(dist_hauls1$tow_clust == dist_hauls1$alt_clust), 
-    "fished"] <- TRUE
   
-  #Add in integer value for haul_id
-  hh <- data_frame(haul_id = unique(dist_hauls1$haul_id), 
-    haul_id_id = 1:length(unique(dist_hauls1$haul_id)))
-  dist_hauls1 <- dist_hauls1 %>% left_join(hh, by = 'haul_id')
-  dist_hauls1 <- dist_hauls1 %>% as.data.frame
-
-  #Filter so that dist_hauls1 is distinct
-  dist_hauls1 <- dist_hauls1 %>% distinct(tow_clust, alt_clust, .keep_all = T)
-  # row.names(dist_hauls2) <- paste(dist_hauls2$haul_id_id, 
-  #   dist_hauls2$alt_clust, sep = '.')
-
-  row.names(dist_hauls1) <- paste(dist_hauls1$haul_id_id, 
-    dist_hauls1$alt_clust, sep = '.')
-
-  #Filter to only look at one year
-  hauls_max_year <- dist_hauls1 %>% filter(set_year == max_year) %>% distinct(haul_id)
-  hauls_max_year <- dist_hauls1 %>% filter(haul_id %in% hauls_max_year$haul_id)
-
-  dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
-    value.var = "btw_clust_dist") 
+    #Re add the btw_clust_distances
+    dist_hauls1$btw_clust_dist <- NULL
+    dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
+      right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
+  
+    #Set distances in the same cluster to 0
+    dist_hauls1[which(dist_hauls1$tow_clust == dist_hauls1$alt_clust), 
+      "btw_clust_dist"] <- 0
+   
+    #Add column indicating if the cluster was fished or not 
+    dist_hauls1$fished <- FALSE
+    dist_hauls1[which(dist_hauls1$tow_clust == dist_hauls1$alt_clust), 
+      "fished"] <- TRUE
+    
+    #Add in integer value for haul_id
+    hh <- data_frame(haul_id = unique(dist_hauls1$haul_id), 
+      haul_id_id = 1:length(unique(dist_hauls1$haul_id)))
+    dist_hauls1 <- dist_hauls1 %>% left_join(hh, by = 'haul_id')
+    dist_hauls1 <- dist_hauls1 %>% as.data.frame
+  
+    #Filter so that dist_hauls1 is distinct
+    dist_hauls1 <- dist_hauls1 %>% distinct(tow_clust, alt_clust, .keep_all = T)
+    # row.names(dist_hauls2) <- paste(dist_hauls2$haul_id_id, 
+    #   dist_hauls2$alt_clust, sep = '.')
+  
+    row.names(dist_hauls1) <- paste(dist_hauls1$haul_id_id, 
+      dist_hauls1$alt_clust, sep = '.')
+  
+    #Filter to only look at one year
+    hauls_max_year <- dist_hauls1 %>% filter(set_year == max_year) %>% distinct(haul_id)
+    hauls_max_year <- dist_hauls1 %>% filter(haul_id %in% hauls_max_year$haul_id)
+  
+    dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
+      value.var = "btw_clust_dist") 
   }
 
   #Fill in the dists columns if looking at first tows
@@ -268,86 +268,18 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   rum_dat <- dists %>% left_join(revs, by = c('haul_id_id', 'tow_clust'))
   rum_dat <- rum_dat %>% filter(is.na(tow_clust) == FALSE)
 
-  #Fill NA values with zeroes in rum_2012
-#There should be no zeroes for the distances
-# sum(is.na(rum_dat[, 1:86]))
-# grep('rev', names(rum_dat))
 
-  rum_dat[is.na(rum_dat)] <- 0
-
-
-#---------------------------------------------------------------------------------
-#Maybe another option
-# Looking at the revs only, find quantiles of things to narrow the choice set
-###
-#Add in quantile cut
-# the_revs <- rum_dat[, c(1, 2, grep("revs", names(rum_dat)))]
-# the_revs <- melt(the_revs, id.vars = c("haul_id_id", "tow_clust"))
-# clust_avg_revs <- the_revs %>% group_by(variable) %>% summarize(avg_value = mean(value),
-#   prop_zero = length(which(value == 0)) / length(value))
-# cut_point <- quantile(clust_avg_revs$avg_value)[quantile_cut]
-
-# to_cut_clusts <- clust_avg_revs %>% filter(avg_value <= cut_point)
-
-# cut_clusts <- gsub("revs", "" , as.character(to_cut_clusts$variable))
-# cut_clusts <- data_frame(chr = cut_clusts, num = as.numeric(gsub("\\.", "", cut_clusts))) %>%
-#   as.data.frame
-
-# #Remove the tow_clusts
-# rum_dat_cut <- rum_dat[-which(rum_dat$tow_clust %in% cut_clusts$num), ]
-# rdc_names <- names(rum_dat_cut)[c(-1, -2)]
-
-# rdc_names_ind <- which(as.numeric(ldply(strsplit(rdc_names, "\\."))$V2 ) %in% cut_clusts$num)
-
-# rum_dat_cut <- rum_dat_cut[, c("haul_id_id", "tow_clust", rdc_names[-rdc_names_ind] )]
-
-# #TRy different model configurations
-
-# rdc <- mlogit.data(rum_dat_cut, shape = 'wide', choice = "tow_clust",
-#     varying = 3:ncol(rum_dat_cut))
-
-# rdc_res <- mlogit(tow_clust ~ dist + revs - 0, rdc)
-# rdc_res2 <- mlogit(tow_clust ~ dist + revs, rdc)
-
-# rdc %>% filter(tow_clust == TRUE) %>% ggplot() + geom_point(aes(x = dist, y = revs)) + 
-#   facet_wrap(~ alt)
-
-# AIC(rdc_res)
-# AIC(rdc_res2)
-#---------------------------------------------------------------------------------
-#Try formatinng the data with alternatives
-# rdo <- mlogit.data(rum_dat, shape = 'wide', choice = 'tow_clust', 
-#   alt.levels = unique(c(1268, 1273, 1276, 1281, 1285)), sep = ".",
-#   varying = 3:12, id = 'haul_id_id')
-# mlogit(tow_clust ~ revs + dist | - 1, rdo)
 
   #Return the data  
   rum_dat_out <- mlogit.data(rum_dat, shape = 'wide', choice = "tow_clust",
     varying = 3:ncol(rum_dat))
-# browser()
-# res_revs1 <- mlogit(tow_clust ~ revs, rum_dat_out)
-# res_revs2 <- mlogit(tow_clust ~ revs + dist - 1, rum_dat_out)
-# res_revs4 <- mlogit(tow_clust ~ revs - 1, rum_dat_out)
+  
+  #add dummy variable for missing values
+  rum_dat_out$dummy <- 1
+  rum_dat_out[is.na(rum_dat_out$revs), 'dummy'] <- 0
 
-
-# predict(res_revs4)
-# AIC(res_revs1)
-# AIC(res_revs2)
-# AIC(res_revs3)
-# AIC(res_revs4)
-
-
-# coef(res_revs)
-# coef(res_revs2)
-# predict(res_revs2)
-
-# res1 <- mlogit(tow_clust ~ dist + revs + 0, rum_dat_out)
-# res1 <- mlogit(tow_clust ~ dist + revs + 0, rum_dat_out)
-# round(predict(res_revs) - predict(res1), digits = 3)
-# predict(res1)
-
-# coef(res1)
-# # rum_dat_out
+  #Fill in NAs with zeroes
+  rum_dat_out[is.na(rum_dat_out)] <- 0
 
   return(rum_dat_out)
 }
@@ -403,3 +335,80 @@ format_rum_data <- function(data_in = filt_clusts, trip_dists1 = trip_dists, the
   # }
 
   #Takes a while
+#
+#Add dummy variable
+# res_revs1 <- mlogit(tow_clust ~ revs, rum_dat_out)
+# res_revs2 <- mlogit(tow_clust ~ revs + dist - 1, rum_dat_out)
+# res_revs4 <- mlogit(tow_clust ~ revs - 1, rum_dat_out)
+
+
+# predict(res_revs4)
+# AIC(res_revs1)
+# AIC(res_revs2)
+# AIC(res_revs3)
+# AIC(res_revs4)
+
+
+# coef(res_revs)
+# coef(res_revs2)
+# predict(res_revs2)
+
+# res1 <- mlogit(tow_clust ~ dist + revs + 0, rum_dat_out)
+# res1 <- mlogit(tow_clust ~ dist + revs + 0, rum_dat_out)
+# round(predict(res_revs) - predict(res1), digits = 3)
+# predict(res1)
+
+# coef(res1)
+# # rum_dat_out
+  #Fill NA values with zeroes in rum_2012
+#There should be no zeroes for the distances
+# sum(is.na(rum_dat[, 1:86]))
+# grep('rev', names(rum_dat))
+
+  # rum_dat[is.na(rum_dat)] <- 0
+
+
+#---------------------------------------------------------------------------------
+#Maybe another option
+# Looking at the revs only, find quantiles of things to narrow the choice set
+###
+#Add in quantile cut
+# the_revs <- rum_dat[, c(1, 2, grep("revs", names(rum_dat)))]
+# the_revs <- melt(the_revs, id.vars = c("haul_id_id", "tow_clust"))
+# clust_avg_revs <- the_revs %>% group_by(variable) %>% summarize(avg_value = mean(value),
+#   prop_zero = length(which(value == 0)) / length(value))
+# cut_point <- quantile(clust_avg_revs$avg_value)[quantile_cut]
+
+# to_cut_clusts <- clust_avg_revs %>% filter(avg_value <= cut_point)
+
+# cut_clusts <- gsub("revs", "" , as.character(to_cut_clusts$variable))
+# cut_clusts <- data_frame(chr = cut_clusts, num = as.numeric(gsub("\\.", "", cut_clusts))) %>%
+#   as.data.frame
+
+# #Remove the tow_clusts
+# rum_dat_cut <- rum_dat[-which(rum_dat$tow_clust %in% cut_clusts$num), ]
+# rdc_names <- names(rum_dat_cut)[c(-1, -2)]
+
+# rdc_names_ind <- which(as.numeric(ldply(strsplit(rdc_names, "\\."))$V2 ) %in% cut_clusts$num)
+
+# rum_dat_cut <- rum_dat_cut[, c("haul_id_id", "tow_clust", rdc_names[-rdc_names_ind] )]
+
+# #TRy different model configurations
+
+# rdc <- mlogit.data(rum_dat_cut, shape = 'wide', choice = "tow_clust",
+#     varying = 3:ncol(rum_dat_cut))
+
+# rdc_res <- mlogit(tow_clust ~ dist + revs - 0, rdc)
+# rdc_res2 <- mlogit(tow_clust ~ dist + revs, rdc)
+
+# rdc %>% filter(tow_clust == TRUE) %>% ggplot() + geom_point(aes(x = dist, y = revs)) + 
+#   facet_wrap(~ alt)
+
+# AIC(rdc_res)
+# AIC(rdc_res2)
+#---------------------------------------------------------------------------------
+#Try formatinng the data with alternatives
+# rdo <- mlogit.data(rum_dat, shape = 'wide', choice = 'tow_clust', 
+#   alt.levels = unique(c(1268, 1273, 1276, 1281, 1285)), sep = ".",
+#   varying = 3:12, id = 'haul_id_id')
+# mlogit(tow_clust ~ revs + dist | - 1, rdo)
