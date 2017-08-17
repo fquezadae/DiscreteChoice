@@ -2,23 +2,22 @@
 % Please edit documentation in R/one_trip.R
 \name{one_trip}
 \alias{one_trip}
-\title{Sample hauls for one trip
-Function to sample hauls for one trip}
+\title{Function to conduct one trip
+One Trip Function}
 \usage{
-one_trip(filt_data, cluster_value, num_hauls, unq_bin_scope = 0, quotas)
+one_trip(p1s, p2s, data_of_interest = filt_clusts, nhauls)
 }
 \arguments{
-\item{filt_data}{Filtered data input into function; This data should not be vessel-specific}
+\item{p1s}{Probabilities of fishing in clusters for first tow. From RUM}
 
-\item{cluster_value}{Cluster specified to fish in}
+\item{p2s}{Probabilities of fishing in clusters not-first tows. From RUM}
 
-\item{num_hauls}{Number of hauls to sample in each cluster (or rather each clust_bin)}
+\item{data_of_interest}{Data used to sample tows from. Defaults to filt_clusts but could 
+be data specific to a vessel}
 
-\item{unq_bin_scope}{Scope of bins to sample}
-
-\item{quotas}{Quotas to  track}
+\item{nhauls}{Number of hauls on specific trip. Can be specified in vess_vals$hauls_per_trip[1]}
 }
 \description{
-Sample hauls for one trip
-Function to sample hauls for one trip
+Function to conduct one trip
+One Trip Function
 }
