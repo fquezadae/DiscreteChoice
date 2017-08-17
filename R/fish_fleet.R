@@ -7,7 +7,8 @@
 #' @export
 
 
-fish_fleet <- function(fleet_chars = vess_vals, rum_res = the_probs){  
+fish_fleet <- function(fleet_chars = vess_vals, rum_res = the_probs, seed){  
+  set.seed(seed)
   drvid_trips <- vector('list', length = nrow(vess_vals))
 
   #Sample the averages for each vessel
@@ -22,7 +23,7 @@ fish_fleet <- function(fleet_chars = vess_vals, rum_res = the_probs){
     all_trips <- list_to_df(all_trips, ind_name = '', col_ind_name = 'trip_id')
     
     drvid_trips[[ii]] <- all_trips
-    print(ii)
+    # print(ii)
   }
 
   drvid_trips <- list_to_df(drvid_trips, ind_name = "", col_ind_name = "drvid_id")
