@@ -275,8 +275,6 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     dists[, 3:ncol(dists)] <- temp_dists
   }
 
-browser()
-
 # names(dists) %in% as.character(unique(dists$tow_clust))
   dists_keeps <- c(1, 2, which(names(dists) %in% as.character(unique(dists$tow_clust))))
   dists <- dists[, dists_keeps]
