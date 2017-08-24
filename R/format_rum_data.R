@@ -68,7 +68,7 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   
   #Add in the periods
   rum_vals <- ldply(rum_vals)
-
+# unique(dist_hauls$unq_clust)[order(unique(dist_hauls$unq_clust))]
   #---------------------------------------------------------------------------------
   #Distances for cluster combinations
   
@@ -111,6 +111,8 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   
     #Expand so that each haul has all alternative clusters
     dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
+
+#Fill in tow_clust    
   } 
   
   #If not looking at the first tows, calculate the distance between different clusters at sea
@@ -148,8 +150,16 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   }
 
   #---------------------------------------------------------------------------------
-  
+  #Add in dummy30 variables
+  dummy_join <- data_in %>% select(haul_id, unq_clust, set_date, dummy_30)
+  dummy_join <- plyr::rename(dummy_join, c('unq_clust' = 'tow_clust'))
+  dummy_join <- dummy_join %>% distinct()
 
+  dist_hauls1 <- dist_hauls1 %>% left_join(dummy_join, 
+    by = c('haul_id', 'tow_clust', 'set_date'))
+
+  # dist_hauls1 %>% group_by(haul_id, alt_clust) %>% mutate(nvals = length(unique(dummy_30)),
+  #   has1 = if_else(1 %in% dummy_30, 1, 0)) %>% select(has1)
   #---------------------------------------------------------------------------------
   # If dealing with the first tow only
   if(1 %in% tow_num_range){
@@ -159,8 +169,10 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     dh2 <- clust_combs %>% 
       right_join(dist_hauls1, by = c('tow_clust', "alt_clust", 'haul_id'))
     dh2 <- dh2 %>% group_by(haul_id) %>% fill(tow_clust)
-    dh2 <- dh2 %>% as.data.frame
+    dh2 <- dh2 %>% group_by(haul_id) %>% fill(tow_clust, .direction = 'up')
     
+    dh2 <- dh2 %>% as.data.frame
+# dh2 %>% filter(alt_clust == 437) %>% head
     dh2$btw_clust_dist <- NULL
     
     #Re add the btw_clust_dists for all the combinations
@@ -169,11 +181,11 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     
     #Reduce the dimensions of this
     dh2 <- dh2 %>% distinct(haul_id, tow_clust, alt_clust, .keep_all = T)
-    
+
     #Replace the btw_clust_dist values if alt_clust and tow_clust are the same
     same_inds <- which(dh2$tow_clust == dh2$alt_clust)
-    dh2[same_inds, "btw_clust_dist"] <- dh2[same_inds, "btw_clust_dist"]
-     
+    dh2[same_inds, "btw_clust_dist"] <- dh2[same_inds, "set_dist"]
+    # dh2[same_inds, ] %>% head 
     #Add column indicating if the cluster was fished or not 
     dh2$fished <- FALSE
     dh2[which(dh2$tow_clust == dh2$alt_clust), 
@@ -195,9 +207,10 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     #Filter to only look at one year
     hauls_max_year <- dh2 %>% filter(set_year == max_year) %>% distinct(haul_id)
     hauls_max_year <- dh2 %>% filter(haul_id %in% hauls_max_year$haul_id)
-    
+
     dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
         value.var = "btw_clust_dist") 
+
     dists <- dists %>% filter(is.na(tow_clust) == FALSE)
 
   }
@@ -207,7 +220,8 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   if(1 %in% tow_num_range == FALSE){        
     dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
       right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
-    dist_hauls1 <- dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust)
+    
+    dist_hauls1 <- suppressMessages(dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust))
   
     #Re add the btw_clust_distances
     dist_hauls1$btw_clust_dist <- NULL
@@ -240,7 +254,6 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     hauls_max_year <- dist_hauls1 %>% filter(set_year == max_year) %>% distinct(haul_id)
     
     hauls_max_year <- dist_hauls1 %>% filter(haul_id %in% hauls_max_year$haul_id)
-# hauls_max_year <- hauls_max_year %>% filter(is.na(tow_clust) == FALSE)
   
     dists <- hauls_max_year %>% dcast(haul_id_id + tow_clust ~ alt_clust, 
       value.var = "btw_clust_dist") 
@@ -262,6 +275,8 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     dists[, 3:ncol(dists)] <- temp_dists
   }
 
+browser()
+
 # names(dists) %in% as.character(unique(dists$tow_clust))
   dists_keeps <- c(1, 2, which(names(dists) %in% as.character(unique(dists$tow_clust))))
   dists <- dists[, dists_keeps]
@@ -276,20 +291,40 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   names(revs)[3:ncol(revs)] <- paste("revs", names(revs)[3:ncol(revs)], sep = ".")
   revs <- revs %>% filter(is.na(tow_clust) == FALSE)
   #---------------------------------------------------------------------------------
+# browser()  
   #Join the two data sets
   rum_dat <- dists %>% left_join(revs, by = c('haul_id_id', 'tow_clust'))
   rum_dat <- rum_dat %>% filter(is.na(tow_clust) == FALSE)
 
   #Return the data  
-  rum_dat_out <- mlogit.data(rum_dat, shape = 'wide', choice = "tow_clust",
-    varying = 3:ncol(rum_dat))
-  
-  #add dummy variable for missing values
-  rum_dat_out$dummy <- 1
-  rum_dat_out[is.na(rum_dat_out$revs), 'dummy'] <- 0
+  #Order the data
 
+  #Make sure the tow_clusts are ordered
+  rum_dat_out <- mlogit.data(rum_dat, shape = 'wide', choice = "tow_clust",
+    varying = 3:ncol(rum_dat), chid.var = "haul_id_id", 
+    alt.levels =  unique(rum_dat$tow_clust)[order(unique(rum_dat$tow_clust))])
+ 
+  #Add in the dummy variable for 30
+  #add the dummy into the rum_dat_out
+  d30 <- hauls_max_year %>% group_by(haul_id_id, alt_clust) %>% 
+    mutate(has1 = if_else(1 %in% dummy_30, 1, 0)) %>% select(has1) 
+  names(d30)[2] <- "alt"
+  names(d30)[3] <- 'dummy_prev30'
+
+  rdo1 <- rum_dat_out %>% left_join(d30, by = c('haul_id_id', 'alt'))
+  rum_dat_out$dummy_prev30 <- rdo1$dummy_prev30
+  
+  #Add in dummy variable for missing values
+  rum_dat_out$dummy_missing <- 0
+  rum_dat_out[is.na(rum_dat_out$revs), 'dummy_missing'] <- 1
+  
   #Fill in NAs with zeroes
   rum_dat_out[is.na(rum_dat_out)] <- 0
+
+  #Add in the haul_ids
+  rdo2 <- rum_dat_out %>% left_join(hh, by = 'haul_id_id')
+
+  rum_dat_out$haul_id <- rdo2$haul_id
 
   return(rum_dat_out)
 }
@@ -422,3 +457,29 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
 #   alt.levels = unique(c(1268, 1273, 1276, 1281, 1285)), sep = ".",
 #   varying = 3:12, id = 'haul_id_id')
 # mlogit(tow_clust ~ revs + dist | - 1, rdo)
+
+#Figure out way to remove the 0 values
+
+# mlogit(tow_clust ~ revs + dummy_miss + dummy_prev30 | dist - 1 , rum_dat_out)
+
+# rdo_res <- mlogit(tow_clust ~  dist + revs - 1, rum_dat_out, alt.var = 'alt',
+#   shape = 'long', heterosc = TRUE, method = "nr", tol = 10, chid.var = "haul_id_id")
+# res2 <- mlogit(tow_clust ~ 1 |  dist + revs + dummy - 1, data = rum_dat_out)
+
+# dim(rdo1)
+# dim(rum_dat_out)
+
+# unique(rdo1$dummy_prev30)
+# row.names(rdo1) <- paste(rdo1$chid, rdo1$alt, sep = '.')
+# hauls_max_year %>% filter(dummy_30 == 0) %>% head
+
+# d30 <- hauls_max_year %>% select(haul_id_id, tow_clust, dummy_30)
+# d30 %>% filter(is.na(tow_clust) == FALSE)
+# d30 %>% distinct(haul_id_id, tow_clust)
+# distinct(d30)
+
+# rdo1 <- rum_dat_out %>% left_join()
+
+  #add dummy variable for missing values
+  
+#Add in a dummy if the cluster was fished in the 30 day period prior in the previous year
