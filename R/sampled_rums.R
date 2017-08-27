@@ -1,4 +1,3 @@
-
 #' Format RUM data base on resampled tows
 
 #' Function calls mlogit
@@ -12,6 +11,7 @@
 #' @param ndays Number of previous days data to use in revenue expectations
 #' @param focus_year Year to focus on for the models
 #' @param nhauls_sampled Number of hauls to sample from the full data set
+#' @param seed Seed for sampling tows
 
 #' @export
 
@@ -22,7 +22,7 @@
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
-  ndays = 60, focus_year = 2012, nhauls_sampled = 50){
+  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300){
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
@@ -62,7 +62,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   # dist_hauls %>% filter(set_year == 2011) %>% ggplot() + geom_histogram(aes(x = haul_net_revenue)) + 
   #   facet_wrap(~ unq_clust,) + geom_vline(xintercept = 0)
   
-  set.seed(300)
+  set.seed(seed)
   
   #For each tow in the focus year, sample other tows
   #Hauls in focus year
@@ -126,7 +126,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     
     return(the_samples)
   })
-  
   
   sampled_hauls <- ldply(sampled_hauls)
   
@@ -208,7 +207,10 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #-----------------------------------------------------------------------------
   #Fit mlogit models returning the coefficients, the models, and the data going into the 
   # models
-  
+
+  #Filter out tows with missing values for distance
+  rdo <- rdo %>% filter(is.na(distance) == FALSE)
+
   #Split first tows and later tows
   tows1 <- rdo %>% filter(fished == TRUE, haul_num == 1) %>% select(fished_haul)
   first_tows <- rdo %>% filter(fished_haul %in% tows1$fished_haul)
@@ -216,19 +218,17 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   first_tows <- mlogit.data(first_tows, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
   
-  # res1 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days - 1, first_tows)
-  res1 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days + dummy_prev_year_days +
-   prev_year_days_rev - 1, first_tows)
-  
+  res1 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days + dummy_prev_year_days - 1, 
+    first_tows)
+
   #Second tows
   second_tows <- rdo[which(rdo$fished_haul %in% tows1$fished_haul == FALSE), ]
   second_tows <- mlogit.data(second_tows, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
   
   # res2 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days - 1, second_tows)
-  res2 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days + dummy_prev_year_days +
-    prev_year_days_rev - 1, second_tows)
-  
+  res2 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days + dummy_prev_year_days - 1, second_tows)
+
   outs <- list(coefs1 = coef(res1), coefs2 = coef(res2), mod1 = res1, mod2 = res2,
     first_tows = first_tows, second_tows = second_tows)
   

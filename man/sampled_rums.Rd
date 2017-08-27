@@ -8,11 +8,11 @@ Function calls mlogit}
 \usage{
 sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1, ndays = 60,
-  focus_year = 2012, nhauls_sampled = 50)
+  focus_year = 2012, nhauls_sampled = 50, seed = 300)
 
 sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1, ndays = 60,
-  focus_year = 2012, nhauls_sampled = 50)
+  focus_year = 2012, nhauls_sampled = 50, seed = 300)
 }
 \arguments{
 \item{data_in}{Data going in to the function; default is filt_clusts}
@@ -30,6 +30,8 @@ sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
 \item{focus_year}{Year to focus on for the models}
 
 \item{nhauls_sampled}{Number of hauls to sample from the full data set}
+
+\item{seed}{Seed for sampling tows}
 
 \item{trip_dists}{Distances covered by each trip}
 
