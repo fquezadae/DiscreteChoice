@@ -26,7 +26,7 @@ training_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-browser()
+# browser()
   
   ##Filter the data
   dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
@@ -129,11 +129,8 @@ browser()
   })
   
   sampled_hauls <- ldply(sampled_hauls)
-
-#Find tows that have NA values for the distances
-
-sampled_hauls[which(is.na(sampled_hauls$distance)), ] %>% head
-sum(is.na(sampled_hauls$distance) )
+sampled_hauls %>% filter(fished_haul == 139881)
+  #Find tows that have NA values for the distances
   
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
@@ -197,7 +194,7 @@ sum(is.na(sampled_hauls$distance) )
     prev_year_days_rev) 
   
   sampled_hauls <- sampled_hauls %>% left_join(td1, by = c("unq_clust", "set_date_chr"))
-  
+
   #Make sure that missing values have dummy variable value of 1 for prev_days
   sampled_hauls[which(sampled_hauls$dummy_prev_days != 0), 'dummy_prev_days'] <- 0
   sampled_hauls[which(sampled_hauls$prev_days_rev == 0), "dummy_prev_days"] <- 1
@@ -207,11 +204,15 @@ sum(is.na(sampled_hauls$distance) )
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
     dummy_prev_days, prev_days_rev, dummy_prev_year_days, prev_year_days_rev)
+
+  #fished_hauls to remove
+  rm_hauls <- rdo %>% filter(is.na(distance)) %>% distinct(fished_haul)
+  rdo <- rdo %>% filter(fished_haul %in% rm_hauls$fished_haul == FALSE)
   
   rdo <- rdo %>% group_by(fished_haul) %>% mutate(alt_tow = 1:length(haul_id)) %>% as.data.frame 
   
-  #Filter out tows with missing values for distance
-  rdo <- rdo %>% filter(is.na(distance) == FALSE)
+  # #Filter out tows with missing values for distance
+  # rdo <- rdo %>% filter(is.na(distance) == FALSE)
 
   #-----------------------------------------------------------------------------
   #Fit mlogit models returning the coefficients, the models, and the data going into the 
