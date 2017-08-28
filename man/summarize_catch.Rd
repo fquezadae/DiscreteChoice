@@ -5,12 +5,12 @@
 \title{Summarize catch
 Function to take haul_id, and count the things that came out}
 \usage{
-summarize_catch(clust = filt_clusts, haul_id1)
+summarize_catch(clust = filt_clusts, sampled_hauls1, rc = 1)
 }
 \arguments{
 \item{input}{Data as input; defaults to filt_clusts}
 
-\item{haul_id}{Haul_id value}
+\item{haul_id_vec}{Vector of haul_id values}
 }
 \description{
 Summarize catch
