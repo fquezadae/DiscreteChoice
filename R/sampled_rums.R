@@ -89,7 +89,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
   
-  sampled_hauls <- lapply(1:nrow(hauls), FUN = function(xx){
+  sampled_hauls <- mclapply(1:nrow(hauls), FUN = function(xx){
     the_samples <- dist_hauls %>% filter(haul_id != hauls[xx, 'haul_id']) %>% 
       sample_n(size = nhauls_sampled, replace = F)
   
@@ -125,8 +125,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     the_samples$set_date <- ymd(paste(actual_haul$set_year, actual_haul$set_month, actual_haul$set_day, sep = "-"))
     
     return(the_samples)
-  })
-  
+  }, mc.cores = 6)
+
+print("Done sampling hauls")  
   sampled_hauls <- ldply(sampled_hauls)
   
   #-----------------------------------------------------------------------------
@@ -146,7 +147,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   
-  dummys <- lapply(1:nrow(td1), FUN = function(xx){
+  dummys <- mclapply(1:nrow(td1), FUN = function(xx){
     temp_dat <- td1[xx, ]  
     
     clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust)
@@ -173,8 +174,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
       dummy_prev_year_days = towed_prev_year_days, prev_year_days_rev = towed_prev_year_days_rev)
   
     return(outs)
-  })
-  
+  }, mc.cores = 6)
+
+print("Done calculating dummys and revenues")    
   dummys1 <- ldply(dummys)
   
   #Change values to be 0 and 1 for dummy variables
