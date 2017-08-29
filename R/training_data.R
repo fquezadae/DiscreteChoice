@@ -22,7 +22,7 @@
 
 training_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
-  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 301){
+  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 301, ncores = 6){
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
@@ -90,7 +90,7 @@ training_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
   
-  sampled_hauls <- lapply(1:nrow(hauls), FUN = function(xx){
+  sampled_hauls <- mclapply(1:nrow(hauls), FUN = function(xx){
     the_samples <- dist_hauls %>% filter(haul_id != hauls[xx, 'haul_id']) %>% 
       sample_n(size = nhauls_sampled, replace = F)
   
@@ -126,12 +126,12 @@ training_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON
     the_samples$set_date <- ymd(paste(actual_haul$set_year, actual_haul$set_month, actual_haul$set_day, sep = "-"))
     
     return(the_samples)
-  })
+  }, mc.cores = ncores)
   
   sampled_hauls <- ldply(sampled_hauls)
-sampled_hauls %>% filter(fished_haul == 139881)
+
   #Find tows that have NA values for the distances
-  
+  print("Done sampling hauls")    
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
@@ -149,7 +149,7 @@ sampled_hauls %>% filter(fished_haul == 139881)
   
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   
-  dummys <- lapply(1:nrow(td1), FUN = function(xx){
+  dummys <- mclapply(1:nrow(td1), FUN = function(xx){
     temp_dat <- td1[xx, ]  
     
     clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust)
@@ -176,7 +176,7 @@ sampled_hauls %>% filter(fished_haul == 139881)
       dummy_prev_year_days = towed_prev_year_days, prev_year_days_rev = towed_prev_year_days_rev)
   
     return(outs)
-  })
+  }, mc.cores = ncores)
   
   dummys1 <- ldply(dummys)
   
@@ -200,6 +200,7 @@ sampled_hauls %>% filter(fished_haul == 139881)
   sampled_hauls[which(sampled_hauls$prev_days_rev == 0), "dummy_prev_days"] <- 1
   sampled_hauls[which(sampled_hauls$dummy_prev_year_days != 0), 'dummy_prev_year_days'] <- 1
   
+  print("Done calculating dummys and revenues")    
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
@@ -222,8 +223,8 @@ sampled_hauls %>% filter(fished_haul == 139881)
   tows1 <- rdo %>% filter(fished == TRUE, haul_num == 1) %>% select(fished_haul)
   first_tows <- rdo %>% filter(fished_haul %in% tows1$fished_haul)
   
-  first_tows <- mlogit.data(first_tows, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
-    chid.var = 'fished_haul')
+  # first_tows <- mlogit.data(first_tows, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
+  #   chid.var = 'fished_haul')
   
   # res1 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days - 1, first_tows)
   # res1 <- mlogit(fished ~ distance + prev_days_rev + dummy_prev_days + dummy_prev_year_days +
