@@ -22,7 +22,7 @@
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
-  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300){
+  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
@@ -125,7 +125,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     the_samples$set_date <- ymd(paste(actual_haul$set_year, actual_haul$set_month, actual_haul$set_day, sep = "-"))
     
     return(the_samples)
-  }, mc.cores = 6)
+  }, mc.cores = ncores)
 
 print("Done sampling hauls")  
   sampled_hauls <- ldply(sampled_hauls)
@@ -174,7 +174,7 @@ print("Done sampling hauls")
       dummy_prev_year_days = towed_prev_year_days, prev_year_days_rev = towed_prev_year_days_rev)
   
     return(outs)
-  }, mc.cores = 6)
+  }, mc.cores = ncores)
 
 print("Done calculating dummys and revenues")    
   dummys1 <- ldply(dummys)
