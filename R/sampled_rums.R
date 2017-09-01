@@ -26,7 +26,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-
+browser()
   ##Filter the data
   dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
     set_year <= max_year)
@@ -127,7 +127,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     return(the_samples)
   }, mc.cores = ncores)
 
-print("Done sampling hauls")  
+  print("Done sampling hauls")  
   sampled_hauls <- ldply(sampled_hauls)
 
   #-----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ print("Done sampling hauls")
     if(towed_prev_days != 0){
       hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$days_inter) %>% 
         distinct(haul_id, .keep_all = T) 
-      towed_prev_days_rev <- mean(hauls_in_period$haul_net_revenue )
+      towed_prev_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
     }
   
     #If towed in the previous year's ndays 
@@ -185,7 +185,7 @@ print("Done sampling hauls")
     if(towed_prev_year_days != 0){
       hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$prev_year_days_inter) %>% 
         distinct(haul_id, .keep_all = T) 
-      towed_prev_year_days_rev <- mean(hauls_in_period$haul_net_revenue )
+      towed_prev_year_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
     }
   
     outs <- data_frame(dummy_prev_days = towed_prev_days, prev_days_rev = towed_prev_days_rev,
