@@ -288,7 +288,16 @@ clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5,
   # outs <- list(coefs1 = coef(res1), coefs2 = coef(res2), mod1 = res1, mod2 = res2,
   #   first_tows = first_tows, second_tows = second_tows)
   
-  outs <- list(coefs = coef(res), mod = res)
+  #List coefficients and rename to align with jeem paper
+  coefs <- coef(res)
+  coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
+    "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
+    "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
+    "distance:dummy_not_first" = 'dist'))
+  coefs <- data.frame(coefs = round(rc1[[1]][c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')],
+    digits = 5))
+
+  outs <- list(coefs = coefs, mod = res)
   return(outs)
 
 }
