@@ -294,7 +294,8 @@ clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5,
     "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
     "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
     "distance:dummy_not_first" = 'dist'))
-  coefs <- data.frame(coefs = round(rc1[[1]][c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')],
+  
+  coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')],
     digits = 5))
 
   outs <- list(coefs = coefs, mod = res)
