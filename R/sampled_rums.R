@@ -23,10 +23,11 @@
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
+# browser()
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-browser()
+# browser()
   ##Filter the data
   dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
     set_year <= max_year)
@@ -56,11 +57,8 @@ browser()
   #Create data set, for each tow
   dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
     drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
-    haul_num, avg_long, avg_lat) %>% as.data.frame
-
-  #Look at net revenues by cluster to see if they differ much
-  # dist_hauls %>% filter(set_year == 2011) %>% ggplot() + geom_histogram(aes(x = haul_net_revenue)) + 
-  #   facet_wrap(~ unq_clust,) + geom_vline(xintercept = 0)
+    haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
+  dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= 2011)
   
   set.seed(seed)
   
@@ -90,7 +88,7 @@ browser()
   #For each haul in the focus year, sample nhauls_sampled tows
 
   sampled_hauls <- mclapply(1:nrow(hauls), FUN = function(xx){
-    the_samples <- dist_hauls %>% filter(haul_id != hauls[xx, 'haul_id']) %>% 
+    the_samples <- dist_hauls_catch_shares %>% filter(haul_id != hauls[xx, 'haul_id']) %>% 
       sample_n(size = nhauls_sampled, replace = F)
   
     #Now calculate the distances between the points and the actual points
@@ -139,7 +137,7 @@ browser()
   #What were the average revenues in each location
   tow_dates <- sampled_hauls %>% 
     select(unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
-      avg_long, avg_lat)
+      avg_long, avg_lat, avg_depth, unq_clust_bin, unq)
   
   #Look at the unique dates and clusters only
   # td1 <- tow_dates %>% distinct(unq_clust, set_date)
@@ -147,16 +145,27 @@ browser()
   tow_dates$prev_year_days_inter <- interval(tow_dates$prev_year_days_date, tow_dates$prev_year_set_date)
   
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
-# browser()    
+
   #-----------------------------------------------------------------------------
   dummys <- mclapply(1:nrow(td1), FUN = function(xx){
     temp_dat <- td1[xx, ]  
     
     #Filter based on distance from the sampled point
     #Sum the hauls for each haul in clust_dat, and keep only previous hauls
-    clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust) %>% 
+    # clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust) %>% 
+    #   distinct(haul_id, .keep_all = T) %>%
+    #   filter(set_date <= temp_dat$set_date)
+
+#Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
+    #Filter based on distance from sampled point
+clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
+  unq_clust <= temp_dat$unq_clust + 5) %>% 
       distinct(haul_id, .keep_all = T) %>%
       filter(set_date <= temp_dat$set_date)
+
+    # clust_dat <- dat %>% filter(unq == temp_dat$unq) %>% 
+    #   distinct(haul_id, .keep_all = T) %>%
+    #   filter(set_date <= temp_dat$set_date)
 
     #Convert degrees to radians
     clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
@@ -170,6 +179,12 @@ browser()
     #Remove points that are greater than 5 km away
     clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
     
+    #Filter based on the depths also, 
+    clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
+      avg_depth <= temp_dat$avg_depth + 25)
+###End of filtering by location and depth
+
+
     #If towed in the previous ndays 
     towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter)
     towed_prev_days_rev <- 0
