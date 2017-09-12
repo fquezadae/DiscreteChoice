@@ -1,9 +1,9 @@
 #---------------------------------------------------------------------------------
 #Specify Computer
 setwd('/Users/peterkuriyama/School/Research/ch4')
-setwd('c://Users//Peter//ch4')
+# setwd('c://Users//Peter//ch4')
 
-list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
+# list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 
 #---------------------------------------------------------------------------------
 #Start of obs_dat, work off this script
@@ -36,7 +36,7 @@ states_map <- map_data("state")
 #---------------------------------------------------------------------------------
 #Load and format data
 #More formatting in ch4_movement
-load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
+# load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 load("output/file_clusts_dist.Rdata")
 
 filt_clusts <- filt_clusts_dist
@@ -48,119 +48,745 @@ filt_clusts$apounds.y <- NULL
 names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
 names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
 
-load("//udrive.uw.edu//udrive//quotas.Rdata")
+# load("//udrive.uw.edu//udrive//quotas.Rdata")
 
 load('output/quotas.Rdata')
 quotas$tac <- quotas$tac_prop * 100000
 filt_clusts <- filt_clusts %>% ungroup
 
 source('R/dist_funcs.R')
+source("R/rum_probs_nodummy.R")
+
+#Format 2013 quotas
+q13 <- read.csv('data/quotas_2013.csv', stringsAsFactors = FALSE)
+names(q13) <- c('year', 'permit_id', 'permit_owner', 'species', 'qs_percent', 'tac',
+  'current_qs', 'qs_balance', 'mts')
+unique(q13$species)
+
+q13$new_species <- c('Arrowtooth Flounder', "Bocaccio Rockfish", "Canary Rockfish", 
+  "Chilipepper Rockfish", "Cowcod Rockfish", "Darkblotched Rockfish", "Dover Sole", 
+  "English Sole", "Lingcod", "Lingcod", "Longspine Thornyhead", "Minor Shelf North",
+  "Minor Shelf South", "Minor Slope North", 'Minor Slope South', "Other Flatfish", "Pacific Cod", 
+  "Pacific Halibut", "Pacific Ocean Perch", "Pacific Whiting", "Petrale Sole", 'Sablefish', "Sablefish",
+  "Shortspine Thornyhead", "Shortspine Thornyhead", "Splitnose Rockfish", "Starry Flounder", 
+  "Widow Rockfish", "Yelloweye Rockfish", "Yellowtail Rockfish")
+
+tnc_q13 <- q13 %>% filter(permit_owner == "THE NATURE CONSERVANCY")
+tnc_q13$tac <- gsub("\\,", "", tnc_q13$tac)
+tnc_q13$tac <- as.numeric(tnc_q13$tac)
+tnc_q13$species <- tnc_q13$new_species
+
+quotas_mb <- quotas %>% select(-tac) %>% left_join(tnc_q13 %>% select(species, tac), by = 'species')
+quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
+
+#Format the species names
+
 
 #---------------------------------------------------------------------------------
-#RUM Data for all the ports
-the_ports <- unique(filt_clusts$dport_desc)
-the_port = "MORRO BAY"
-
-#Try adding in dummy variables
-
-mb_firsts <- format_rum_data(the_port = "MORRO BAY", 
-  min_year = 2012, max_year = 2013)
-mb_seconds <- format_rum_data(the_port = "MORRO BAY", 
-  min_year = 2012, max_year = 2013, tow_num_range = c(2, 30))
+#Add dummy variables for previously fished clusters to filt_clusts
+fc_dummy <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
+ select(dport_desc, unq_clust, set_date, haul_id) 
 
 
+load(file = 'output/dummy_30.Rdata')
+fc_dummy$dummy_30 <- dummy_30
 
-xx <- rum_probs(rc = 1, port = "MORRO BAY", years = c(2012, 2013), 
-  fc = filt_clusts, ndays1 = 60)
-
-
-#Currently estimate a dummy 
-
-
-mb_firsts$dummy$di
-head(mb_firsts)
-
-res1 <- mlogit(tow_clust ~ revs + dist | dummy - 1, mb_firsts)
-model.matrix(res1) %>% head
-
-res2 <- mlogit(tow_clust ~ revs + dist - 1, mb_firsts)
-AIC(res2)
-
-res1 <- mlogit(tow_clust ~ revs | dist - 1, mb_firsts)
-res1 <- mlogit(tow_clust ~ revs | dist - 1, mb_firsts)
-
-res2 <- mlogit(tow_clust ~ dist + revs - 1, mb_firsts)
-
-AIC(res1)
-AIC(res2)
-
-str(mb_firsts)
+#Add this into filt_clusts
+filt_clusts <- filt_clusts %>% left_join(fc_dummy %>% select(haul_id, dummy_30), by = 'haul_id')
 
 
-#See how the risk coefficient affects numbers
-ast_firsts <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
-  min_year = 2012, max_year = 2013, quantile_cut = 2)
-ast_firsts_risk5 <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
-  min_year = 2012, max_year = 2013, quantile_cut = 2, risk_coefficient = 5)
-
-ast_res <- mlogit(tow_clust ~ dist + revs - 1 , ast_firsts)
-ast_res_risk5 <- mlogit(tow_clust ~ dist + revs - 1 , ast_firsts_risk5)
-coef(ast_res_risk10)
-predict(ast_res)
-predict(ast_res_risk10)
-
-ast_firsts %>% ggplot(aes(x = alt, y = revs)) + geom_point()
-
-avg_revs <- ast_firsts %>% group_by(alt) %>% summarize(avg_revs = mean(revs)) 
-cut_point <- quantile(avg_revs$avg_revs)[2]
-cut_alts <- avg_revs %>% filter(avg_revs >= cut_point) %>% select(alt)
-str(ast_firsts_cut)
-ast_firsts_cut <- ast_firsts %>% filter(alt %in% cut_alts$alt)
-
-%>% 
-  arrange(desc(avg_revs)) %>% ggplot() +
-  geom_histogram(aes(avg_revs), bins = 40) + xlab("average rev. in each cluster")
-
-
-
-#Remove some of the options to scope the choice set a little better
-
-
-
-#Estimate with only one slope
-xx <- model.matrix(tow_clust ~ revs + dist , data = ast_firsts)
-ast_firsts_res <- mlogit(tow_clust ~ revs, data = ast_firsts)
-
-ast_firsts %>% ggplot() + geom_point(aes(x = dist, y = revs))
-
-ast_seconds <- format_rum_data(the_port = "ASTORIA / WARRENTON", 
-  min_year = 2011, max_year = 2012,
-  tow_num_range = c(2, 30))
-mb_seconds_res <- mlogit(tow_clust ~ dist + revs, mb_seconds)
-
-#Only the first tows
-tp <- vector('list', length = length(the_ports))
-for(ii in 1:length(the_ports)){
-  temp_port <- the_ports[ii]
-  tp[[ii]] <- format_rum_data(the_port = temp_port, max_year = 2012)
-  print(temp_port)
+#---------------------------------------------------------------------------------
+#Start of resampling function
+ch4_ctl <- function(rc = 1, port, years, ndays1, the_seeds, ncores, rum_func = rum_probs, 
+  focus_year = 2013){
+  outs <- list(rc = rc, port = port, years = years, 
+    ndays1 = ndays1, the_seeds = the_seeds, ncores = ncores, rum_func = rum_func, 
+    focus_year = focus_year)
+  return(outs)
 }
 
+#--------------------------------------------------------------------------------- 
+#morro bay runs in like 20 seconds
+#Newport takes like 3 minutes to run this
 
-cc <- format_rum_data(the_port = the_ports[5], max_year = 2012)
+# rc0 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
+#   risk_coefficient = 0, ndays = 30, focus_year = 2013, 
+#   nhauls_sampled = 50, seed = 310, ncores = 6)
+
+#Extract coefficients and see how they compare to Dan's 
+newport1 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+
+eureka1 <- sampled_rums(data_in = filt_clusts, the_port = 'EUREKA', min_year = 2010, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+
+#--------------------------------------------------------------------------------- 
+#Then sample a training data set in proportion to tows in each cluster
+#use this to see if on average vessels go towards certain clusters more often than others
+start_time <- Sys.time()
+# rc_ast <- sampled_rums(data_in = filt_clusts, the_port = 'ASTORIA / WARRENTON', 
+  # min_year = 2011, max_year = 2014,
+  # risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  # nhauls_sampled = 50, seed = 310)
+run_time <- Sys.time() - start_time; run_time
+
+rc1 <- sampled_rums(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310)
+
+dat_set1 <- training_data(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 301)
 
 
-cc_res <- mlogit(tow_clust ~ dist + revs, cc)
-apply(cc_res$probabilities, MAR = 2, mean)
-probabilities(cc_res)
+#----------------------------------------------------------------------------------------------------
+#Sample Tows from sampled_rums results and training data set
+#Can sample all 1000 morro bay tows in 1 hour 20 minutes
+# 300:(300 + (6 * 10) - 1)
 
-cc2 <- format_rum_data(the_port = the_ports[1], max_year = 2012, tow_num_range = c(2, 30))
+the_seeds <- 300:(300 + (6 * 10) - 1)
 
-
-rum_data_first_tows <- mclapply(the_ports, FUN = function(xx){
-  tt <- format_rum_data(the_port = xx)
-  return(tt)
+start_time <- Sys.time()
+replicates <- mclapply(the_seeds, FUN = function(xx){
+  temp_samps <- resample_training_data(training_data = dat_set1, rum_results = rc1, seed = xx)
+  temp_samps <- temp_samps %>% filter(is.na(tac) == FALSE)
+  return(temp_samps)
 }, mc.cores = 6)
+replicates1 <- list_to_df(replicates, the_seeds, col_ind_name = 'seeds')
+
+run_time <- Sys.time - start_time; run_time
+
+#Plot replicate values
+replicates1 %>% distinct(seeds, date_haul_id, .keep_all = T) %>% group_by(seeds) %>%
+  summarize(revenues = sum(haul_net_revenue)) %>% ggplot() + geom_histogram(aes(x = revenues))
+
+save(replicates1, file = 'output/morro_bay_rc1.Rdata')
+
+#Run this tonight while eating dinner maybe for 1000
+
+
+#----------------------------------------------------------------------------------------------------
+#Summary Values
+#Some tows might not be over the tac
+#Filter keeping only the catches that are below the tac
+sampled_catches <- sampled_catches %>% filter(is.na(tac) == FALSE)
+
+#Catch:TAC
+sampled_catches %>% group_by(species) %>% summarize(tot_catch = sum(hpounds), tac = unique(tac),
+  ctac = round(tot_catch / tac, digits = 3)) 
+
+revenues <- sampled_catches %>% distinct(haul_id, .keep_all = TRUE) %>% select(haul_net_revenue) %>% sum
+
+#----------------------------------------------------------------------------------------------------
+
+
+
+
+catch_over <- sampled_catches[which(sampled_catches$cum_catch >= sampled_catches$tac), "date_haul_id"] %>% min
+
+under_catches <- sampled_catches %>% filter(date_haul_id <= catch_over)
+
+
+
+#Calculate final catch:TAC
+under_catches %>% filter(is.na(tac) == FALSE) %>% group_by(species, type) %>% 
+  summarize(tot_catch = sum(hpounds), tac = sum(tac, na.rm = TRUE))
+
+
+under_catches %>% distinct(species, type, tac)
+under_catches %>% group_by(species, type) %>% 
+
+summarize(tot_catch = sum(hpounds))
+
+
+under_catches %>% filter(date_haul_id == catch_over) %>% mutate(ctac = cum_catch / tac) %>%
+  filter(type %in% c('targets', 'weaks')) %>% ggplot() + geom_histogram(aes(x = ctac)) + 
+  facet_wrap(~ type)
+  
+
+
+sampled_catches <- sampled_catches %>% as.data.frame
+
+
+
+
+
+
+
+
+
+# date_of_hauls <- sampled_catches %>% ungroup %>% distinct(haul_id, .keep_all = T) %>% 
+#   select(haul_id, fished_haul_date) %>%
+#   mutate(date_haul_id = 1:length(haul_id))
+
+
+#Calculate the haul values in each  
+
+
+# clust_samples$fished_haul_date <- clust_samples$set_date
+
+
+
+
+
+#what is the assumption about order of tows?
+#Pick cluster based on revenue expectations and distance
+sampled_catches <- sampled_catches %>% left_join(clust_samples %>%
+  select(unq_clust, clust_haulnum, fished_haul_date), by = c('unq_clust', 'clust_haulnum'))
+
+#See how much of quota is caught?
+
+
+
+
+sampled_catches <- sampled_catches %>% left_join(date_of_hauls, by = c('haul_id', 'fished_haul_date')) %>%
+  as.data.frame
+
+
+#Find place that a cumulative quota goes over quota
+sampled_catches <- sampled_catches %>% filter(is.na(tac) == FALSE)
+
+#some of the date_haul_id values are NA
+
+date_of_hauls %>% filter(fished_haul_date == ymd("2013-03-19"))
+
+sampled_catches %>% filter(is.na(date_haul_id)) %>% select(haul_id, fished_haul_date)
+
+
+#
+sampled_catches[which(sampled_catches$cum_catch >= sampled_catches$tac), ]
+
+catches_under_quota <- 
+sampled_ca
+
+
+sampled_catches[which(sampled_catches$cum_catch >= sampled_catches$tac), "date_haul_id" ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Could sum the probabilities of fishing in each cluster
+dat_set1[[1]] %>% group_by(fished_haul, unq_clust) %>% mutate(probs = sum(probs))
+
+#Sample tows to fish in
+
+
+
+
+
+
+#--------------------------------------------------------------------------------- 
+#Pick it up here
+head(dat_set1[[2]])
+
+dat_set1[[1]] 
+
+
+
+first_tows1 <- dat_set1[[1]]
+second_tows1 <- dat_set1[[2]]
+
+first_tows1 <- lapply(unique(first_tows1$fished_haul), FUN = function(xx){
+  temp <- first_tows1 %>% filter(fished_haul == xx)
+  probs <- predict(rc100[[3]], temp)
+  temp$probs <- probs
+  return(temp)
+})
+
+first_tows1
+
+
+one_tow1 <- dat_set1[[1]] %>% filter(fished_haul == 128004)
+
+dat_set100 <- training_data(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+  risk_coefficient = 100, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 301)
+
+one_tow100 <- dat_set100[[1]] %>% filter(fished_haul == 128004)
+
+
+
+predict(rc1[[3]], newdat = one_tow1)
+predict(rc100[[3]], newdat = one_tow100)
+(set_set1[[1]])
+
+#See how to add probabilities
+one_tow100 <- dat_set100[[1]] %>% filter(fished_haul %in% c(128004))
+two_tow100 <- dat_set100[[1]] %>% filter(fished_haul %in% c(128004, 128112))
+predict(rc100[[3]], newdat = one_tow100)
+
+#Calculate probabilities of fishing
+dat_set100[[1]] <- lapply(unique(dat_set100[[1]]$fished_haul), FUN = function(xx){
+  temp <- two_tow100 %>% filter(fished_haul == xx)
+  probs <- predict(rc100[[3]], temp)
+  temp$probs <- probs
+  return(temp)
+})
+two_tow100 <- ldply(two_tow100)
+
+two_tow100 %>% group_by(fished_haul) %>% summarize(probsum = sum(probs))
+
+two_tow100 %>% group_by(fished_haul) %>% do({
+  probs <- predict(rc100[[3]], newdat = .)
+  # data_frame(., probs)
+})
+
+
+mutate(probs = predict(rc100[[3]], newdat = .))
+
+
+unique(dat_set100[[1]]$fished_haul)
+
+
+#--------------------------------------------------------------------------------- 
+#Check the probabilities associated with each risk coefficient
+#Way to compare the probabilities
+ctl_list <- ch4_ctl(rc = 0, port = "MORRO BAY", years = c(2012, 2013), ndays1 = 30,
+  the_seeds = 300, ncores = 1, rum_func = rum_probs)
+
+probs <- mclapply(c(0, 1, 100, 200), FUN = function(xx){
+  temp_list <- ctl_list
+  temp_list$rc <- xx
+
+  temp_outs <- temp_list$rum_func(rc = temp_list$rc, port = temp_list$port,
+    years = temp_list$years, fc = filt_clusts, ndays1 = temp_list$ndays1)
+  return(temp_outs)
+}, mc.cores = 4)
+
+#FIRST tow probabilities in each cluster
+first_tow_probs <- list_to_df(lapply(probs, FUN = function(yy) yy[[1]]), ind_name = c(0, 1, 100, 200),
+  col_ind_name = "risk_coefficient")
+first_tow_probs$probs <- round(first_tow_probs$probs, digits = 3)
+first_tow_probs$risk_coefficient <- as.integer(first_tow_probs$risk_coefficient)
+first_tow_probs %>% dcast(unq_clust ~ risk_coefficient, value.var = 'probs')
+
+#SECOND tow probabilities in each cluster
+second_tow_probs <- list_to_df(lapply(probs, FUN = function(yy) yy[[2]]), ind_name = c(0, 1, 100, 200),
+  col_ind_name = "risk_coefficient")
+second_tow_probs$probs <- round(second_tow_probs$probs, digits = 3)
+second_tow_probs$risk_coefficient <- as.integer(second_tow_probs$risk_coefficient)
+second_tow_probs %>% dcast(unq_clust ~ risk_coefficient, value.var = 'probs')
+
+
+probs[[1]][[6]] %>% head
+probs[[2]][[6]] %>% head
+probs[[3]][[6]] %>% head
+
+coef(probs[[1]][[4]])[1] / coef(probs[[1]][[4]])[2]
+
+#Dig into one run
+ctl_list <- ch4_ctl(rc = 200, port = "MORRO BAY", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300:305, ncores = 6, rum_func = rum_probs)
+the_probs <- ctl_list$rum_func(rc = ctl_list$rc, port = ctl_list$port,
+  years = ctl_list$years, fc = filt_clusts, ndays1 = ctl_list$ndays1)
+
+ctl_list <- ch4_ctl(rc = 1, port = "MORRO BAY", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300:305, ncores = 6, rum_func = rum_probs)
+the_probs1 <- ctl_list$rum_func(rc = ctl_list$rc, port = ctl_list$port,
+  years = ctl_list$years, fc = filt_clusts, ndays1 = ctl_list$ndays1)
+
+ctl_list <- ch4_ctl(rc = 100, port = "MORRO BAY", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300:305, ncores = 6, rum_func = rum_probs)
+
+
+
+
+
+the_probs5 <- ctl_list$rum_func(rc = ctl_list$rc, port = ctl_list$port,
+  years = ctl_list$years, fc = filt_clusts, ndays1 = ctl_list$ndays1)
+
+
+
+#Compare the data going in
+the_probs1[[5]] %>% head(n = 10)
+the_probs5[[5]] %>% head(n = 10)
+
+coef(the_probs[[4]])
+coef(the_probs1[[4]])
+coef(the_probs5[[4]])
+
+
+#Plot the values for comparison
+the_probs[[1]]
+the_probs1[[1]]
+the_probs5[[1]]
+
+the_probs[[2]]
+the_probs1[[2]]
+the_probs5[[2]]
+
+filt_clusts %>% filter(haul_id == 128005, type %in% c('targets', 'weaks')) %>% select(species)
+
+%>% select(species, )
+
+
+the_probs[[6]] %>% head
+the_probs1[[6]] %>% head(n = 15)
+
+coef(the_probs[[4]])
+
+coef(the_probs1[[4]])
+
+the_probs[[6]] %>% head
+the_probs1[[6]] %>% head
+
+
+the_probs5[[1]] %>% filter(dummy == 1) %>% ggplot() + geom_histogram(aes(x = revs))
+
+sum(the_probs1[[2]]$probs)
+
+the_probs1[[2]] %>% left_join(the_probs5[[2]], by = 'unq_clust') %>% 
+  mutate(diffs = round(probs.x - probs.y, digits = 4))
+
+#---------------------------------------------------------------------------------
+#Try some actual runs
+
+diff_risk_values <- function(rc_values, input_ctl){
+
+  #Change rc value
+  temp_res <- lapply(rc_values, FUN = function(xx){
+    temp_ctl <- input_ctl
+    temp_ctl$rc <- xx
+
+    #Run the model now
+    temp <- sample_catches(ctl_list = temp_ctl)
+
+    return(temp)
+  })
+
+  #Parse the outputs from each thing
+  catch_samples <- lapply(temp_res, FUN = function(xx) xx[[1]])
+  catch_samples <- list_to_df(catch_samples, ind_name = rc_values, col_ind_name = "risk_coefficient")
+  #Filter out bycatch also
+  catch_samples <- catch_samples %>% filter(type != 'other')
+
+  run_times <- lapply(temp_res, FUN = function(xx) xx[[2]])
+  run_times <- list_to_df(run_times, ind_name = rc_values, col_ind_name = "risk_coefficient")
+  
+  first_tow_model <- lapply(temp_res, FUN = function(xx) xx[[3]])
+  second_tow_model <- lapply(temp_res, FUN = function(xx) xx[[4]])
+
+  first_tow_probs <- lapply(temp_res, FUN = function(xx) xx[[5]])
+  first_tow_probs <- list_to_df(first_tow_probs, ind_name = rc_values, col_ind_name = "risk_coefficient")
+  
+  second_tow_probs <- lapply(temp_res, FUN = function(xx) xx[[6]])
+  second_tow_probs <- list_to_df(second_tow_probs, ind_name = rc_values, col_ind_name = "risk_coefficient")
+
+  outs <- list(catch_samples = catch_samples, run_times = run_times, 
+    first_tow_model = first_tow_model, second_tow_model = second_tow_model, 
+    first_tow_probs = first_tow_probs, second_tow_probs = second_tow_probs)
+  return(outs)
+}
+
+rcrc <- c(0, 1, 5)
+
+ctl1 <- ch4_ctl(rc = 1, port = "ASTORIA / WARRENTON", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300, ncores = 1, rum_func = rum_probs)
+s1 <- sample_catches(ctl_list = ctl1, the_dat = filt_clusts)
+
+
+vals <- diff_risk_values(rc_values = rcrc, input_ctl = ctl1)
+
+
+#Mean catch compositions are nearly identical
+vals[[1]] %>% filter(type %in% c('targets', 'weaks')) %>% 
+  group_by(risk_coefficient, rep, drvid_id, trip_id, species) %>%
+  summarize(catch = sum(hpounds)) %>% dcast(species ~ risk_coefficient, value.var = 'catch', mean)
+
+vals[[1]] %>% filter(type %in% c('targets', 'weaks')) %>% 
+  group_by(risk_coefficient, rep, drvid_id, trip_id, species) %>%  summarize(catch = sum(hpounds)) %>%
+   ggplot() + geom_histogram(aes(x = catch)) +
+  facet_wrap(~ species + risk_coefficient)
+
+vals$first_tow_probs %>% dcast(unq_clust ~ risk_coefficient, value.var = 'probs') 
+
+vals$second_tow_probs %>% dcast(unq_clust ~ risk_coefficient, value.var = 'probs')
+
+
+vals[[1]] %>% filter(rep == 300, risk_coefficient == 5) %>% distinct(haul_id) 
+
+
+tt <- ch4_ctl(rc = 5, port = "MORRO BAY", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300:301, ncores = 1, rum_func = rum_probs)
+t0 <- sample_catches(ctl_list = tt)
+
+coef(t0[[3]])
+coef(t0[[4]])
+
+t0[[5]]
+t0[[6]]
+
+
+
+#With dummy
+tt <- ch4_ctl(rc = 1, port = "ASTORIA / WARRENTON", years = c(2012, 2013),
+  ndays1 = 30, the_seeds = 300:301, ncores = 2, rum_func = rum_probs)
+t1 <- sample_catches(ctl_list = tt)
+
+apply(fitted(t0[[3]], outcome = FALSE), MAR = 2, FUN = mean)
+apply(fitted(t1[[3]], outcome = FALSE), MAR = 2, FUN = mean)
+
+apply(fitted(t0[[4]], outcome = FALSE), MAR = 2, FUN = mean)
+apply(fitted(t1[[4]], outcome = FALSE), MAR = 2, FUN = mean)
+
+fitted(t0[[4]], outcome == FALSE )
+t1[[4]] 
+
+
+tt <- ch4_ctl(rc = 1, port = "ASTORIA / WARRENTON", years = c(2012, 2013),
+  ndays1 = 60, the_seeds = 300:311, ncores = 6)
+t1 <- sample_catches(ctl_list = tt)
+
+tt <- ch4_ctl(rc = 5, port = "ASTORIA / WARRENTON", years = c(2012, 2013),
+  ndays1 = 60, the_seeds = 300:301, ncores = 6)
+t5 <- sample_catches(ctl_list = tt)
+
+#Look at the revenues
+
+t0_300 <- t0[[1]] %>% distinct(rep, drvid, trip_tow_id, .keep_all = T) %>% group_by(drvid) %>%
+  mutate(med_value = median(haul_value), rc  = 0) 
+
+t1_300 <- t1[[1]] %>% distinct(rep, drvid, trip_tow_id, .keep_all = T) %>% group_by(drvid) %>%
+  mutate(med_value = median(haul_value), rc = 1)
+
+t5_300 <- t5[[1]] %>% distinct(rep, drvid, trip_tow_id, .keep_all = T) %>% group_by(drvid) %>%
+  mutate(med_value = median(haul_value), rc = 5)
+
+tts <- rbind(t0_300, t1_300, t5_300)
+
+tts %>% ggplot() + geom_histogram(aes(x = haul_value)) + geom_vline(aes(xintercept = med_value), lty = 2) +
+  facet_wrap(~ drvid + rc, scales = 'free')
+
+tts %>% distinct(med_value)
+
+
+
+t5_300 <- t5[[1]] %>% filter(rep == 300) %>% distinct(trip_tow_id, .keep_all = T) %>% 
+  mutate(med_value = median(haul_value)) %>% ggplot() + 
+  geom_histogram(aes(x = haul_value)) + geom_vline(aes(xintercept = med_value), lty = 2)
+
+
+t1[[1]] %>% filter(rep == 300, trip_id <= 3) %>% distinct(trip_tow_id, .keep_all = T) %>% head
+t1[[5]]
+
+
+t5[[1]] %>% filter(rep == 300, trip_id <= 3) %>% distinct(trip_tow_id, .keep_all = T) %>% head
+t5[[5]]
+
+set.seed(300)
+cc <- t1[[5]] %>% sample_n(size = 1, replace = T, weight = t1[[5]]$probs); cc
+tows <- filt_clusts %>% filter(unq_clust == cc$unq_clust) %>% distinct(haul_id) 
+base::sample(tows$haul_id, size = 1)
+
+
+# filt_clusts %>% filter(unq_clust == cc$unq_clust) %>% distinct(haul_id) %>% 
+#   sample_n(size = 1, replace = T) 
+
+set.seed(300)
+cc <- t5[[5]] %>% sample_n(size = 1, replace = T, weight = t5[[5]]$probs); cc
+tows <- filt_clusts %>% filter(unq_clust == cc$unq_clust) %>% distinct(haul_id) 
+base::sample(tows$haul_id, size = 1)
+
+
+filt_clusts %>% filter(unq_clust == cc$unq_clust) %>% distinct(haul_id) %>% 
+  sample_n(size = 1, replace = T) 
+
+#------------------------------------------------------------------------------------
+#Look at results of tt
+load('output/test_run1.Rdata')
+runs$catch_samples %>% distinct(rep, trip_tow_id, .keep_all = T) %>% 
+  ggplot(aes(x = haul_value)) + geom_histogram()
+
+runs$catch_sample %>% head
+runs8$catch_sample %>% head
+str(runs)
+# runs8 <- runs
+runs8$catch_samples %>% distinct(rep, trip_tow_id, .keep_all = T) %>% 
+  ggplot(aes(x = haul_value)) + geom_histogram()
+
+
+
+#------------------------------------------------------------------------------------
+#Arguments
+#Arguments seed values, representing different iterations
+#number of cores to run wit it
+xx <- calc_ctac_rev(quotas = quotas, catches = mb_reps1)
+
+#------------------------------------------------------------------------------------
+#Maybe a function to compare samples to empirical values 
+#See what actual values were for 2013
+emp_values <- filt_clusts %>% filter(set_year == 2013, dport_desc == "MORRO BAY", 
+  type %in% c('targets', 'weaks')) 
+
+length(unique(emp_values$haul_id))
+length(unique(emp_values$trip_id))
+
+emp_values_summary <- emp_values %>% group_by(species) %>% 
+  summarize(emp_catches = sum(hpounds))
+
+resamp_values <- mb_reps1 %>% filter(type %in% c('targets', 'weaks'),
+  trip_tow_id <= length(unique(emp_values$haul_id))) %>% 
+  group_by(rep, drvid_id, species) %>% summarize(resamp_catches = sum(hpounds)) %>% 
+  left_join(emp_values_summary, by = 'species')
+
+resamp_values %>% filter(drvid_id == 1) %>% 
+  ggplot(aes(x = emp_catches, y = resamp_catches, colour = species)) + geom_point() + 
+  geom_abline(slope = 1)  + facet_wrap(~ rep)
+
+
+#------------------------------------------------------------------------------------
+#Add in NA values for species that weren't caught in the resampling
+
+#Sample catches for each iteration, then determine which ones you keep
+#to calculate catch-quota balancing
+# mb_reps_orig <- mb_reps1
+
+
+
+#Add cumulative catches for each species
+# mb_reps1 <- mb_reps1 %>% arrange(rep, drvid_id, trip_id, tow_index) %>% 
+#  group_by(rep, species) %>% mutate(cum_catch = cumsum(hpounds)) %>% as.data.frame
+
+#Add in the quotas to compare catches to TAC
+# mb_reps1 <- mb_reps1 %>% right_join(quotas, by = c('species', 'type'))
+
+#Add zeroes in for missing values
+# mb_reps1[which(is.na(mb_reps1$rep)), 'hpounds'] <- 0
+# mb_reps1[which(is.na(mb_reps1$rep)), 'cum_catch'] <- 0
+
+#Figure out points in each replicate  at which cum_catch goes over tac
+mb_reps1$catch_tac <- mb_reps1$cum_catch / mb_reps1$tac
+
+#Number tows within each trip
+tows_over <- mb_reps1 %>% filter(catch_tac >= 1) %>% group_by(rep, drvid_id) %>% 
+  summarize(first_trip_tow_over = min(trip_tow_id))
+mb_reps1 <- mb_reps1 %>% left_join(tows_over, by = c('rep', 'drvid_id'))
+
+mb_reps1 %>% filter(rep == 300, drvid_id == 1, trip_tow_id %in% c(6, 7)) %>%
+ arrange(trip_tow_id)
+
+unders <- mb_reps1 %>% filter(trip_tow_id <= first_trip_tow_over)
+
+#annual revenues
+unders %>% group_by()
+
+final_catch_tac <- unders %>% group_by(rep, drvid, species, type) %>% 
+  summarize(catch = sum(hpounds), tac = unique(tac), catch_tac = catch / tac)
+
+final_catch_tac %>% filter(drvid == "610567") %>% ggplot(aes(x = catch_tac)) + 
+  geom_histogram() + facet_wrap(~ type)
+
+#End of function
+#How to calculate revenues
+mb_reps1 %>% distinct(haul_id, .keep_all = TRUE) %>% group_by(rep, drvid_id) %>% 
+  ggplot() + geom_histogram(aes(x = haul_value)) + 
+  facet_wrap(~ drvid_id + unq_clust, scales = 'free_x')
+
+mb_reps1 %>% filter(drvid_id == 1, rep == 300) %>% distinct(haul_id, .keep_all = T) %>%
+  group_by(trip_id) %>% summarize(nhauls = length(haul_id)) %>% as.data.frame
+
+mb_reps1 %>% filter(drvid_id == 1, rep == 300, trip_id == 31) %>% 
+  distinct(haul_id, .keep_all = T) %>% ggplot() + geom_point(aes(x = avg_long,
+    y = avg_lat)) 
+
+
+%>% distinct(haul_id, .keep_all = T) %>% 
+  group_by(rep, drvid_id) %>% summarize(nhauls = length(unique(haul_id)), 
+    revenues = sum(haul_value))
+
+ distinct(haul_value)
+
+   %>% ggplot() + geom_histogram(aes(x = revenues))
+
+mb_reps1 %>% filter(rep == 300) %>% distinct(drvid_id, haul_id, .keep_all = T) %>% head
+
+
+#Look at how variable revenues are for mb_reps
+
+
+eddie <- fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed = 300)
+
+
+
+
+
+
+
+ggplot(all_trips) + geom_point(aes(x = avg_long,))
+
+
+one_trip(p1s = first_probs, p2s = second_probs, data_of_interest = filt_clusts, 
+  nhauls = 8)
+
+##Combine with quotas
+quotas1 <- catch %>% group_by(species, type) %>% summarize(hpounds = sum(hpounds, na.rm = TRUE)) %>%
+  select(species, hpounds) %>% 
+  right_join(quotas, by = 'species')
+quotas1[is.na(quotas1)] <- 0
+quotas1$catch <- quotas1$catch + quotas1$hpounds
+stop_samples <- sum(quotas$catch >= quotas$tac)
+
+
+
+one_trip(p1s = first_probs, p2s = second_probs, quotas = quotas,
+  data_of_interest = filt_clusts)
+
+
+# first_tow <- sample_n(first_probs, size = 1, weight = first_probs$probs, replace = T)
+trip_clusts <- c(first_tow$unq_clust, other_tows$unq_clust)
+
+ntows_in_each_clust <- table(trip_clusts)
+
+the_tows <- lapply(1:length(ntows_in_each_clust), FUN = function(xx){
+  temp_hauls <- filt_clusts %>% filter(unq_clust == as.numeric(names(ntows_in_each_clust)[xx])) %>%
+    distinct(haul_id) %>% sample_n(size = ntows_in_each_clust[xx], replace = T)
+  return(data.frame(unq_clust = as.numeric(names(ntows_in_each_clust)[xx]), 
+    haul_id = temp_hauls, index = 1:ntows_in_each_clust[xx]))
+})
+
+the_tows <- ldply(the_tows)
+the_tows <- plyr::rename(the_tows, c("index" = 'inclust_index'))
+
+#Add in the hauls
+trip_clusts <- data_frame(unq_clust = trip_clusts, tow_index = 1:length(trip_clusts))
+trip_clusts <- trip_clusts %>% group_by(unq_clust) %>% mutate(inclust_index = 1:n())
+trip_clusts <- trip_clusts %>% left_join(the_tows, by = c('unq_clust', "inclust_index"))
+
+catches <- filt_clusts %>% filter(haul_id %in% trip_clusts$haul_id)
+
+#What are the columns to save
+catch <- catches %>% group_by(haul_id, species, type) %>% summarize(hpounds = sum(hpounds, na.rm = T),
+    haul_value = unique(haul_value),  haul_profit = unique(haul_profit),
+    profit_fuel_only = unique(profit_fuel_only), unq_clust_bin = unique(unq_clust_bin),
+    xbin = unique(xbin), ybin = unique(ybin), unq = unique(unq), 
+    unq_clust = unique(unq_clust), avg_long = unique(avg_long), 
+    avg_lat = unique(avg_lat)) %>% as.data.frame
+trip_clusts <- ungroup(trip_clusts)
+catch <- catch %>% left_join(trip_clusts %>% select(haul_id, tow_index), by = 'haul_id') 
+catch <- catch %>% arrange(tow_index)
+
+##Combine with quotas
+quotas1 <- catch %>% group_by(species, type) %>% summarize(hpounds = sum(hpounds, na.rm = TRUE)) %>%
+  select(species, hpounds) %>% 
+  right_join(quotas, by = 'species')
+quotas1[is.na(quotas1)] <- 0
+quotas1$catch <- quotas1$catch + quotas1$hpounds
+stop_samples <- sum(quotas$catch >= quotas$tac)
 
 
 #---------------------------------------------------------------------------------
@@ -726,3 +1352,223 @@ load('output/survey_deltas.Rdata')
 # # ntows <- as.data.frame(diag(x = haul_dat2$ntows))
 # # names(ntows) <- paste0("clust", haul_dat2$unq_clust)
 # # haul_dat2$Y <- as.matrix(ntows)
+
+# head(mb_reps1)
+
+
+# tows_over <- mb_reps1 %>% filter(catch_tac < 1) %>% group_by(rep, drvid_id, trip_id, species) %>%
+#   summarize(first_tow_over = min(tow_index))
+
+# #Go through each 
+
+
+# mb_reps1 %>% filter(catch_tac >= 1) %>% group_by(rep, drvid_id) %>% 
+#   summarize(first_tow_over = min(tow_index))
+
+# mb_reps1 %>% filter(rep == 300, species == 'Chilipepper Rockfish') %>% head
+
+# #Find the tow at which shit goes over
+# #Let them go over
+# just_under_tows <- mb_reps1 %>% filter(catch_tac < 1) %>% 
+#   group_by(rep, drvid_id, trip_id, species) %>% summarize(just_under_tow = max(tow_index))
+
+# just_under_tows %>% group_by(rep, drvid_id, trip_id) %>% summarize(just_under_tow = min(just_under_tow))
+
+
+# , rep == 300, drvid_id == 1, 
+#   trip_id == 1) %>% group_by(species) %>% summarize(max_tow = max(tow_index)) 
+
+# %>% 
+# select(max_tow) %>% min
+
+
+# one_tow <- mb_reps11 %>% filter(rep == 300, drvid_id == 1,
+#   trip_id == 1)
+
+# one_tow %>% mutate(catch_tac = round(catch_tac, digits = 3)) %>% filter(tow_index <= 7) %>%
+#   group_by(species, type) %>% summarize(total_catch = sum(hpounds), tac = unique(tac)) %>% 
+#   mutate(prop = total_catch / tac) %>% ggplot() + geom_histogram(aes(x = prop)) + 
+#   facet_wrap(~ type)
+
+# #Check this shit works
+
+# mb_reps %>% filter()
+
+# mb_reps11 <- mb_reps11 %>% arrange(rep, drvid_id, trip_id, tow_index) %>%
+#   group_by(rep, drvid_id, trip_id, species)
+
+# # mb_reps11$over <- mb_reps11$cum_catch >= mb_reps11$tac
+
+# mb_reps11 <- mb_reps11 %>% arrange(rep, drvid_id, trip_id, tow_index) %>%
+#   group_by(rep, drvid_id, trip_id, species, over) %>% mutate(tow_over = min(tow_index)) %>%
+#   as.data.frame
+
+# mb_reps11 %>% filter(over == TRUE) %>% group_by(rep, drvid_id, trip_id) %>% summarize(tow_over = min(tow_over))
+
+# #Filter out the tows that are over
+# mb_reps11 %>% filter(rep == 300, drvid_id == 1, trip_id == 1, over == FALSE)
+
+
+# mb_reps11 %>% filter(over == T) %>% head
+
+
+
+
+
+#---------------------------------------------------------------------------------
+#Try running models for 2012 data 
+
+
+# the_model <- sampled_rums
+# filename <- paste0(tolower(substr(models$ports[1], 1, 3)),
+#   "_mod_", models$rcs[1], ".Rdata")
+
+
+# start_time <- Sys.time()
+# rc_ast0 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', 
+#   min_year = 2010, max_year = 2014,
+#   risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+#   nhauls_sampled = 50, seed = 310, ncores = 6)
+# run_time <- Sys.time() - start_time; run_time
+
+# summary(rc_ast0[[2]])
+
+# rc_ast50 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', 
+#   min_year = 2011, max_year = 2014,
+#   risk_coefficient = 50, ndays = 30, focus_year = 2013, 
+#   nhauls_sampled = 50, seed = 310, ncores = 6)
+# summary(rc_ast50[[2]])
+
+# predict(rc_ast50[[2]])
+# train <- rc_ast0[[2]]$model[1:51, ]
+# predict(train, newdat = rc_ast50[[2]])
+# mf <- mFormula(fished ~ prev_days_rev * dummy_first + 
+#     distance * dummy_first + prev_days_rev * dummy_not_first +
+#     distance * dummy_not_first - distance - prev_days_rev - 1 - 
+#     dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days)
+# predict(rc_ast0[[2]], newdat = train) - 
+#   predict(rc_ast50[[2]], newdat = train)
+
+
+#---------------------------------------------------------------------------------
+#Add dummy variables for previously fished clusters to filt_clusts
+ # dummy30
+# #Subtract 30 days
+# fc_dummy$prev_date <- fc_dummy$set_date - days(30)
+# fc_dummy$one_year_set_date <- fc_dummy$set_date - days(365)
+# fc_dummy$one_year_prev_date <- fc_dummy$prev_date - days(365)
+# fc_dummy <- fc_dummy %>% as.data.frame
+
+# #Port and cluster combinations, used to unlist the intervals
+# port_clust_combs <- fc_dummy %>% distinct(dport_desc, unq_clust) %>% as.data.frame
+
+# #Create a list of unlisted intervals
+# the_intervals <- lapply(1:nrow(port_clust_combs), FUN = function(xx){
+#   temp <- fc_dummy %>% filter(dport_desc == port_clust_combs[xx, "dport_desc"],
+#     unq_clust == port_clust_combs[xx, "unq_clust"])
+#   temp$interval <- interval(temp$one_year_prev_date, temp$one_year_set_date)
+#   return(unlist(temp$interval))
+# })
+
+# #Compare each set date to the corresponding intervals
+# start_time <- Sys.time()
+# dummy_30 <- sapply(1:nrow(fc_dummy), FUN = function(aa){
+#   #Find the index in port_clust_combs
+#   interval_ind <- which(port_clust_combs$dport_desc %in% fc_dummy[aa, 'dport_desc'] &
+#         port_clust_combs$unq_clust %in% fc_dummy[aa, 'unq_clust'])
+# # which(fc_dummy[aa, 'set_date'] %within% the_intervals[[interval_ind]]  )
+# # the_intervals[[interval_ind]][c(58, 60, 61)]
+#   ntimes_int <- sum(fc_dummy[aa, 'set_date'] %within% the_intervals[[interval_ind]])
+#   return(if_else(ntimes_int > 0, 1, 0))
+# })
+# run_time <- Sys.time() - start_time
+
+# dim(fc_dummy)
+# fc_dummy$dummy_30 <- dummy_30
+# save(dummy_30, file = 'output/dummy_30.Rdata')
+
+#---------------------------------------------------------------------------------
+#Astoria Run
+# browser()    
+# filt_clusts %>% filter(dport_desc == "ASTORIA / WARRENTON", set_year == 2012) %>%
+#   select(drvid) %>% unique
+
+#Fort bragg, astoria, newport, charleston, eureka
+# ss_time <- Sys.time()
+# ports_to_run <- c("ASTORIA / WARRENTON", "NEWPORT", "CHARLESTON (COOS BAY)",
+#   "FORT BRAGG", "EUREKA")
+# risk_coefficients <- c(1, 50)
+
+# models <- expand.grid(ports_to_run, risk_coefficients)
+# models <- data_frame(ports = as.character(models$Var1), 
+#   rcs = as.numeric(models$Var2))
+# models <- as.data.frame(models)
+
+# for(jj in 1:nrow(models)){
+#   start_time <- Sys.time()
+#   mod <- sampled_rums(data_in = filt_clusts, the_port = models[jj, "ports"],
+#    min_year = 2011, max_year = 2014, risk_coefficient = models[jj, "rcs"],
+#    ndays = 30, focus_year = 2013, nhauls_sampled = 50, seed = 310,
+#    ncores = 6)
+#   run_time <- Sys.time() - start_time
+  
+#   #Print the run time
+#   cat(run_time, units(run_time), "run =" ,jj, '\n')
+
+#   filename <- paste0("output/", tolower(substr(models$ports[jj], 1, 3)),
+#     "_mod_", models$rcs[jj], ".Rdata")
+#   save(mod, file = filename)
+# }
+
+# rr_time <- Sys.time() - ss_time
+
+
+# load("output/ast_mod_1.Rdata")
+# load("output/ast_mod_50.Rdata")
+
+
+# load("output/new_mod_1.Rdata")
+
+# rc1 <- sampled_rums(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+#   risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+#   nhauls_sampled = 50, seed = 310)
+
+
+# filt_clusts %>% filter(dport_desc == "MORRO BAY", set_year == 2013) %>% distinct(haul_id, .keep_all = T) %>%
+#   select(avg_long, avg_lat, haul_id) %>% as.data.frame %>% head(n = 30)
+
+# rc100 <- sampled_rums(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+#   risk_coefficient = 100, ndays = 30, focus_year = 2013, 
+#   nhauls_sampled = 50)
+#---------------------------------------------------------------------------------
+# #See how risk affects the
+# # the_probs1 <- rum_probs(rc = tt$rc, port = tt$port,
+# #     years = tt$years, fc = filt_clusts, ndays1 = tt$ndays1)
+
+# #Just look at the model fits with different risk coefficients
+
+# tt <- ch4_ctl(rc = 5, port = "ASTORIA / WARRENTON", years = c(2012, 2013),
+#   ndays1 = 60, the_seeds = 300:305, ncores = 6)
+# the_probs10 <- rum_probs(rc = tt$rc, port = tt$port,
+#     years = tt$years, fc = filt_clusts, ndays1 = tt$ndays1)
+
+# p1s <- the_probs1[[1]]
+# names(p1s)[2] <- 'probs1'
+
+# p2s <- the_probs10[[1]]
+# names(p2s)[2] <- 'probs2'
+
+# pcomps <- p1s %>% left_join(p2s, by = 'unq_clust') %>% mutate(pdiffs = probs2 - probs1)
+
+
+# the_probs1[[1]] %>% left_join(the_probs5[[1]], by = 'unq_clust') %>% 
+#   mutate(probs_diff = probs.y - probs.x)
+
+
+# the_probs[1]
+
+# length(300:407) / 6
+
+
+
+
