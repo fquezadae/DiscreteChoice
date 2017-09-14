@@ -81,7 +81,6 @@ quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
 
 #Format the species names
 
-
 #---------------------------------------------------------------------------------
 #Add dummy variables for previously fished clusters to filt_clusts
 fc_dummy <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
@@ -111,7 +110,89 @@ ch4_ctl <- function(rc = 1, port, years, ndays1, the_seeds, ncores, rum_func = r
 
 # rc0 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
 #   risk_coefficient = 0, ndays = 30, focus_year = 2013, 
+
 #   nhauls_sampled = 50, seed = 310, ncores = 6)
+
+st_time <- Sys.time()
+newport1 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+r_time <- Sys.time() - st_time
+r_time
+
+start_clust <- Sys.time()
+newport1_clust <- sampled_rums_clust(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+run_clust <- Sys.time() - start_clust
+run_clust
+
+#--------------------------------------------------------------------------------- 
+#Try gettting this to run with multiple ports 
+the_port <- c("MOSS LANDING", 'SAN FRANCISCO')
+
+Rprof("sampled_rums.out")
+mb1 <- sampled_rums(data_in = filt_clusts, the_port = "MORRO BAY", 
+  min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+Rprof(NULL)
+summaryRprof('sampled_rums.out')
+
+
+
+#--------------------------------------------------------------------------------- 
+
+moss_sf_310 <- sampled_rums(data_in = filt_clusts, the_port = c("MOSS LANDING", "SAN FRANCISCO"), 
+  min_year = 2010, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+
+moss_sf_311 <- sampled_rums(data_in = filt_clusts, the_port = c("MOSS LANDING", "SAN FRANCISCO"), 
+  min_year = 2010, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 311, ncores = 6)
+
+moss_sf_309 <- sampled_rums(data_in = filt_clusts, the_port = c("MOSS LANDING", "SAN FRANCISCO"), 
+  min_year = 2010, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 309, ncores = 6)
+#--------------------------------------------------------------------------------- 
+ports <- c("NEWPORT", "ASTORIA / WARRENTON", "EUREKA", "CHARLESTON (COOS BAY)")
+rcs <- c(1, 50)
+
+to_run <- expand.grid(ports, rcs)
+to_run[, 1] <- as.character(to_run[, 1])
+to_run[, 2] <- as.integer(to_run[, 2])
+to_run <- as.data.frame(to_run)
+
+names(to_run) <- c('port', "risk_coefficient")
+
+t1 <- Sys.time()
+runs <- lapply(1:8, FUN = function(yy){
+  thing <- sampled_rums(data_in = filt_clusts, the_port = to_run[yy, 'port'],
+    min_year = 2011, max_year = 2014, risk_coefficient = to_run[yy, 'risk_coefficient'],
+    ndays = 30, focus_year = 2013, nhauls_sampled = 50, seed = 310, ncores = 6)
+  return(thing)
+})
+t2 <- Sys.time() - t1; t2
+save(runs, file = 'output/runs.Rdata')
+
+
+thing <- sampled_rums(data_in = filt_clusts, the_port = to_run[yy, 'port'],
+    min_year = 2011, max_year = 2014, risk_coefficient = to_run[yy, 'risk_coefficient'],
+    ndays = 30, focus_year = 2013, nhauls_sampled = 50, seed = 310, ncores = 6)
+
+
+
+summary(morro0[[2]])$CoefTable[, 4]
+
+str(coef(morro0[[2]]))
+
+morro1 <- sampled_rums(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+  nhauls_sampled = 50, seed = 310, ncores = 6)
+
 
 #Extract coefficients and see how they compare to Dan's 
 newport1 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
