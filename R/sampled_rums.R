@@ -100,9 +100,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     .packages = c("dplyr", 'lubridate')) %dopar% 
       sample_hauls(xx = ii, hauls1 = hauls, 
         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled)
-  stopCluster(cl)
-
-
+  
   # sampled_hauls <- mclapply(1:nrow(hauls), FUN = function(xx){
   #   the_samples <- dist_hauls_catch_shares %>% filter(haul_id != hauls[xx, 'haul_id']) %>% 
   #     sample_n(size = nhauls_sampled, replace = F)
@@ -163,67 +161,72 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
 
   #-----------------------------------------------------------------------------
-  dummys <- mclapply(1:nrow(td1), FUN = function(xx){
-    temp_dat <- td1[xx, ]  
+  dummys <- foreach::foreach(ii = 1:nrow(td1), 
+    .packages = c("dplyr", 'lubridate')) %dopar% 
+      process_dummys(xx = ii)
+  stopCluster(cl)
+
+#   dummys <- mclapply(1:nrow(td1), FUN = function(xx){
+#     temp_dat <- td1[xx, ]  
     
-    #Filter based on distance from the sampled point
-    #Sum the hauls for each haul in clust_dat, and keep only previous hauls
-    # clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust) %>% 
-    #   distinct(haul_id, .keep_all = T) %>%
-    #   filter(set_date <= temp_dat$set_date)
+#     #Filter based on distance from the sampled point
+#     #Sum the hauls for each haul in clust_dat, and keep only previous hauls
+#     # clust_dat <- dat %>% filter(unq_clust == temp_dat$unq_clust) %>% 
+#     #   distinct(haul_id, .keep_all = T) %>%
+#     #   filter(set_date <= temp_dat$set_date)
 
-#Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
-    #Filter based on distance from sampled point
-clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
-  unq_clust <= temp_dat$unq_clust + 5) %>% 
-      distinct(haul_id, .keep_all = T) %>%
-      filter(set_date <= temp_dat$set_date)
+# #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
+#     #Filter based on distance from sampled point
+# clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
+#   unq_clust <= temp_dat$unq_clust + 5) %>% 
+#       distinct(haul_id, .keep_all = T) %>%
+#       filter(set_date <= temp_dat$set_date)
 
-    # clust_dat <- dat %>% filter(unq == temp_dat$unq) %>% 
-    #   distinct(haul_id, .keep_all = T) %>%
-    #   filter(set_date <= temp_dat$set_date)
+#     # clust_dat <- dat %>% filter(unq == temp_dat$unq) %>% 
+#     #   distinct(haul_id, .keep_all = T) %>%
+#     #   filter(set_date <= temp_dat$set_date)
 
-    #Convert degrees to radians
-    clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
-    clust_dat$avg_lat <- deg2rad(clust_dat$avg_lat)
+#     #Convert degrees to radians
+#     clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
+#     clust_dat$avg_lat <- deg2rad(clust_dat$avg_lat)
 
-    #Calculate distances
-    clust_dat$dist_from_samp_tow <- gcd_slc(temp_dat$avg_long, temp_dat$avg_lat,
-      clust_dat$avg_long, clust_dat$avg_lat)
+#     #Calculate distances
+#     clust_dat$dist_from_samp_tow <- gcd_slc(temp_dat$avg_long, temp_dat$avg_lat,
+#       clust_dat$avg_long, clust_dat$avg_lat)
 
-##NEED TO add distance to filter argument
-    #Remove points that are greater than 5 km away
-    clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
+# ##NEED TO add distance to filter argument
+#     #Remove points that are greater than 5 km away
+#     clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
     
-    #Filter based on the depths also, 
-    clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
-      avg_depth <= temp_dat$avg_depth + 25)
-###End of filtering by location and depth
+#     #Filter based on the depths also, 
+#     clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
+#       avg_depth <= temp_dat$avg_depth + 25)
+# ###End of filtering by location and depth
 
 
-    #If towed in the previous ndays 
-    towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter)
-    towed_prev_days_rev <- 0
-    if(towed_prev_days != 0){
-      hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$days_inter) %>% 
-        distinct(haul_id, .keep_all = T) 
-      towed_prev_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
-    }
+#     #If towed in the previous ndays 
+#     towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter)
+#     towed_prev_days_rev <- 0
+#     if(towed_prev_days != 0){
+#       hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$days_inter) %>% 
+#         distinct(haul_id, .keep_all = T) 
+#       towed_prev_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
+#     }
   
-    #If towed in the previous year's ndays 
-    towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter)
-    towed_prev_year_days_rev <- 0
-    if(towed_prev_year_days != 0){
-      hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$prev_year_days_inter) %>% 
-        distinct(haul_id, .keep_all = T) 
-      towed_prev_year_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
-    }
+#     #If towed in the previous year's ndays 
+#     towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter)
+#     towed_prev_year_days_rev <- 0
+#     if(towed_prev_year_days != 0){
+#       hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$prev_year_days_inter) %>% 
+#         distinct(haul_id, .keep_all = T) 
+#       towed_prev_year_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
+#     }
   
-    outs <- data_frame(dummy_prev_days = towed_prev_days, prev_days_rev = towed_prev_days_rev,
-      dummy_prev_year_days = towed_prev_year_days, prev_year_days_rev = towed_prev_year_days_rev)
+#     outs <- data_frame(dummy_prev_days = towed_prev_days, prev_days_rev = towed_prev_days_rev,
+#       dummy_prev_year_days = towed_prev_year_days, prev_year_days_rev = towed_prev_year_days_rev)
   
-    return(outs)
-  }, mc.cores = ncores)
+#     return(outs)
+#   }, mc.cores = ncores)
 
   print("Done calculating dummys and revenues")    
   dummys1 <- ldply(dummys)
