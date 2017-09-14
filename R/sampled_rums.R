@@ -162,8 +162,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   #-----------------------------------------------------------------------------
   dummys <- foreach::foreach(ii = 1:nrow(td1), 
+    # .export = c('dat', 'td1'),
     .packages = c("dplyr", 'lubridate')) %dopar% 
-      process_dummys(xx = ii)
+      process_dummys(xx = ii, td2 = td1, dat1 = dat)
   stopCluster(cl)
 
 #   dummys <- mclapply(1:nrow(td1), FUN = function(xx){
