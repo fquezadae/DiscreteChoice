@@ -29,7 +29,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   ##Filter the data
   dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
-  deg2rad <- function(deg) return(deg * pi / 180)
+  
   #---------------------------------------------------------------
   #Calculate haul revenues
   #Turn NA prices into zeroes
@@ -96,7 +96,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   registerDoParallel(cl)
 
   sampled_hauls <- foreach::foreach(ii = 1:nrow(hauls), 
-    .export = c("sample_hauls", 'deg2rad', 'gcd_slc'), 
+    .export = c("sample_hauls"), 
     .packages = c("dplyr", 'lubridate')) %dopar% 
       sample_hauls(xx = ii, hauls1 = hauls, 
         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled)
