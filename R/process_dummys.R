@@ -2,14 +2,15 @@
 #' Function to calculate revenues and distances
 
 #' @param xx Index value
+#' @param td2 The tow dates
 #' @export
 
-process_dummys <- function(xx){
-  temp_dat <- td1[xx, ]
+process_dummys <- function(xx, td2 = td1, dat1 = dat){
+  temp_dat <- td2[xx, ]
 
   #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
   
-  clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
+  clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
                               unq_clust <= temp_dat$unq_clust + 5) %>% 
         distinct(haul_id, .keep_all = T) %>%
         filter(set_date <= temp_dat$set_date)
