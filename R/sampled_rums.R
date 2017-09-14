@@ -29,7 +29,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   ##Filter the data
   dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
-  
+  deg2rad <- function(deg) return(deg * pi / 180)
   #---------------------------------------------------------------
   #Calculate haul revenues
   #Turn NA prices into zeroes
@@ -91,7 +91,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
 
-  
+
   cl <- makeCluster(ncores)
   registerDoParallel(cl)
 
