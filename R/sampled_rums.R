@@ -23,13 +23,11 @@
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
-# browser()
-
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
 # browser()
   ##Filter the data
-  dat <- data_in %>% filter(dport_desc == the_port, set_year >= min_year,
+  dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
   
   #---------------------------------------------------------------
@@ -73,8 +71,14 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #add in zero haul_num values
   zero_hauls <- prev_hauls %>% distinct(trip_id)  
   zero_hauls$haul_num <- 0
-  zero_hauls$avg_long <- unique(dat$d_port_long)
-  zero_hauls$avg_lat <- unique(dat$d_port_lat)
+  
+  port_locs <- dat %>% ungroup %>% distinct(trip_id, d_port_long, d_port_lat)
+  zero_hauls <- zero_hauls %>% left_join(port_locs, by = "trip_id")
+  zero_hauls <- plyr::rename(zero_hauls, c("d_port_long" = "avg_long", 
+    "d_port_lat" = 'avg_lat'))
+
+  # zero_hauls$avg_long <- unique(dat$d_port_long)
+  # zero_hauls$avg_lat <- unique(dat$d_port_lat)
   
   #Add into previous hauls data frame
   prev_hauls <- rbind(prev_hauls, zero_hauls) %>% arrange(trip_id, haul_num)
@@ -297,6 +301,22 @@ clust_dat <- dat %>% filter(unq_clust >= temp_dat$unq_clust - 5,
   
   coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')],
     digits = 5))
+
+  ps <- summary(res)$CoefTable[, 4]
+
+  ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
+    "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
+    "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
+    "distance:dummy_not_first" = 'dist'))
+  ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')]
+  
+  #Add significance values
+  coefs$p_values <- round(ps, digits = 5)
+  coefs$significance <- " "
+  coefs[which(coefs$p_values <= .10), 'significance'] <- "."
+  coefs[which(coefs$p_values <= .05), 'significance'] <- "*"
+  coefs[which(coefs$p_values <= .01), 'significance'] <- "**"
+  coefs[which(coefs$p_values <= .001), 'significance'] <- "***"
 
   outs <- list(coefs = coefs, mod = res)
   return(outs)
