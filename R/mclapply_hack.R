@@ -12,7 +12,7 @@ mclapply_hack <- function(...) {
   ##          argument passed to the function. In
   ##          this case it is the list to iterate over
   size.of.list <- length(list(...)[[1]])
-  cl <- makeCluster( min(size.of.list, detectCores()) )
+  cl <- makeCluster( min(size.of.list, detectCores() - 2) )
   
   ## Find out the names of the loaded packages 
   loaded.package.names <- c(
