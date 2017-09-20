@@ -4,7 +4,7 @@
 \alias{fish_fleet}
 \title{Function to resample averages for each vessel in a fleet}
 \usage{
-fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed)
+fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed, the_dat)
 }
 \arguments{
 \item{fleet_chars}{Vessel charcteristics, can filter here if fewere samplees for each

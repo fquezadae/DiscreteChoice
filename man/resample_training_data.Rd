@@ -6,7 +6,7 @@
 Take models and training data set. Resample to see what average revenues/ catch:TAC are.}
 \usage{
 resample_training_data(training_data = dat_set1, rum_results = rc1,
-  seed = 300, quotas = quotas_mb)
+  seed = 300, quotas = quotas_mb, port = "NEWPORT", rc)
 }
 \arguments{
 \item{training_data}{Set of training data}

@@ -5,9 +5,9 @@
 \title{Function to format RUM data
 Function calls mlogit}
 \usage{
-format_rum_data(data_in = filt_clusts, trip_dists1 = trip_dists,
-  the_port = "ASTORIA / WARRENTON", min_year = 2011, max_year = 2012,
-  risk_coefficient = 1, tow_num_range = c(1, 1), ndays = 60)
+format_rum_data(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
+  min_year = 2011, max_year = 2012, risk_coefficient = 1,
+  tow_num_range = c(1, 1), ndays = 60)
 }
 \arguments{
 \item{data_in}{Data going in to the function; default is filt_clusts}

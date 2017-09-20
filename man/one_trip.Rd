@@ -5,17 +5,17 @@
 \title{Function to conduct one trip
 One Trip Function}
 \usage{
-one_trip(p1s, p2s, data_of_interest = filt_clusts, nhauls)
+one_trip(the_models, data_of_interest = filt_clusts, nhauls)
 }
 \arguments{
-\item{p1s}{Probabilities of fishing in clusters for first tow. From RUM}
-
-\item{p2s}{Probabilities of fishing in clusters not-first tows. From RUM}
-
 \item{data_of_interest}{Data used to sample tows from. Defaults to filt_clusts but could 
 be data specific to a vessel}
 
 \item{nhauls}{Number of hauls on specific trip. Can be specified in vess_vals$hauls_per_trip[1]}
+
+\item{p1s}{Probabilities of fishing in clusters for first tow. From RUM}
+
+\item{p2s}{Probabilities of fishing in clusters not-first tows. From RUM}
 }
 \description{
 Function to conduct one trip
