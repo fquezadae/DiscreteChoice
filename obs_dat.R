@@ -37,16 +37,16 @@ states_map <- map_data("state")
 #Load and format data
 #More formatting in ch4_movement
 # load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
-load("output/file_clusts_dist.Rdata")
+# load("output/file_clusts_dist.Rdata")
 
-filt_clusts <- filt_clusts_dist
-rm(filt_clusts_dist)
-# names(filt_clusts)[grep('hpounds', names(filt_clusts))]
-filt_clusts$hpounds.y <- NULL
-filt_clusts$apounds.y <- NULL
+# filt_clusts <- filt_clusts_dist
+# rm(filt_clusts_dist)
+# # names(filt_clusts)[grep('hpounds', names(filt_clusts))]
+# filt_clusts$hpounds.y <- NULL
+# filt_clusts$apounds.y <- NULL
 
-names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
-names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
+# names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
+# names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
 
 # load("//udrive.uw.edu//udrive//quotas.Rdata")
 
@@ -82,16 +82,75 @@ quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
 #Format the species names
 
 #---------------------------------------------------------------------------------
+#Add in monthly prices
+
+# prices <- read.csv('data/monthly_prices.csv', stringsAsFactors = FALSE)
+# names(prices) <- tolower(names(prices))
+# names(prices)[2] <- "dport"
+# names(prices)[3] <- "species"
+
+# #Check Species names
+# unique(prices$species)[which(unique(prices$species) %in% unique(filt_clusts$species) == FALSE)]
+
+# #Change POP and shortspine/longspine thornyheads
+# prices[grep("Pacific Ocean Perch", prices$species), 'species'] <- "Pacific Ocean Perch"
+# prices[grep("/ Longspine Thorny", prices$species), 'species'] <- "Shortspine/Longspine Thornyhead"
+
+
+# #Check port names
+# unique(prices$dport)[unique(prices$dport) %in% unique(filt_clusts$dport_desc) == FALSE]
+# prices[grep("ASTORIA", prices$dport), 'dport'] <- "ASTORIA / WARRENTON"
+# prices[grep("Charleston", prices$dport), 'dport'] <- "CHARLESTON (COOS BAY)"
+
+# #Add it into filt_clusts
+# filt_clusts$exval_pound <- NULL
+
+# # names(prices)[9] <- 'exval_pound'
+
+# prices <- plyr::rename(prices, c("year" = 'ryear', 'month' = 'rmonth', 'dport' = 'r_port', 
+#   'price' = 'exval_pound'))
+
+# names(prices)[names(prices) %in% names(filt_clusts)]
+
+# filt_clusts1 <- filt_clusts %>% left_join(prices %>% select(species, r_port, rmonth, ryear, exval_pound), 
+#   by = c('species', 'r_port', 'ryear', 'rmonth'))
+
+
+# filt_clusts1$dupes <- paste(filt_clusts1$haul_id, filt_clusts1$species)
+# filt_clusts1[which(duplicated(filt_clusts1$dupes)), ]
+
+# filt_clusts1 %>% filter(haul_id == '139802', species == 'Shortspine/Longspine Thornyhead') %>% 
+#   select(hpounds)
+
+# filt_clusts1 <- filt_clusts1[-which(duplicated(filt_clusts1$dupes)), ]
+
+# #Check that the pounds are the same
+# filt_clusts %>% group_by(set_year) %>% summarize(tot_pounds = sum(apounds))
+# filt_clusts1 %>% group_by(set_year) %>% summarize(tot_pounds = sum(apounds))
+
+# #Remove the dupes column and save filt_clusts
+# filt_clusts <- filt_clusts1
+
+# rm(filt_clusts1)
+# save(filt_clusts, file = 'output/filt_clusts_w_monthly_prices.Rdata')
+
+
+#---------------------------------------------------------------------------------
+load(file = 'output/filt_clusts_w_monthly_prices.Rdata')
+filt_clusts$dupes <- NULL
+
+filt_clusts %>% group_by(set_year) %>% summarize(nhauls = length(unique(haul_id)))
+
+
 #Add dummy variables for previously fished clusters to filt_clusts
-fc_dummy <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
- select(dport_desc, unq_clust, set_date, haul_id) 
+# fc_dummy <- filt_clusts %>% distinct(haul_id, .keep_all = T) %>% 
+#  select(dport_desc, unq_clust, set_date, haul_id) 
 
-
-load(file = 'output/dummy_30.Rdata')
-fc_dummy$dummy_30 <- dummy_30
+# load(file = 'output/dummy_30.Rdata')
+# fc_dummy$dummy_30 <- dummy_30
 
 #Add this into filt_clusts
-filt_clusts <- filt_clusts %>% left_join(fc_dummy %>% select(haul_id, dummy_30), by = 'haul_id')
+# filt_clusts <- filt_clusts %>% left_join(fc_dummy %>% select(haul_id, dummy_30), by = 'haul_id')
 
 
 #---------------------------------------------------------------------------------
@@ -131,15 +190,10 @@ run_clust
 #Try gettting this to run with multiple ports 
 the_port <- c("MOSS LANDING", 'SAN FRANCISCO')
 
-Rprof("sampled_rums.out")
 mb1 <- sampled_rums(data_in = filt_clusts, the_port = "MORRO BAY", 
   min_year = 2011, max_year = 2014,
   risk_coefficient = 1, ndays = 30, focus_year = 2013, 
   nhauls_sampled = 50, seed = 310, ncores = 6)
-Rprof(NULL)
-summaryRprof('sampled_rums.out')
-
-
 
 #--------------------------------------------------------------------------------- 
 
@@ -189,7 +243,7 @@ summary(morro0[[2]])$CoefTable[, 4]
 
 str(coef(morro0[[2]]))
 
-morro1 <- sampled_rums(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+morro1 <- sampled_rums_pc(data_in = filt_clusts, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
   risk_coefficient = 1, ndays = 30, focus_year = 2013, 
   nhauls_sampled = 50, seed = 310, ncores = 6)
 
