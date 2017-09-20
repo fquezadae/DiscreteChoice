@@ -13,10 +13,10 @@
 
 #' @export
 
-
 adjust_probs <- function(rum1, quotas1, rc1){
+
   quotas1$prop <- round(quotas1$catch / quotas1$tac, digits = 4)
-  quotas1$adj_prop <- quotas$prop * 10 #Maximum value
+  quotas1$adj_prop <- quotas1$prop * 10 #Maximum value
 
   #adjust back down depending on the risk coefficient
   if(rc1 == -1) quotas1$adj_prop <- 0 #Case where you don't care about catch expectations at all
@@ -39,6 +39,7 @@ adjust_probs <- function(rum1, quotas1, rc1){
   }
 
   clust_probs <- apply(predict(rum1, X1, type = 'probs'), 2, mean)
+
   # return probabilities, quotas, and data values
   return(list(probs = clust_probs, quotas = quotas1, Xvalues = X1))
 }

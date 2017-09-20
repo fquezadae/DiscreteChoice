@@ -39,6 +39,9 @@
 #Cluster, number of samples, catch_list, 
 fish_trip <- function(input = filt_clusts, start_vess = 295, seed = 300,
   quotas, the_port = "ASTORIA / WARRENTON", risk_coefficient = 2){
+
+#Input filtered data, either for a particular vessel or for the entire fleet
+  
   
   #-----------------------------------------------------------------------------------
   input$revenue <- input$hpounds * (input$exval_pound - input$avg_quota_price)

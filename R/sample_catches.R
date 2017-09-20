@@ -10,9 +10,9 @@
 
 sample_catches <- function(ctl_list, the_dat = filt_clusts){
   #Fit RUM to estimate probabilities of fishing in each place
-  the_probs <- rum_probs(rc = ctl_list$rc, port = ctl_list$port,
-    years = ctl_list$years, fc = the_dat, ndays1 = ctl_list$ndays1)
-  
+the_probs <- ctl_list$rum_func(rc = ctl_list$rc, port = ctl_list$port,
+  years = ctl_list$years, fc = the_dat, ndays1 = ctl_list$ndays1)
+# browser()
   #Specify probabilities for first tow and later tows
   first_probs <- the_probs[[1]]
   second_probs <- the_probs[[2]]
@@ -29,9 +29,13 @@ sample_catches <- function(ctl_list, the_dat = filt_clusts){
 
   #Run the simulation and store run times
   start_time <- Sys.time()
+
+  port_dat <- the_dat %>% filter(dport_desc == ctl_list$port, set_year %in% ctl_list$years)
+
   the_reps <- mclapply(ctl_list$the_seeds, FUN = function(seeds){
-    fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed = seeds)
+    fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed = seeds, the_dat = port_dat)
   }, mc.cores = ctl_list$ncores)
+  
   run_time <- Sys.time() - start_time; run_time
 
   #Conver the samples to a data frame
@@ -46,6 +50,7 @@ sample_catches <- function(ctl_list, the_dat = filt_clusts){
   tt_ids$trip_tow_id <- 1:nrow(tt_ids)
 
   the_reps1 <- the_reps1 %>% left_join(tt_ids, by = c("trip_id", "tow_index"))
-  outs <- list(catch_samples = the_reps1, run_time = run_time)
+  outs <- list(catch_samples = the_reps1, run_time = run_time, first_tow_model = the_probs[[3]],
+    second_tow_model = the_probs[[4]], first_tow_probs = the_probs[[1]], second_tow_probs = the_probs[[2]])
   return(outs)
 }

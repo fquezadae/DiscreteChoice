@@ -13,7 +13,7 @@ mclapply_hack <- function(...) {
   ##          this case it is the list to iterate over
   size.of.list <- length(list(...)[[1]])
   cl <- makeCluster( min(size.of.list, detectCores() - 2) )
-  
+browser()  
   ## Find out the names of the loaded packages 
   loaded.package.names <- c(
     ## Base packages

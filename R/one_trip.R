@@ -9,14 +9,61 @@
 
 #' @export
 
-one_trip <- function(p1s, p2s, data_of_interest = filt_clusts, nhauls){
+# one_trip <- function(p1s, p2s, data_of_interest = filt_clusts, nhauls, mod2){  
+one_trip <- function(the_models, data_of_interest = filt_clusts, nhauls){  
+  p1s <- the_models[[1]]
+  p2s <- the_models[[2]]
+  
   #Sample clusters for the tows
   first_tow <- sample_n(p1s, size = 1, weight = p1s$probs, replace = T)
 
-  #May need to scope by distance
-  #Could scope this by distance somehow I think
-  other_tows <- sample_n(p2s, size = vess_vals$hauls_per_trip[1] - 1, 
-    weight = second_probs$probs, replace = T)
+  the_tows <- vector("list", length = nhauls)
+
+  one_tow <-  data_of_interest %>% filter(unq_clust == first_tow$unq_clust) %>% distinct(haul_id) %>% 
+    sample_n(1, replace = T)
+      
+  #The first tow in the first cluster
+  # tow1 <- the_models[[6]] %>% filter(haul_id == one_tow$haul_id)
+  # predict(the_models[[4]], newdata = tow1)
+
+
+
+browser()  
+
+  
+
+#Format the model.data
+mod_dat <- mod2$model
+mod_dat$alt_clust <- row.names(mod_dat)
+
+trn <- ldply(strsplit(mod_dat$alt_clust, split = "\\."))
+
+mod_dat$chid <- as.numeric(trn[, 1])
+mod_dat$alt_clust <- as.numeric(trn[, 2])
+
+#Use the average revenues and distances to generate predictions
+alt_clusts <- mod_dat %>% filter(tow_clust == TRUE)  %>% select(alt_clust) 
+
+
+mod_probs
+plot(mod_probs[1, ])
+
+mod_probs <- fitted(mod2, outcome = FALSE) 
+mod_probs <- round(mod_probs, digits = 0)
+
+aa <- apply(mod_probs, MAR = 1, FUN = function(xx) which(xx == 1))
+length(which(aa == alt_clusts$alt_clust)) / length(aa)
+
+head(mod_dat)
+
+
+#Let's say that you pick a new location based on distance now
+
+
+
+
+  other_tows <- sample_n(p2s, size = nhauls - 1, 
+    weight = p2s$probs, replace = T)
 
   trip_clusts <- c(first_tow$unq_clust, other_tows$unq_clust)
 

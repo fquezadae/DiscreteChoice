@@ -29,7 +29,15 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   
   #Adjust the net prices based on risk coefficient
   dat$rc <- risk_coefficient
-  dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
+
+  print("only weak stock species adjusted for risk")  
+
+  dat$net_price <- dat$exval_pound
+  weak_inds <- which(dat$type == 'weaks')
+  dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
+    dat$avg_quota_price[weak_inds]
+
+  # dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
   dat$net_revenue <- dat$net_price * dat$hpounds
 
   #Sum the haul revenues
@@ -68,7 +76,7 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   
   #Add in the periods
   rum_vals <- ldply(rum_vals)
-# unique(dist_hauls$unq_clust)[order(unique(dist_hauls$unq_clust))]
+
   #---------------------------------------------------------------------------------
   #Distances for cluster combinations
   
@@ -111,8 +119,6 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   
     #Expand so that each haul has all alternative clusters
     dist_hauls1 <- dist_hauls1 %>% complete(haul_id, alt_clust) 
-
-#Fill in tow_clust    
   } 
   
   #If not looking at the first tows, calculate the distance between different clusters at sea
@@ -158,8 +164,6 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   dist_hauls1 <- dist_hauls1 %>% left_join(dummy_join, 
     by = c('haul_id', 'tow_clust', 'set_date'))
 
-  # dist_hauls1 %>% group_by(haul_id, alt_clust) %>% mutate(nvals = length(unique(dummy_30)),
-  #   has1 = if_else(1 %in% dummy_30, 1, 0)) %>% select(has1)
   #---------------------------------------------------------------------------------
   # If dealing with the first tow only
   if(1 %in% tow_num_range){
@@ -172,7 +176,7 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     dh2 <- dh2 %>% group_by(haul_id) %>% fill(tow_clust, .direction = 'up')
     
     dh2 <- dh2 %>% as.data.frame
-# dh2 %>% filter(alt_clust == 437) %>% head
+
     dh2$btw_clust_dist <- NULL
     
     #Re add the btw_clust_dists for all the combinations
@@ -222,7 +226,9 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
       right_join(dist_hauls1, by = c('tow_clust', 'alt_clust'))
     
     dist_hauls1 <- suppressMessages(dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust))
-  
+    dist_hauls1 <- suppressMessages(dist_hauls1 %>% group_by(haul_id) %>% fill(tow_clust, 
+      .direction = 'up'))
+
     #Re add the btw_clust_distances
     dist_hauls1$btw_clust_dist <- NULL
     dist_hauls1 <- clust_combs %>% select(tow_clust, alt_clust, btw_clust_dist) %>% 
@@ -275,7 +281,6 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
     dists[, 3:ncol(dists)] <- temp_dists
   }
 
-# names(dists) %in% as.character(unique(dists$tow_clust))
   dists_keeps <- c(1, 2, which(names(dists) %in% as.character(unique(dists$tow_clust))))
   dists <- dists[, dists_keeps]
   names(dists)[3:ncol(dists)] <- paste("dist", names(dists)[3:ncol(dists)], sep = ".")
@@ -289,7 +294,7 @@ format_rum_data <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENT
   names(revs)[3:ncol(revs)] <- paste("revs", names(revs)[3:ncol(revs)], sep = ".")
   revs <- revs %>% filter(is.na(tow_clust) == FALSE)
   #---------------------------------------------------------------------------------
-# browser()  
+
   #Join the two data sets
   rum_dat <- dists %>% left_join(revs, by = c('haul_id_id', 'tow_clust'))
   rum_dat <- rum_dat %>% filter(is.na(tow_clust) == FALSE)

@@ -9,7 +9,7 @@
 #' @export
 
 resample_training_data <- function(training_data = dat_set1, rum_results = rc1, seed = 300, 
-  quotas = quotas_mb){
+  quotas = quotas_mb, port = "NEWPORT", rc){
 
   #--------------------------------------------------------------------------------- 
   #Calculate probabilities of fishing in each location
@@ -21,7 +21,6 @@ resample_training_data <- function(training_data = dat_set1, rum_results = rc1, 
     as.data.frame
 
   set.seed(seed)
-
   #--------------------------------------------------------------------------------- 
   #Sample the individual hauls
   clust_samples <- dat_set1 %>% group_by(tow_type, fished_haul) %>% distinct(unq_clust, .keep_all = T) %>% 
@@ -33,8 +32,8 @@ resample_training_data <- function(training_data = dat_set1, rum_results = rc1, 
   clust_samples_tbl <-  clust_samples %>% group_by(unq_clust) %>% summarize(nhauls = length(fished_haul))
     
   ######PUll set
-  #Filter the data to be from the specific port and only data from 2011-2014
-  hauls <- filt_clusts %>% filter(set_year >= 2011, set_year <= 2014, dport_desc == "MORRO BAY") %>%
+  #Filter the data to be from the specific port and only data from 2007-2014
+  hauls <- filt_clusts %>% filter(set_year >= 2007, set_year <= 2014, dport_desc == port) %>%
     distinct(haul_id, .keep_all = T) %>% select(unq_clust, haul_id, set_date)
   
   #Sample individual hauls
@@ -48,7 +47,7 @@ resample_training_data <- function(training_data = dat_set1, rum_results = rc1, 
 
   #--------------------------------------------------------------------------------- 
   #Summarize catches by type
-  sampled_catches <- summarize_catch(sampled_hauls1 = sampled_hauls, rc = 1)
+  sampled_catches <- summarize_catch(sampled_hauls1 = sampled_hauls, rc = rc)
   sampled_catches <- sampled_catches %>% filter(type != 'other') %>% arrange(unq_clust, clust_haulnum) 
   
   #Add in the fished_clust value

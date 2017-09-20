@@ -7,31 +7,31 @@
 #' @export
 
 
-fish_fleet <- function(fleet_chars = vess_vals, rum_res = the_probs, seed){  
+fish_fleet <- function(fleet_chars = vess_vals, rum_res = the_probs, seed, the_dat){  
+
   set.seed(seed)
-  drvid_trips <- vector('list', length = nrow(vess_vals))
+  drvid_trips <- vector('list', length = nrow(fleet_chars))
 
   #Sample the averages for each vessel
-  for(ii in 1:nrow(vess_vals)){
-  
+  for(ii in 1:nrow(fleet_chars)){
     #specify number of trips and number of hauls
-    all_trips <- lapply(1:vess_vals$avg_ntrips[ii], FUN = function(xx){
-      temp <- one_trip(p1s = first_probs, p2s = second_probs, data_of_interest = filt_clusts, 
-        nhauls = vess_vals$avg_ntrips[ii])
+    all_trips <- lapply(1:fleet_chars$avg_ntrips[ii], FUN = function(xx){
+      temp <- one_trip(the_models = rum_res, data_of_interest = the_dat, 
+        nhauls = fleet_chars$avg_ntrips[ii])
+      # temp <- one_trip(p1s = rum_res[[1]], p2s = rum_res[[2]], data_of_interest = the_dat, 
+      #   nhauls = fleet_chars$avg_ntrips[ii], mod2 = rum_res[[4]])
       return(temp)
     })
     all_trips <- list_to_df(all_trips, ind_name = '', col_ind_name = 'trip_id')
     
     drvid_trips[[ii]] <- all_trips
-    # print(ii)
   }
 
   drvid_trips <- list_to_df(drvid_trips, ind_name = "", col_ind_name = "drvid_id")
   
   #Combine the actual drvid values in rather than indices
-
   #Data frame of drvid values
-  drvdrv <- data_frame(drvid = vess_vals$drvid, drvid_id = 1:length(vess_vals$drvid))
+  drvdrv <- data_frame(drvid = fleet_chars$drvid, drvid_id = 1:length(fleet_chars$drvid))
   drvdrv$drvid_id <- as.character(drvdrv$drvid_id)
 
   drvid_trips <- drvid_trips %>% left_join(drvdrv, by = 'drvid_id')
