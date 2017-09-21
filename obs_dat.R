@@ -35,80 +35,155 @@ states_map <- map_data("state")
 
 #---------------------------------------------------------------------------------
 #Load and format data
+
+#Tows clust, more complete than filt_clusts
+load("output/tows_clust.Rdata")
+
+#Consolidate species records in tows_clust
+tows_clust <- tows_clust %>% group_by(haul_id, species) %>%
+  mutate(apounds = sum(apounds, na.rm = T), hpounds = sum(hpounds, na.rm = T)) %>%
+  distinct(haul_id, species, .keep_all = T) %>% as.data.frame
+
 #More formatting in ch4_movement
 # load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
-# load("output/file_clusts_dist.Rdata")
+load("output/file_clusts_dist.Rdata")
 
-# filt_clusts <- filt_clusts_dist
-# rm(filt_clusts_dist)
-# # names(filt_clusts)[grep('hpounds', names(filt_clusts))]
-# filt_clusts$hpounds.y <- NULL
-# filt_clusts$apounds.y <- NULL
+filt_clusts <- filt_clusts_dist
+rm(filt_clusts_dist)
+# names(filt_clusts)[grep('hpounds', names(filt_clusts))]
+filt_clusts$hpounds.y <- NULL
+filt_clusts$apounds.y <- NULL
 
-# names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
-# names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
+names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
+names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
 
 # load("//udrive.uw.edu//udrive//quotas.Rdata")
 
-load('output/quotas.Rdata')
-quotas$tac <- quotas$tac_prop * 100000
-filt_clusts <- filt_clusts %>% ungroup
+# load('output/quotas.Rdata')
+# quotas$tac <- quotas$tac_prop * 100000
+# filt_clusts <- filt_clusts %>% ungroup
 
-source('R/dist_funcs.R')
-source("R/rum_probs_nodummy.R")
+# source('R/dist_funcs.R')
+# source("R/rum_probs_nodummy.R")
 
-#Format 2013 quotas
-q13 <- read.csv('data/quotas_2013.csv', stringsAsFactors = FALSE)
-names(q13) <- c('year', 'permit_id', 'permit_owner', 'species', 'qs_percent', 'tac',
-  'current_qs', 'qs_balance', 'mts')
-unique(q13$species)
+# #Format 2013 quotas
+# q13 <- read.csv('data/quotas_2013.csv', stringsAsFactors = FALSE)
+# names(q13) <- c('year', 'permit_id', 'permit_owner', 'species', 'qs_percent', 'tac',
+#   'current_qs', 'qs_balance', 'mts')
+# unique(q13$species)
 
-q13$new_species <- c('Arrowtooth Flounder', "Bocaccio Rockfish", "Canary Rockfish", 
-  "Chilipepper Rockfish", "Cowcod Rockfish", "Darkblotched Rockfish", "Dover Sole", 
-  "English Sole", "Lingcod", "Lingcod", "Longspine Thornyhead", "Minor Shelf North",
-  "Minor Shelf South", "Minor Slope North", 'Minor Slope South', "Other Flatfish", "Pacific Cod", 
-  "Pacific Halibut", "Pacific Ocean Perch", "Pacific Whiting", "Petrale Sole", 'Sablefish', "Sablefish",
-  "Shortspine Thornyhead", "Shortspine Thornyhead", "Splitnose Rockfish", "Starry Flounder", 
-  "Widow Rockfish", "Yelloweye Rockfish", "Yellowtail Rockfish")
+# q13$new_species <- c('Arrowtooth Flounder', "Bocaccio Rockfish", "Canary Rockfish", 
+#   "Chilipepper Rockfish", "Cowcod Rockfish", "Darkblotched Rockfish", "Dover Sole", 
+#   "English Sole", "Lingcod", "Lingcod", "Longspine Thornyhead", "Minor Shelf North",
+#   "Minor Shelf South", "Minor Slope North", 'Minor Slope South', "Other Flatfish", "Pacific Cod", 
+#   "Pacific Halibut", "Pacific Ocean Perch", "Pacific Whiting", "Petrale Sole", 'Sablefish', "Sablefish",
+#   "Shortspine Thornyhead", "Shortspine Thornyhead", "Splitnose Rockfish", "Starry Flounder", 
+#   "Widow Rockfish", "Yelloweye Rockfish", "Yellowtail Rockfish")
 
-tnc_q13 <- q13 %>% filter(permit_owner == "THE NATURE CONSERVANCY")
-tnc_q13$tac <- gsub("\\,", "", tnc_q13$tac)
-tnc_q13$tac <- as.numeric(tnc_q13$tac)
-tnc_q13$species <- tnc_q13$new_species
+# tnc_q13 <- q13 %>% filter(permit_owner == "THE NATURE CONSERVANCY")
+# tnc_q13$tac <- gsub("\\,", "", tnc_q13$tac)
+# tnc_q13$tac <- as.numeric(tnc_q13$tac)
+# tnc_q13$species <- tnc_q13$new_species
 
-quotas_mb <- quotas %>% select(-tac) %>% left_join(tnc_q13 %>% select(species, tac), by = 'species')
-quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
+# quotas_mb <- quotas %>% select(-tac) %>% left_join(tnc_q13 %>% select(species, tac), by = 'species')
+# quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
 
 #Format the species names
 
 #---------------------------------------------------------------------------------
 #Add in monthly prices
 
-# prices <- read.csv('data/monthly_prices.csv', stringsAsFactors = FALSE)
-# names(prices) <- tolower(names(prices))
-# names(prices)[2] <- "dport"
-# names(prices)[3] <- "species"
+prices <- read.csv('data/monthly_prices.csv', stringsAsFactors = FALSE)
+names(prices) <- tolower(names(prices))
+names(prices)[2] <- "dport"
+names(prices)[3] <- "species"
 
-# #Check Species names
-# unique(prices$species)[which(unique(prices$species) %in% unique(filt_clusts$species) == FALSE)]
+#Check Species names
+unique(prices$species)[which(unique(prices$species) %in% unique(filt_clusts$species) == FALSE)]
 
-# #Change POP and shortspine/longspine thornyheads
-# prices[grep("Pacific Ocean Perch", prices$species), 'species'] <- "Pacific Ocean Perch"
-# prices[grep("/ Longspine Thorny", prices$species), 'species'] <- "Shortspine/Longspine Thornyhead"
+#Change POP and shortspine/longspine thornyheads
+prices[grep("Pacific Ocean Perch", prices$species), 'species'] <- "Pacific Ocean Perch"
+prices[grep("/ Longspine Thorny", prices$species), 'species'] <- "Shortspine/Longspine Thornyhead"
 
-
-# #Check port names
-# unique(prices$dport)[unique(prices$dport) %in% unique(filt_clusts$dport_desc) == FALSE]
-# prices[grep("ASTORIA", prices$dport), 'dport'] <- "ASTORIA / WARRENTON"
-# prices[grep("Charleston", prices$dport), 'dport'] <- "CHARLESTON (COOS BAY)"
+#Check port names
+unique(prices$dport)[unique(prices$dport) %in% unique(filt_clusts$dport_desc) == FALSE]
+prices[grep("ASTORIA", prices$dport), 'dport'] <- "ASTORIA / WARRENTON"
+prices[grep("Charleston", prices$dport), 'dport'] <- "CHARLESTON (COOS BAY)"
 
 # #Add it into filt_clusts
 # filt_clusts$exval_pound <- NULL
 
-# # names(prices)[9] <- 'exval_pound'
+# names(prices)[9] <- 'exval_pound'
+prices <- plyr::rename(prices, c("year" = 'ryear', 'month' = 'rmonth', 'dport' = 'r_port', 
+  'price' = 'exval_pound'))
 
-# prices <- plyr::rename(prices, c("year" = 'ryear', 'month' = 'rmonth', 'dport' = 'r_port', 
-#   'price' = 'exval_pound'))
+#Add prices into tows_clust
+#Fill in price data so there are values for each previous month
+prices_expanded <- prices %>% expand(r_port, species, ryear, rmonth)
+prices_expanded <- prices_expanded %>% left_join(prices %>%
+  select(r_port, species, ryear, rmonth, exval_pound), by = c("r_port", "species", 'ryear',
+  'rmonth'))
+
+#Look at filt_clusts when available
+annual_prices <- filt_clusts %>% ungroup %>% 
+  distinct(r_port, ryear, species, rmonth, exval_pound) %>%
+  as.data.frame
+names(annual_prices)[5] <- 'annual_price'
+
+prices_expanded <- prices_expanded %>% left_join(annual_prices, by = c("r_port",
+  "ryear", 'species', 'rmonth'))
+
+#Use annual prices in the case of missing monthly prices
+prices_expanded <- prices_expanded %>% group_by(r_port, species, ryear) %>% fill(annual_price) 
+
+prices_expanded <- prices_expanded %>% group_by(species) %>% 
+  mutate(species_avg_price = mean(exval_pound, na.rm = T)) %>% 
+  group_by(species, r_port) %>% mutate(species_port_avg_price = mean(exval_pound, na.rm = T)) %>%
+  group_by(species, ryear) %>% mutate(species_year_avg_price = mean(exval_pound, na.rm = T)) %>%
+  as.data.frame
+
+#Fill in missing exval_pound values with: first
+#1. The annual species average value
+na_ind <- which(is.na(prices_expanded$exval_pound))
+prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_year_avg_price']
+
+#2. The species average value 
+na_ind <- which(is.na(prices_expanded$exval_pound))
+prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_avg_price']
+
+#Now add into tows_clust
+prices_expanded <- prices_expanded %>% select(r_port, species, ryear, rmonth, exval_pound)
+
+tc1 <- tows_clust %>% left_join(prices_expanded, by = c("r_port", "species",
+  'ryear', 'rmonth'))
+
+tows_clust$haul_spp <- paste(tows_clust$haul_id, tows_clust$species)
+tc1$haul_spp <- paste(tc1$haul_id, tc1$species)
+
+#Remove the duplicated values
+tows_clust <- tc1 %>% distinct(haul_spp, .keep_all = T) 
+rm(tc1)
+
+#---------------------------------------------------------------------------------
+#Add in avg_quota price, exval_pound, d_port_long, d_port_lat, set_date
+#Exval_pound added above
+filt_clusts <- filt_clusts %>% ungroup
+
+###Add in avg_quota prices
+qps <- filt_clusts %>% ungroup %>% filter(type %in% c('weaks')) %>% distinct(species, avg_quota_price)
+qps <- subset(qps, species != "Cowcod Rockfish")
+tows_clust <- tows_clust %>% left_join(qps, by = 'species')
+
+###Add in d_port_long and lats
+port_lat_long <- filt_clusts %>% distinct(d_port, d_port_lat, d_port_long) %>% as.data.frame
+tows_clust <- tows_clust %>% left_join(port_lat_long, by = "d_port")
+tows_clust %>% distinct(d_port, d_port_lat, d_port_long)
+
+###Add in date
+tows_clust$set_date <- paste(tows_clust$set_year, tows_clust$set_month, tows_clust$set_day, sep = "-")
+tows_clust$set_date <- ymd(tows_clust$set_date)
+
+#
 
 # names(prices)[names(prices) %in% names(filt_clusts)]
 
@@ -134,9 +209,11 @@ quotas_mb <- quotas_mb %>% group_by(species, type) %>% summarize(tac = sum(tac))
 # rm(filt_clusts1)
 # save(filt_clusts, file = 'output/filt_clusts_w_monthly_prices.Rdata')
 
-
 #---------------------------------------------------------------------------------
-load(file = 'output/filt_clusts_w_monthly_prices.Rdata')
+#Add in the filt_clusts
+# load(file = 'output/filt_clusts_w_monthly_prices.Rdata')
+
+#Check that 
 filt_clusts$dupes <- NULL
 
 filt_clusts %>% group_by(set_year) %>% summarize(nhauls = length(unique(haul_id)))
