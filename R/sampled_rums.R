@@ -118,7 +118,7 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
 
-  #-----------------------------------------------------------------------------
+  #-----------------------------------------------------------------------------  
   dummys <- foreach::foreach(ii = 1:nrow(td1), 
     # .export = c('dat', 'td1'),
     .packages = c("dplyr", 'lubridate')) %dopar% 
@@ -127,8 +127,6 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
 
   print("Done calculating dummys and revenues")    
   dummys1 <- ldply(dummys)
-
-browser()
 
   #Change values to be 0 and 1 for dummy variables
   # tow_dates <- cbind(tow_dates, dummys1)
@@ -142,8 +140,8 @@ browser()
   
   #Add in charcater set_date for sampled_hauls
   sampled_hauls$set_date_chr <- as.character(sampled_hauls$set_date)
-  td1 <- td1 %>% select(unq_clust, set_date_chr, dummy_prev_days, prev_days_rev, dummy_prev_year_days, 
-    prev_year_days_rev) 
+  td1 <- td1 %>% select(unq_clust, set_date_chr, dummy_prev_days, dummy_prev_year_days, 
+    dummy_miss, miss_rev) 
   
   sampled_hauls <- sampled_hauls %>% left_join(td1, by = c("unq_clust", "set_date_chr"))
   
@@ -158,15 +156,16 @@ browser()
   sampled_hauls[which(sampled_hauls$dummy_not_first == 2), "dummy_not_first"] <- 0
   
   #Make sure that missing values have dummy variable value of 1 for prev_days
-  sampled_hauls[which(sampled_hauls$dummy_prev_days != 0), 'dummy_prev_days'] <- 0
-  sampled_hauls[which(sampled_hauls$prev_days_rev == 0), "dummy_prev_days"] <- 1
+  sampled_hauls[which(sampled_hauls$dummy_prev_days != 0), 'dummy_prev_days'] <- 1
   sampled_hauls[which(sampled_hauls$dummy_prev_year_days != 0), 'dummy_prev_year_days'] <- 1
 
-# sampled_hauls %>% filter(fished_haul == 128004)  
+  sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
+  sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
+  
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
-    dummy_prev_days, prev_days_rev, dummy_prev_year_days, prev_year_days_rev,
+    dummy_prev_days, dummy_prev_year_days, dummy_miss, miss_rev,
     dummy_first, dummy_not_first)
   
   rdo <- rdo %>% group_by(fished_haul) %>% mutate(alt_tow = 1:length(haul_id)) %>% as.data.frame 
@@ -182,30 +181,36 @@ browser()
   the_tows <- mlogit.data(rdo, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
 
-  mf <- mFormula(fished ~ prev_days_rev * dummy_first + 
-    distance * dummy_first + prev_days_rev * dummy_not_first +
-    distance * dummy_not_first - distance - prev_days_rev - 1 - 
-    dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days)
+  mf <- mFormula(fished ~ miss_rev * dummy_first + 
+    distance * dummy_first + miss_rev * dummy_not_first +
+    distance * dummy_not_first - distance - miss_rev - 1 - 
+    dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days + dummy_miss)
   
   res <- mlogit(mf, the_tows)
 
   #List coefficients and rename to align with jeem paper
   coefs <- coef(res)
   coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
-    "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
-    "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
-    "distance:dummy_not_first" = 'dist'))
+    "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
+    "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
+    "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
   
-  coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')],
+  coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dmiss', 'dum30', 'dum30y')],
     digits = 5))
 
   ps <- summary(res)$CoefTable[, 4]
 
   ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
-    "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
-    "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
-    "distance:dummy_not_first" = 'dist'))
-  ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dum30', 'dum30y')]
+    "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
+    "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
+    "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
+  
+  # ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
+  #   "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
+  #   "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
+  #   "distance:dummy_not_first" = 'dist'))
+  
+  ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dmiss','dum30', 'dum30y')]
   
   #Add significance values
   coefs$p_values <- round(ps, digits = 5)
