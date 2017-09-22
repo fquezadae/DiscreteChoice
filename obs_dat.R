@@ -183,7 +183,60 @@ tows_clust %>% distinct(d_port, d_port_lat, d_port_long)
 tows_clust$set_date <- paste(tows_clust$set_year, tows_clust$set_month, tows_clust$set_day, sep = "-")
 tows_clust$set_date <- ymd(tows_clust$set_date)
 
-#
+#---------------------------------------------------------------------------------
+#Bin tows_clust, then back assign the tows
+tows_clust_bin <- bin_data(tows_clust, x_col = 'avg_long', y_col = 'avg_lat', group = 'set_year', grid_size = c(.0909, .11),
+  group_vec = 2007:2014)
+
+#Back assign the clustered values
+unq_bins <- tows_clust_bin %>% distinct(unq, .keep_all = T)
+
+#Loop through all the unq_bins rows
+tows_clust$unq <- "999"
+tows_clust$bin_x <- "999"
+tows_clust$bin_y <- "999"
+
+for(ii in 1:nrow(unq_bins)){
+  tb <- unq_bins[ii, ]
+  the_inds <- which(tows_clust$avg_long > tb$xmin & tows_clust$avg_long < tb$xmax &
+    tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
+  tows_clust[the_inds, 'unq'] <- tb$unq
+  tows_clust[the_inds, 'bin_x'] <- tb$x
+  tows_clust[the_inds, 'bin_y'] <- tb$y
+}
+
+tows_clust$bin_x <- round(as.numeric(tows_clust$bin_x), digits = 4)
+tows_clust$bin_y <- round(as.numeric(tows_clust$bin_y), digits = 4)
+
+#---------------------------------------------------------------------------------
+#Add in type for tows_clust
+tows_clust$type <- NULL
+# tows_clust$type <- "other"
+
+the_types <- filt_clusts %>% filter(type != 'other') %>% distinct(species, type) %>% as.data.frame
+tows_clust <- tows_clust %>% left_join(the_types, by = 'species')
+tows_clust[which(is.na(tows_clust$type)), 'type'] <- "other"
+
+#Some prices exval pound values are still NAs?
+exval_nas <- which(is.na(tows_clust$exval_pound))
+tows_clust %>% filter(type != 'other', is.na(exval_pound)) %>% distinct(species, set_year, d_port)
+
+  
+#####Need to check the prices
+
+
+unique(tows_clust[exval_nas, "species"])
+
+
+#Check price amounts
+9356301
+
+
+
+mb1 <- sampled_rums(data_in = tows_clust, the_port = 'MORRO BAY', min_year = 2010, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 310, ncores = 1)
+
 
 # names(prices)[names(prices) %in% names(filt_clusts)]
 
@@ -929,15 +982,7 @@ mb_reps1 %>% filter(rep == 300) %>% distinct(drvid_id, haul_id, .keep_all = T) %
 
 
 #Look at how variable revenues are for mb_reps
-
-
-eddie <- fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed = 300)
-
-
-
-
-
-
+# eddie <- fish_fleet(fleet_chars = vess_vals, rum_res = the_probs, seed = 300)
 
 ggplot(all_trips) + geom_point(aes(x = avg_long,))
 
@@ -1074,6 +1119,7 @@ names(exvessel) <- c('set_year', 'd_state', 'species', 'exval_pound')
 #Can find tows_clust in "ch4_cluster.R"
 
 tows_clust <- left_join(tows_clust, exvessel, by = c("set_year", "d_state", "species"))
+
 
 # load(file = "C://Users//Lewis//Documents//Data//comb_data.Rda")
 # obs_data <- comb_data
