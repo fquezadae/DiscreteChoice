@@ -228,8 +228,8 @@ tows_clust <- tows_clust %>% left_join(unq_clusts, by = c('dport_desc', 'clust')
 
 #---------------------------------------------------------------------------------
 
-mb1 <- sampled_rums(data_in = tows_clust, the_port = 'MORRO BAY', min_year = 2010, max_year = 2014,
-  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+mb1 <- sampled_rums(data_in = tows_clust, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+  risk_coefficient = 1, ndays = 30, focus_year = 2013, 
   nhauls_sampled = 50, seed = 310, ncores = 6)
 
 
