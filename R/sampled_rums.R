@@ -20,7 +20,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-browser()
+
   ##Filter the data
   dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
@@ -109,7 +109,7 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   #What were the average revenues in each location
   tow_dates <- sampled_hauls %>% 
     select(unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
-      avg_long, avg_lat, avg_depth, unq_clust_bin, unq)
+      avg_long, avg_lat, avg_depth, unq)
   
   #Look at the unique dates and clusters only
   # td1 <- tow_dates %>% distinct(unq_clust, set_date)
@@ -125,9 +125,10 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
       process_dummys(xx = ii, td2 = td1, dat1 = dat)
   stopCluster(cl)
 
-
   print("Done calculating dummys and revenues")    
   dummys1 <- ldply(dummys)
+
+browser()
 
   #Change values to be 0 and 1 for dummy variables
   # tow_dates <- cbind(tow_dates, dummys1)
