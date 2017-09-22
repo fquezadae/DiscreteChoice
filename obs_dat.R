@@ -44,6 +44,10 @@ tows_clust <- tows_clust %>% group_by(haul_id, species) %>%
   mutate(apounds = sum(apounds, na.rm = T), hpounds = sum(hpounds, na.rm = T)) %>%
   distinct(haul_id, species, .keep_all = T) %>% as.data.frame
 
+#Replace Princeton to keep consistent
+tows_clust[which(tows_clust$d_port == "PRINCETON (HALF MOON BAY)"), 'd_port'] <- "PRINCETON / HALF MOON BAY"
+tows_clust[which(tows_clust$r_port == "PRINCETON (HALF MOON BAY)"), 'r_port'] <- "PRINCETON / HALF MOON BAY"
+
 #More formatting in ch4_movement
 # load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 load("output/file_clusts_dist.Rdata")
@@ -177,7 +181,6 @@ tows_clust <- tows_clust %>% left_join(qps, by = 'species')
 ###Add in d_port_long and lats
 port_lat_long <- filt_clusts %>% distinct(d_port, d_port_lat, d_port_long) %>% as.data.frame
 tows_clust <- tows_clust %>% left_join(port_lat_long, by = "d_port")
-tows_clust %>% distinct(d_port, d_port_lat, d_port_long)
 
 ###Add in date
 tows_clust$set_date <- paste(tows_clust$set_year, tows_clust$set_month, tows_clust$set_day, sep = "-")
@@ -219,23 +222,15 @@ tows_clust[which(is.na(tows_clust$type)), 'type'] <- "other"
 
 #Some prices exval pound values are still NAs?
 exval_nas <- which(is.na(tows_clust$exval_pound))
-tows_clust %>% filter(type != 'other', is.na(exval_pound)) %>% distinct(species, set_year, d_port)
 
-  
-#####Need to check the prices
+unq_clusts <- tows_clust %>% distinct(dport_desc, clust) %>% mutate(unq_clust = 1:length(clust))
+tows_clust <- tows_clust %>% left_join(unq_clusts, by = c('dport_desc', 'clust'))
 
-
-unique(tows_clust[exval_nas, "species"])
-
-
-#Check price amounts
-9356301
-
-
+#---------------------------------------------------------------------------------
 
 mb1 <- sampled_rums(data_in = tows_clust, the_port = 'MORRO BAY', min_year = 2010, max_year = 2014,
   risk_coefficient = 1, ndays = 30, focus_year = 2012, 
-  nhauls_sampled = 50, seed = 310, ncores = 1)
+  nhauls_sampled = 50, seed = 310, ncores = 6)
 
 
 # names(prices)[names(prices) %in% names(filt_clusts)]
