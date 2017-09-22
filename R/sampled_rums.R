@@ -20,7 +20,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-# browser()
+browser()
   ##Filter the data
   dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
@@ -48,9 +48,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     mutate(haul_net_revenue = sum(net_revenue, na.rm = T))
   
   #Create data set, for each tow
-  dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
-    drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
-    haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
+dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
+    drvid, trip_id, set_day, set_year, haul_net_revenue,
+    haul_num, avg_long, avg_lat, avg_depth, unq) %>% as.data.frame  
+  # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
+  #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
+  #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
   dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= 2011)
   
   set.seed(seed)
@@ -85,8 +88,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #-----------------------------------------------------------------------------
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
-
-
   cl <- makeCluster(ncores)
   registerDoParallel(cl)
 
@@ -96,9 +97,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
       sample_hauls(xx = ii, hauls1 = hauls, 
         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled)
   
-
-  # }, mc.cores = ncores)
-
   print("Done sampling hauls")  
   sampled_hauls <- ldply(sampled_hauls)
 
