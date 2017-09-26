@@ -37,29 +37,29 @@ states_map <- map_data("state")
 #Load and format data
 
 #Tows clust, more complete than filt_clusts
-load("output/tows_clust.Rdata")
+# load("output/tows_clust.Rdata")
 
-#Consolidate species records in tows_clust
-tows_clust <- tows_clust %>% group_by(haul_id, species) %>%
-  mutate(apounds = sum(apounds, na.rm = T), hpounds = sum(hpounds, na.rm = T)) %>%
-  distinct(haul_id, species, .keep_all = T) %>% as.data.frame
+# #Consolidate species records in tows_clust
+# tows_clust <- tows_clust %>% group_by(haul_id, species) %>%
+#   mutate(apounds = sum(apounds, na.rm = T), hpounds = sum(hpounds, na.rm = T)) %>%
+#   distinct(haul_id, species, .keep_all = T) %>% as.data.frame
 
-#Replace Princeton to keep consistent
-tows_clust[which(tows_clust$d_port == "PRINCETON (HALF MOON BAY)"), 'd_port'] <- "PRINCETON / HALF MOON BAY"
-tows_clust[which(tows_clust$r_port == "PRINCETON (HALF MOON BAY)"), 'r_port'] <- "PRINCETON / HALF MOON BAY"
+# #Replace Princeton to keep consistent
+# tows_clust[which(tows_clust$d_port == "PRINCETON (HALF MOON BAY)"), 'd_port'] <- "PRINCETON / HALF MOON BAY"
+# tows_clust[which(tows_clust$r_port == "PRINCETON (HALF MOON BAY)"), 'r_port'] <- "PRINCETON / HALF MOON BAY"
 
-#More formatting in ch4_movement
-# load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
-load("output/file_clusts_dist.Rdata")
+# #More formatting in ch4_movement
+# # load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
+# load("output/file_clusts_dist.Rdata")
 
-filt_clusts <- filt_clusts_dist
-rm(filt_clusts_dist)
-# names(filt_clusts)[grep('hpounds', names(filt_clusts))]
-filt_clusts$hpounds.y <- NULL
-filt_clusts$apounds.y <- NULL
+# filt_clusts <- filt_clusts_dist
+# rm(filt_clusts_dist)
+# # names(filt_clusts)[grep('hpounds', names(filt_clusts))]
+# filt_clusts$hpounds.y <- NULL
+# filt_clusts$apounds.y <- NULL
 
-names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
-names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
+# names(filt_clusts)[grep('hpounds', names(filt_clusts))] <- 'hpounds'
+# names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
 
 # load("//udrive.uw.edu//udrive//quotas.Rdata")
 
@@ -97,157 +97,160 @@ names(filt_clusts)[grep('apounds', names(filt_clusts))] <- 'apounds'
 #---------------------------------------------------------------------------------
 #Add in monthly prices
 
-prices <- read.csv('data/monthly_prices.csv', stringsAsFactors = FALSE)
-names(prices) <- tolower(names(prices))
-names(prices)[2] <- "dport"
-names(prices)[3] <- "species"
+# prices <- read.csv('data/monthly_prices.csv', stringsAsFactors = FALSE)
+# names(prices) <- tolower(names(prices))
+# names(prices)[2] <- "dport"
+# names(prices)[3] <- "species"
 
-#Check Species names
-unique(prices$species)[which(unique(prices$species) %in% unique(filt_clusts$species) == FALSE)]
+# #Check Species names
+# unique(prices$species)[which(unique(prices$species) %in% unique(filt_clusts$species) == FALSE)]
 
-#Change POP and shortspine/longspine thornyheads
-prices[grep("Pacific Ocean Perch", prices$species), 'species'] <- "Pacific Ocean Perch"
-prices[grep("/ Longspine Thorny", prices$species), 'species'] <- "Shortspine/Longspine Thornyhead"
+# #Change POP and shortspine/longspine thornyheads
+# prices[grep("Pacific Ocean Perch", prices$species), 'species'] <- "Pacific Ocean Perch"
+# prices[grep("/ Longspine Thorny", prices$species), 'species'] <- "Shortspine/Longspine Thornyhead"
 
-#Check port names
-unique(prices$dport)[unique(prices$dport) %in% unique(filt_clusts$dport_desc) == FALSE]
-prices[grep("ASTORIA", prices$dport), 'dport'] <- "ASTORIA / WARRENTON"
-prices[grep("Charleston", prices$dport), 'dport'] <- "CHARLESTON (COOS BAY)"
+# #Check port names
+# unique(prices$dport)[unique(prices$dport) %in% unique(filt_clusts$dport_desc) == FALSE]
+# prices[grep("ASTORIA", prices$dport), 'dport'] <- "ASTORIA / WARRENTON"
+# prices[grep("Charleston", prices$dport), 'dport'] <- "CHARLESTON (COOS BAY)"
 
-# #Add it into filt_clusts
-# filt_clusts$exval_pound <- NULL
+# # #Add it into filt_clusts
+# # filt_clusts$exval_pound <- NULL
 
-# names(prices)[9] <- 'exval_pound'
-prices <- plyr::rename(prices, c("year" = 'ryear', 'month' = 'rmonth', 'dport' = 'r_port', 
-  'price' = 'exval_pound'))
+# # names(prices)[9] <- 'exval_pound'
+# prices <- plyr::rename(prices, c("year" = 'ryear', 'month' = 'rmonth', 'dport' = 'r_port', 
+#   'price' = 'exval_pound'))
 
-#Add prices into tows_clust
-#Fill in price data so there are values for each previous month
-prices_expanded <- prices %>% expand(r_port, species, ryear, rmonth)
-prices_expanded <- prices_expanded %>% left_join(prices %>%
-  select(r_port, species, ryear, rmonth, exval_pound), by = c("r_port", "species", 'ryear',
-  'rmonth'))
+# #Add prices into tows_clust
+# #Fill in price data so there are values for each previous month
+# prices_expanded <- prices %>% expand(r_port, species, ryear, rmonth)
+# prices_expanded <- prices_expanded %>% left_join(prices %>%
+#   select(r_port, species, ryear, rmonth, exval_pound), by = c("r_port", "species", 'ryear',
+#   'rmonth'))
 
-#Look at filt_clusts when available
-annual_prices <- filt_clusts %>% ungroup %>% 
-  distinct(r_port, ryear, species, rmonth, exval_pound) %>%
-  as.data.frame
-names(annual_prices)[5] <- 'annual_price'
+# #Look at filt_clusts when available
+# annual_prices <- filt_clusts %>% ungroup %>% 
+#   distinct(r_port, ryear, species, rmonth, exval_pound) %>%
+#   as.data.frame
+# names(annual_prices)[5] <- 'annual_price'
 
-prices_expanded <- prices_expanded %>% left_join(annual_prices, by = c("r_port",
-  "ryear", 'species', 'rmonth'))
+# prices_expanded <- prices_expanded %>% left_join(annual_prices, by = c("r_port",
+#   "ryear", 'species', 'rmonth'))
 
-#Use annual prices in the case of missing monthly prices
-prices_expanded <- prices_expanded %>% group_by(r_port, species, ryear) %>% fill(annual_price) 
+# #Use annual prices in the case of missing monthly prices
+# prices_expanded <- prices_expanded %>% group_by(r_port, species, ryear) %>% fill(annual_price) 
 
-prices_expanded <- prices_expanded %>% group_by(species) %>% 
-  mutate(species_avg_price = mean(exval_pound, na.rm = T)) %>% 
-  group_by(species, r_port) %>% mutate(species_port_avg_price = mean(exval_pound, na.rm = T)) %>%
-  group_by(species, ryear) %>% mutate(species_year_avg_price = mean(exval_pound, na.rm = T)) %>%
-  as.data.frame
+# prices_expanded <- prices_expanded %>% group_by(species) %>% 
+#   mutate(species_avg_price = mean(exval_pound, na.rm = T)) %>% 
+#   group_by(species, r_port) %>% mutate(species_port_avg_price = mean(exval_pound, na.rm = T)) %>%
+#   group_by(species, ryear) %>% mutate(species_year_avg_price = mean(exval_pound, na.rm = T)) %>%
+#   as.data.frame
 
-#Fill in missing exval_pound values with: first
-#1. The annual species average value
-na_ind <- which(is.na(prices_expanded$exval_pound))
-prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_year_avg_price']
+# #Fill in missing exval_pound values with: first
+# #1. The annual species average value
+# na_ind <- which(is.na(prices_expanded$exval_pound))
+# prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_year_avg_price']
 
-#2. The species average value 
-na_ind <- which(is.na(prices_expanded$exval_pound))
-prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_avg_price']
+# #2. The species average value 
+# na_ind <- which(is.na(prices_expanded$exval_pound))
+# prices_expanded[na_ind, 'exval_pound'] <- prices_expanded[na_ind, 'species_avg_price']
 
-#Now add into tows_clust
-prices_expanded <- prices_expanded %>% select(r_port, species, ryear, rmonth, exval_pound)
+# #Now add into tows_clust
+# prices_expanded <- prices_expanded %>% select(r_port, species, ryear, rmonth, exval_pound)
 
-tc1 <- tows_clust %>% left_join(prices_expanded, by = c("r_port", "species",
-  'ryear', 'rmonth'))
+# tc1 <- tows_clust %>% left_join(prices_expanded, by = c("r_port", "species",
+#   'ryear', 'rmonth'))
 
-tows_clust$haul_spp <- paste(tows_clust$haul_id, tows_clust$species)
-tc1$haul_spp <- paste(tc1$haul_id, tc1$species)
+# tows_clust$haul_spp <- paste(tows_clust$haul_id, tows_clust$species)
+# tc1$haul_spp <- paste(tc1$haul_id, tc1$species)
 
-#Remove the duplicated values
-tows_clust <- tc1 %>% distinct(haul_spp, .keep_all = T) 
-rm(tc1)
+# #Remove the duplicated values
+# tows_clust <- tc1 %>% distinct(haul_spp, .keep_all = T) 
+# rm(tc1)
 
-#---------------------------------------------------------------------------------
-#Add in avg_quota price, exval_pound, d_port_long, d_port_lat, set_date
-#Exval_pound added above
-filt_clusts <- filt_clusts %>% ungroup
+# #---------------------------------------------------------------------------------
+# #Add in avg_quota price, exval_pound, d_port_long, d_port_lat, set_date
+# #Exval_pound added above
+# filt_clusts <- filt_clusts %>% ungroup
 
-###Add in avg_quota prices
-qps <- filt_clusts %>% ungroup %>% filter(type %in% c('weaks')) %>% distinct(species, avg_quota_price)
-qps <- subset(qps, species != "Cowcod Rockfish")
-tows_clust <- tows_clust %>% left_join(qps, by = 'species')
+# ###Add in avg_quota prices
+# qps <- filt_clusts %>% ungroup %>% filter(type %in% c('weaks')) %>% distinct(species, avg_quota_price)
+# qps <- subset(qps, species != "Cowcod Rockfish")
+# tows_clust <- tows_clust %>% left_join(qps, by = 'species')
 
-###Add in d_port_long and lats
-port_lat_long <- filt_clusts %>% distinct(d_port, d_port_lat, d_port_long) %>% as.data.frame
-tows_clust <- tows_clust %>% left_join(port_lat_long, by = "d_port")
+# ###Add in d_port_long and lats
+# port_lat_long <- filt_clusts %>% distinct(d_port, d_port_lat, d_port_long) %>% as.data.frame
+# tows_clust <- tows_clust %>% left_join(port_lat_long, by = "d_port")
 
-###Add in date
-tows_clust$set_date <- paste(tows_clust$set_year, tows_clust$set_month, tows_clust$set_day, sep = "-")
-tows_clust$set_date <- ymd(tows_clust$set_date)
+# ###Add in date
+# tows_clust$set_date <- paste(tows_clust$set_year, tows_clust$set_month, tows_clust$set_day, sep = "-")
+# tows_clust$set_date <- ymd(tows_clust$set_date)
 
 #---------------------------------------------------------------------------------
 #Bin tows_clust, then back assign the tows
-tows_clust_bin <- bin_data(tows_clust, x_col = 'avg_long', y_col = 'avg_lat', group = 'set_year', grid_size = c(.0909, .11),
-  group_vec = 2007:2014)
+# tows_clust_bin <- bin_data(tows_clust, x_col = 'avg_long', y_col = 'avg_lat', group = 'set_year', grid_size = c(.0909, .11),
+#   group_vec = 2007:2014)
 
-#Back assign the clustered values
-unq_bins <- tows_clust_bin %>% distinct(unq, .keep_all = T)
+# #Back assign the clustered values
+# unq_bins <- tows_clust_bin %>% distinct(unq, .keep_all = T)
 
-#Loop through all the unq_bins rows
-tows_clust$unq <- "999"
-tows_clust$bin_x <- "999"
-tows_clust$bin_y <- "999"
+# #Loop through all the unq_bins rows
+# tows_clust$unq <- "999"
+# tows_clust$bin_x <- "999"
+# tows_clust$bin_y <- "999"
 
-for(ii in 1:nrow(unq_bins)){
-  tb <- unq_bins[ii, ]
-  the_inds <- which(tows_clust$avg_long > tb$xmin & tows_clust$avg_long < tb$xmax &
-    tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
-  tows_clust[the_inds, 'unq'] <- tb$unq
-  tows_clust[the_inds, 'bin_x'] <- tb$x
-  tows_clust[the_inds, 'bin_y'] <- tb$y
-}
+# for(ii in 1:nrow(unq_bins)){
+#   tb <- unq_bins[ii, ]
+#   the_inds <- which(tows_clust$avg_long > tb$xmin & tows_clust$avg_long < tb$xmax &
+#     tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
+#   tows_clust[the_inds, 'unq'] <- tb$unq
+#   tows_clust[the_inds, 'bin_x'] <- tb$x
+#   tows_clust[the_inds, 'bin_y'] <- tb$y
+# }
 
-tows_clust$bin_x <- round(as.numeric(tows_clust$bin_x), digits = 4)
-tows_clust$bin_y <- round(as.numeric(tows_clust$bin_y), digits = 4)
+# tows_clust$bin_x <- round(as.numeric(tows_clust$bin_x), digits = 4)
+# tows_clust$bin_y <- round(as.numeric(tows_clust$bin_y), digits = 4)
 
-#---------------------------------------------------------------------------------
-#Add in type for tows_clust
-tows_clust$type <- NULL
-# tows_clust$type <- "other"
+# #---------------------------------------------------------------------------------
+# #Add in type for tows_clust
+# tows_clust$type <- NULL
+# # tows_clust$type <- "other"
 
-the_types <- filt_clusts %>% filter(type != 'other') %>% distinct(species, type) %>% as.data.frame
-tows_clust <- tows_clust %>% left_join(the_types, by = 'species')
-tows_clust[which(is.na(tows_clust$type)), 'type'] <- "other"
+# the_types <- filt_clusts %>% filter(type != 'other') %>% distinct(species, type) %>% as.data.frame
+# tows_clust <- tows_clust %>% left_join(the_types, by = 'species')
+# tows_clust[which(is.na(tows_clust$type)), 'type'] <- "other"
 
-#Some prices exval pound values are still NAs?
-exval_nas <- which(is.na(tows_clust$exval_pound))
+# #Some prices exval pound values are still NAs?
+# exval_nas <- which(is.na(tows_clust$exval_pound))
 
-unq_clusts <- tows_clust %>% distinct(dport_desc, clust) %>% mutate(unq_clust = 1:length(clust))
-tows_clust <- tows_clust %>% left_join(unq_clusts, by = c('dport_desc', 'clust'))
+# unq_clusts <- tows_clust %>% distinct(dport_desc, clust) %>% mutate(unq_clust = 1:length(clust))
+# tows_clust <- tows_clust %>% left_join(unq_clusts, by = c('dport_desc', 'clust'))
 
-save(tows_clust, file = "/Volumes/udrive/tows_clust_921.Rdata")
+# save(tows_clust, file = "/Volumes/udrive/tows_clust_921.Rdata")
 
-load(file = "/Volumes/udrive/tows_clust_921.Rdata")
+# load(file = "/Volumes/udrive/tows_clust_921.Rdata")
 
-#Add in depth bands to tows_clust
-depths <- data.frame(depth_band = c(1, 2, 3, 4, 5, 6, 7),
-  min_depth = c(0, 50, 100, 150, 200, 300, 500), 
-  max_depth = c(50, 100, 150, 200, 300, 500, 700))
+# #Add in depth bands to tows_clust
+# depths <- data.frame(depth_band = c(1, 2, 3, 4, 5, 6, 7),
+#   min_depth = c(0, 50, 100, 150, 200, 300, 500), 
+#   max_depth = c(50, 100, 150, 200, 300, 500, 700))
 
-tows_clust$depth_bin <- 69
+# tows_clust$depth_bin <- 69
 
-for(dd in 1:nrow(depths)){
-  temp_depth <- depths[dd, ]
-  tows_clust[which(tows_clust$avg_depth >= temp_depth$min_depth & 
-          tows_clust$avg_depth < temp_depth$max_depth), 'depth_bin'] <- temp_depth$depth_band
-}
+# for(dd in 1:nrow(depths)){
+#   temp_depth <- depths[dd, ]
+#   tows_clust[which(tows_clust$avg_depth >= temp_depth$min_depth & 
+#           tows_clust$avg_depth < temp_depth$max_depth), 'depth_bin'] <- temp_depth$depth_band
+# }
 
-unique(tows_clust$depth_bin)
+# unique(tows_clust$depth_bin)
 
 # tows_clust[which(tows_clust$depth_bin == 69), 'avg_depth'] 
 save(tows_clust, file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
 #---------------------------------------------------------------------------------
+
+load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
+
 #Add in depth bins to tows_clust
 
 mb1 <- sampled_rums(data_in = tows_clust, the_port = c("MOSS LANDING", 'SAN FRANCISCO'), min_year = 2011, max_year = 2014,
