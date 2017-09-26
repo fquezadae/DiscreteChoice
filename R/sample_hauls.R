@@ -12,17 +12,12 @@
 
   sample_hauls <- function(xx, hauls1 = hauls, dist_hauls_catch_shares1 = dist_hauls_catch_shares,
     nhauls_sampled1 = 50, depth_bin_proportions){
-# browser()
-    
-    #Use rmultinom to sample values in each depth_bin
-    depth_bin_proportions$nsamp <- rmultinom(depth_bin_proportions$depth_bin, size = nhauls_sampled1, 
-        depth_bin_proportions$prop)
-    depth_bin_proportions <- as.data.frame(depth_bin_proportions)
-    
+
+   #Check to make sure there are enough samples of each thing to sample without replacement
    the_samples <- lapply(depth_bin_proportions$depth_bin, FUN = function(dd){
                       temp <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id'],
                                   depth_bin == depth_bin_proportions[dd, "depth_bin"])
-                      samps <- temp %>% sample_n(size = depth_bin_proportions[dd, "nsamp"], replace = T)
+                      samps <- temp %>% sample_n(size = depth_bin_proportions[dd, "n_samp"], replace = F)
                       return(samps)
                   })
    the_samples <- plyr::ldply(the_samples)
