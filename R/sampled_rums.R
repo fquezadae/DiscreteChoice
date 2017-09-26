@@ -18,6 +18,7 @@
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
+
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
 
@@ -34,7 +35,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   dat$rc <- risk_coefficient
 
   # print("only weak stock species adjusted for risk")  
-
   dat$net_price <- dat$exval_pound
   weak_inds <- which(dat$type == 'weaks')
   dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
@@ -48,9 +48,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     mutate(haul_net_revenue = sum(net_revenue, na.rm = T))
   
   #Create data set, for each tow
-dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
+  dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
     drvid, trip_id, set_day, set_year, haul_net_revenue,
-    haul_num, avg_long, avg_lat, avg_depth, unq) %>% as.data.frame  
+    haul_num, avg_long, avg_lat, avg_depth, depth_bin, unq) %>% as.data.frame  
   # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
   #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
   #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
@@ -84,7 +84,7 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   
   #Add this into the hauls data frame
   hauls <- hauls %>% left_join(prev_hauls, by = c('trip_id', 'prev_haul_num'))
-  
+
   #-----------------------------------------------------------------------------
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
@@ -100,6 +100,15 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   print("Done sampling hauls")  
   sampled_hauls <- ldply(sampled_hauls)
 
+# hauls %>% filter(trip_id == 20294)
+# dat %>% filter(haul_id == 127982) %>% distinct(d_port_long, d_port_lat)
+
+# picked <- sampled_hauls[1, ]
+# sampled_hauls %>% filter(fished_haul == 127982) %>% ggplot() + 
+#   geom_point(aes(x = haul_net_revenue, y = distance)) + 
+#   geom_point(aes(x = haul_net_revenue, y = distance, colour = 'red'), data = picked)
+
+
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
@@ -108,8 +117,8 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   
   #What were the average revenues in each location
   tow_dates <- sampled_hauls %>% 
-    select(unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
-      avg_long, avg_lat, avg_depth, unq)
+    select(haul_id, unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
+      avg_long, avg_lat, avg_depth, depth_bin, unq)
   
   #Look at the unique dates and clusters only
   # td1 <- tow_dates %>% distinct(unq_clust, set_date)
@@ -119,6 +128,8 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
 
   #-----------------------------------------------------------------------------  
+# pd <- process_dummys(xx = 1, td2 = td1, dat1 = dat)  
+  
   dummys <- foreach::foreach(ii = 1:nrow(td1), 
     # .export = c('dat', 'td1'),
     .packages = c("dplyr", 'lubridate')) %dopar% 
@@ -131,8 +142,6 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
   #Change values to be 0 and 1 for dummy variables
   # tow_dates <- cbind(tow_dates, dummys1)
   td1 <- cbind(td1, dummys1)
-
-# td1 %>% ggplot(aes(x = prev_days_rev)) + geom_histogram() + facet_wrap(~ unq_clust)
   
   #converte set_date to character string to merge with the sampled_hauls
   tow_dates$set_date_chr <- as.character(tow_dates$set_date)
@@ -161,6 +170,8 @@ dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_c
 
   sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
   sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
+
+
   
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
