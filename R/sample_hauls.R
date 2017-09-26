@@ -6,15 +6,31 @@
 #' @param hauls1 hauls data frame
 #' @param dist_hauls_catch_shares1 df with distance after catch shares
 #' @param nhauls_sampled1 number of sampled hauls
+#' @param depth_bin_proportions Proportions of tows in each depth bin
 
 #' @export
 
   sample_hauls <- function(xx, hauls1 = hauls, dist_hauls_catch_shares1 = dist_hauls_catch_shares,
-    nhauls_sampled1 = 50){
+    nhauls_sampled1 = 50, depth_bin_proportions){
+# browser()
+    
+    #Use rmultinom to sample values in each depth_bin
+    depth_bin_proportions$nsamp <- rmultinom(depth_bin_proportions$depth_bin, size = nhauls_sampled1, 
+        depth_bin_proportions$prop)
+    depth_bin_proportions <- as.data.frame(depth_bin_proportions)
+    
+   the_samples <- lapply(depth_bin_proportions$depth_bin, FUN = function(dd){
+                      temp <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id'],
+                                  depth_bin == depth_bin_proportions[dd, "depth_bin"])
+                      samps <- temp %>% sample_n(size = depth_bin_proportions[dd, "nsamp"], replace = F)
+                      return(samps)
+                  })
+   the_samples <- ldply(the_samples)
 
-    the_samples <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id']) %>% 
-      sample_n(size = nhauls_sampled1, replace = F)
-  
+    #Sample in proportion to depth bins
+    # the_samples <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id']) %>% 
+    #   sample_n(size = nhauls_sampled1, replace = F)
+    
     #Now calculate the distances between the points and the actual points
     actual_haul <- hauls1[xx, ]
   
