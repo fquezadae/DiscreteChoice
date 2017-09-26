@@ -22,10 +22,10 @@
    the_samples <- lapply(depth_bin_proportions$depth_bin, FUN = function(dd){
                       temp <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id'],
                                   depth_bin == depth_bin_proportions[dd, "depth_bin"])
-                      samps <- temp %>% sample_n(size = depth_bin_proportions[dd, "nsamp"], replace = F)
+                      samps <- temp %>% sample_n(size = depth_bin_proportions[dd, "nsamp"], replace = T)
                       return(samps)
                   })
-   the_samples <- ldply(the_samples)
+   the_samples <- plyr::ldply(the_samples)
 
     #Sample in proportion to depth bins
     # the_samples <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id']) %>% 

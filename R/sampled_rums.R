@@ -93,8 +93,21 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   dbp <- dist_hauls_catch_shares %>% filter(depth_bin != 69) %>%
     group_by(depth_bin) %>% summarize(nvals = length(unique(haul_id))) %>%
     mutate(tot_nvals = sum(nvals), prop = nvals / tot_nvals)
+  dbp <- as.data.frame(dbp)
+  
+  #Add number of values to sample
 
+  dbp$n_samp <- dbp$prop * nhauls_sampled
+  
+  #Round the values to integers
+  dbp$n_samp <- round(dbp$n_samp)
+  
+  #Top off the highest value
+  max_dbp <- which(dbp$prop == max(dbp$prop))
+  dbp[max_dbp, 'n_samp'] <- dbp[max_dbp, 'n_samp'] + (nhauls_sampled - sum(round(dbp$n_samp)))
+  
   #-----------------------------------------------------------------------------
+
 # sh <- sample_hauls(xx = 1, hauls1 = hauls, 
 #         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
 #         depth_bin_proportions = dbp)
@@ -105,12 +118,13 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   sampled_hauls <- foreach::foreach(ii = 1:nrow(hauls), 
     .export = c("sample_hauls"), 
-    .packages = c("dplyr", 'lubridate')) %dopar% 
+    .packages = c("dplyr", 'plyr', 'lubridate')) %dopar% 
       sample_hauls(xx = ii, hauls1 = hauls, 
-        dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled)
+        dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
+        depth_bin_proportions = dbp)
   
   print("Done sampling hauls")  
-  sampled_hauls <- ldply(sampled_hauls)
+  sampled_hauls <- plyr::ldply(sampled_hauls)
 
 # hauls %>% filter(trip_id == 20294)
 # dat %>% filter(haul_id == 127982) %>% distinct(d_port_long, d_port_lat)
