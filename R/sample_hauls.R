@@ -11,7 +11,7 @@
 
   sample_hauls <- function(xx, hauls1 = hauls, dist_hauls_catch_shares1 = dist_hauls_catch_shares,
     nhauls_sampled1 = 50){
-# browser()    
+
     the_samples <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id']) %>% 
       sample_n(size = nhauls_sampled1, replace = F)
   
