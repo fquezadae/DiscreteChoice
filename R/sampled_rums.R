@@ -21,7 +21,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-
+browser()
   ##Filter the data
   dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
     set_year <= max_year)
@@ -39,8 +39,13 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   weak_inds <- which(dat$type == 'weaks')
   dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
     dat$avg_quota_price[weak_inds]
-
   # dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
+
+####Change net_price for groundfish and other species to 0
+  dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
+  dat[which(dat$type == 'other'), 'net_price'] <- 0
+####  
+
   dat$net_revenue <- dat$net_price * dat$hpounds
 
   #Sum the haul revenues
@@ -90,6 +95,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #For each haul in the focus year, sample nhauls_sampled tows
   cl <- makeCluster(ncores)
   registerDoParallel(cl)
+
+sh <- sample_hauls(xx = 1, hauls1 = hauls, 
+        dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled)
 
   sampled_hauls <- foreach::foreach(ii = 1:nrow(hauls), 
     .export = c("sample_hauls"), 
