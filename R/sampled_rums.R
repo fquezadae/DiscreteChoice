@@ -106,12 +106,20 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   max_dbp <- which(dbp$prop == max(dbp$prop))
   dbp[max_dbp, 'n_samp'] <- dbp[max_dbp, 'n_samp'] + (nhauls_sampled - sum(round(dbp$n_samp)))
 
+  #Make sure that you don't oversample?
+
+# browser()
   #-----------------------------------------------------------------------------
+ sample_hauls(xx = 1, hauls1 = hauls, 
+   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
+   depth_bin_proportions = dbp)
+
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
   cl <- makeCluster(ncores)
   registerDoParallel(cl)
 
+ 
   sampled_hauls <- foreach::foreach(ii = 1:nrow(hauls), 
     .export = c("sample_hauls"), 
     .packages = c("dplyr", 'plyr', 'lubridate')) %dopar% 
