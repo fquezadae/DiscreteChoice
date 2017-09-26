@@ -226,9 +226,31 @@ exval_nas <- which(is.na(tows_clust$exval_pound))
 unq_clusts <- tows_clust %>% distinct(dport_desc, clust) %>% mutate(unq_clust = 1:length(clust))
 tows_clust <- tows_clust %>% left_join(unq_clusts, by = c('dport_desc', 'clust'))
 
-#---------------------------------------------------------------------------------
+save(tows_clust, file = "/Volumes/udrive/tows_clust_921.Rdata")
 
-mb1 <- sampled_rums(data_in = tows_clust, the_port = 'MORRO BAY', min_year = 2011, max_year = 2014,
+load(file = "/Volumes/udrive/tows_clust_921.Rdata")
+
+#Add in depth bands to tows_clust
+depths <- data.frame(depth_band = c(1, 2, 3, 4, 5, 6, 7),
+  min_depth = c(0, 50, 100, 150, 200, 300, 500), 
+  max_depth = c(50, 100, 150, 200, 300, 500, 700))
+
+tows_clust$depth_bin <- 69
+
+for(dd in 1:nrow(depths)){
+  temp_depth <- depths[dd, ]
+  tows_clust[which(tows_clust$avg_depth >= temp_depth$min_depth & 
+          tows_clust$avg_depth < temp_depth$max_depth), 'depth_bin'] <- temp_depth$depth_band
+}
+
+unique(tows_clust$depth_bin)
+
+# tows_clust[which(tows_clust$depth_bin == 69), 'avg_depth'] 
+save(tows_clust, file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
+#---------------------------------------------------------------------------------
+#Add in depth bins to tows_clust
+
+mb1 <- sampled_rums(data_in = tows_clust, the_port = c("MOSS LANDING", 'SAN FRANCISCO'), min_year = 2011, max_year = 2014,
   risk_coefficient = 1, ndays = 30, focus_year = 2013, 
   nhauls_sampled = 50, seed = 310, ncores = 6)
 
