@@ -105,12 +105,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Top off the highest value
   max_dbp <- which(dbp$prop == max(dbp$prop))
   dbp[max_dbp, 'n_samp'] <- dbp[max_dbp, 'n_samp'] + (nhauls_sampled - sum(round(dbp$n_samp)))
-  
-  #-----------------------------------------------------------------------------
 
-# sh <- sample_hauls(xx = 1, hauls1 = hauls, 
-#         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
-#         depth_bin_proportions = dbp)
+  #-----------------------------------------------------------------------------
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
   cl <- makeCluster(ncores)
@@ -125,15 +121,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   print("Done sampling hauls")  
   sampled_hauls <- plyr::ldply(sampled_hauls)
-
-# hauls %>% filter(trip_id == 20294)
-# dat %>% filter(haul_id == 127982) %>% distinct(d_port_long, d_port_lat)
-
-# picked <- sampled_hauls[1, ]
-# sampled_hauls %>% filter(fished_haul == 127982) %>% ggplot() + 
-#   geom_point(aes(x = haul_net_revenue, y = distance)) + 
-#   geom_point(aes(x = haul_net_revenue, y = distance, colour = 'red'), data = picked)
-
 
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
@@ -197,8 +184,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
   sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
 
-
-  
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
