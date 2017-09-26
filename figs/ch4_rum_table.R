@@ -128,16 +128,51 @@ names(c1_table) <- c("MOS/SF", "FTB", "EUR", "CC/B", "CHA",
 
 
 xtable(c1_table)
-xtable.decimal(c1_table)
+print(xtable(c1_table), file = 'figs/coefs1.tex')
 
+#-----------------------------------------------------------------
 
+coefs50 <- lapply(coefs50, FUN = function(xx){
+  xx$value = paste(formatC(xx$coefs, digits = 5, format = 'f'), xx$significance)
+  return(xx)
+} )
+
+#Calculate difference between tables
+lapply(1:8, FUN = function(xx){
+  temp <- coefs50[[xx]]$coefs - coefs50[[xx]]$coefs
+  coefs50[[xx]]$change <- temp
+  return(coefs50[[xx]])
+} )
+
+#Try foramtting this shit in xtable
+c50_table <- lapply(coefs50, FUN = function(xx){
+  return(xx$value)
+})
+
+c50_table <- ldply(c50_table)
+names(c50_table) <- c('port', rownames(coefs50[[1]]))
+c50_table <- t(c50_table)
+c50_table <- as.data.frame(c50_table)
+
+names(c50_table) <- port_names
+c50_table <- c50_table[-1, ]
+names(c50_table) <- c("MOS/SF", "FTB", "EUR", "CC/B", "CHA",
+  "NEW", "AST", "ILW/NEW")
+
+# xtable(c50_table)
+print(xtable(c50_table), file = 'figs/coefs50.tex')
 
 
 
 xtable(c1_table)
+print(xtable(c1_table), file = 'figs/coefs50.tex')
 
 
-print(xtable(c1_table), file = 'figs/coefs1.tex')
+
+
+
+
+
 
 
 as.vector(c1_table[1, ])
