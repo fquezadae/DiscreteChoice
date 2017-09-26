@@ -8,8 +8,8 @@
 process_dummys <- function(xx, td2 = td1, dat1 = dat){
   temp_dat <- td2[xx, ]
 
+# browser()
   #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
-  
   clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
                               unq_clust <= temp_dat$unq_clust + 5) %>% 
         distinct(haul_id, .keep_all = T) %>%
@@ -26,7 +26,8 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
   #------------------------------------------------------------
   ######Add Dummys for points within 5 miles (8.05 km)
   #These are the dum30 and dum30y coefficients
-  clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 8.05)
+  clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 8.05, 
+    depth_bin == temp_dat$depth_bin)
 
   #Did this vessel fish here within the past 30 days
   towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter)
@@ -41,8 +42,8 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
   clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
     
   #Filter based on the depths also, hard coded to be within 50fm range
-  clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
-    avg_depth <= temp_dat$avg_depth + 25)
+  # clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
+  #   avg_depth <= temp_dat$avg_depth + 25)
 
   #If towed in the previous ndays 
   towed_miss <- sum(clust_dat$set_date %within% temp_dat$days_inter)
