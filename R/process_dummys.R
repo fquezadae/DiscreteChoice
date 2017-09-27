@@ -30,10 +30,12 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
     depth_bin == temp_dat$depth_bin)
 
   #Did this vessel fish here within the past 30 days
-  towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter)
+  towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter, 
+    clust_dat$drvid ==  temp_dat$drvid)
 
   #Did this vessel fish here in the previous 30 days of last year?
-  towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter)
+  towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter,
+    clust_dat$drvid == temp_dat$drvid)
 
   #------------------------------------------------------------
   #Now filter the data to calculate revenues and dumMissing
