@@ -12,12 +12,14 @@
 #' @param focus_year Year to focus on for the models
 #' @param nhauls_sampled Number of hauls to sample from the full data set
 #' @param seed Seed for sampling tows
+#' @param ncores Number of cores to use
+#' @param rev_scale Scale the revenue by this factor
 
 #' @export
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1,
-  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores){
+  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale){
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
@@ -42,7 +44,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 ####Change net_price for groundfish and other species to 0
   # dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
-  # dat[which(dat$type == 'other'), 'net_price'] <- 0
+  dat[which(dat$type == 'other'), 'net_price'] <- 0
 ####  
 
   dat$net_revenue <- dat$net_price * dat$hpounds
@@ -189,7 +191,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
   sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
 
-  sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / 10
+  sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / rev_scale
 # browser()
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
