@@ -237,10 +237,10 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   ps <- summary(res)$CoefTable[, 4]
 
-  ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
-    "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
-    "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
-    "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
+  # ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
+  #   "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
+  #   "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
+  #   "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
   
   ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
     "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
