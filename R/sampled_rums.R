@@ -55,6 +55,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
     drvid, trip_id, set_day, set_year, haul_net_revenue,
     haul_num, avg_long, avg_lat, avg_depth, depth_bin, unq) %>% as.data.frame  
+  
+
   # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
   #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
   #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
@@ -110,9 +112,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 # browser()
   #-----------------------------------------------------------------------------
- sample_hauls(xx = 1, hauls1 = hauls, 
-   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
-   depth_bin_proportions = dbp)
+ # sample_hauls(xx = 1, hauls1 = hauls, 
+ #   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
+ #   depth_bin_proportions = dbp)
 
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
@@ -138,7 +140,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #What were the average revenues in each location
   tow_dates <- sampled_hauls %>% 
-    select(haul_id, unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
+    select(haul_id, drvid, unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
       avg_long, avg_lat, avg_depth, depth_bin, unq)
   
   #Look at the unique dates and clusters only
