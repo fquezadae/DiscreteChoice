@@ -41,8 +41,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   # dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
 
 ####Change net_price for groundfish and other species to 0
-  dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
-  dat[which(dat$type == 'other'), 'net_price'] <- 0
+  # dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
+  # dat[which(dat$type == 'other'), 'net_price'] <- 0
 ####  
 
   dat$net_revenue <- dat$net_price * dat$hpounds
@@ -117,7 +117,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   cl <- makeCluster(ncores)
   registerDoParallel(cl)
 
- 
   sampled_hauls <- foreach::foreach(ii = 1:nrow(hauls), 
     .export = c("sample_hauls"), 
     .packages = c("dplyr", 'plyr', 'lubridate')) %dopar% 
@@ -189,8 +188,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
   sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
+
+  sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / 10
 # browser()
-  sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / 100
   #-----------------------------------------------------------------------------
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
