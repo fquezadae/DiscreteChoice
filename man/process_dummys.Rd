@@ -5,10 +5,12 @@
 \title{Process dummy variables
 Function to calculate revenues and distances}
 \usage{
-process_dummys(xx)
+process_dummys(xx, td2 = td1, dat1 = dat)
 }
 \arguments{
 \item{xx}{Index value}
+
+\item{td2}{The tow dates}
 }
 \description{
 Process dummy variables

@@ -8,11 +8,11 @@ Function calls mlogit}
 \usage{
 sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1, ndays = 60,
-  focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores)
+  focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale)
 
 sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2011, max_year = 2012, risk_coefficient = 1, ndays = 60,
-  focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores)
+  focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale)
 }
 \arguments{
 \item{data_in}{Data going in to the function; default is filt_clusts}
@@ -32,6 +32,10 @@ sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
 \item{nhauls_sampled}{Number of hauls to sample from the full data set}
 
 \item{seed}{Seed for sampling tows}
+
+\item{ncores}{Number of cores to use}
+
+\item{rev_scale}{Scale the revenue by this factor}
 
 \item{trip_dists}{Distances covered by each trip}
 

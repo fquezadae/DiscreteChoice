@@ -6,7 +6,8 @@
 Function to Sample Hauls}
 \usage{
 sample_hauls(xx, hauls1 = hauls,
-  dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = 50)
+  dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = 50,
+  depth_bin_proportions)
 }
 \arguments{
 \item{xx}{Index}
@@ -16,6 +17,8 @@ sample_hauls(xx, hauls1 = hauls,
 \item{dist_hauls_catch_shares1}{df with distance after catch shares}
 
 \item{nhauls_sampled1}{number of sampled hauls}
+
+\item{depth_bin_proportions}{Proportions of tows in each depth bin}
 }
 \description{
 Function to Sample Hauls
