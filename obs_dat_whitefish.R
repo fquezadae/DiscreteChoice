@@ -75,18 +75,31 @@ runs1 <- lapply(c(1, 2, 3), FUN = function(yy){
 #------------------------------------------------------------------------------
 #Run for years in succession
 #--------------------------Runs with risk coefficient of 1
+#Run Without Astoria because it takes so long
+sev_ports <- list(c("MOSS LANDING", "SAN FRANCISCO"),
+              "FORT BRAGG",
+              "EUREKA",
+              c("CRESCENT CITY", "BROOKINGS"),
+              "CHARLESTON (COOS BAY)",
+              "NEWPORT", 
+              # "ASTORIA / WARRENTON", 
+              c("ILWACO/CHINOOK", "WESTPORT"))
 #2011
-port_rums(m_y = 2009, f_y = 2011, nhauls_sampled = 75,
-          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+rums_11 <- port_rums(m_y = 2009, f_y = 2011, nhauls_sampled = 75,
+             ncores = 10, seed = 303, r_c = 1, r_s = 10, ports = sev_ports)
 #2012
-port_rums(m_y = 2010, f_y = 2012, nhauls_sampled = 75,
-          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+rums_12 <- port_rums(m_y = 2010, f_y = 2012, nhauls_sampled = 75,
+          ncores = 10, seed = 303, r_c = 1, r_s = 10, ports = sev_ports)
 #2013
-port_rums(m_y = 2011, f_y = 2013, nhauls_sampled = 75,
-          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+rums_13 <- port_rums(m_y = 2011, f_y = 2013, nhauls_sampled = 75,
+          ncores = 10, seed = 303, r_c = 1, r_s = 10, ports = sev_ports)
 #2014
-port_rums(m_y = 2011, f_y = 2014, nhauls_sampled = 75,
-          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+rums_14 <- port_rums(m_y = 2011, f_y = 2014, nhauls_sampled = 75,
+          ncores = 10, seed = 303, r_c = 1, r_s = 10, ports = sev_ports)
+
+#--
+#Run ASTORIA only
+
 
 runs1 <- lapply(1:length(ports), FUN = function(yy){
 # runs1 <- lapply(1, FUN = function(yy){
