@@ -130,7 +130,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   print("Done sampling hauls")  
   sampled_hauls <- plyr::ldply(sampled_hauls)
-
+# browser()
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
@@ -150,11 +150,11 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
 
   #-----------------------------------------------------------------------------  
-# pd <- process_dummys(xx = 1, td2 = td1, dat1 = dat)  
+# pd <- process_dummys(xx = 2, td2 = td1, dat1 = dat)  
   
   dummys <- foreach::foreach(ii = 1:nrow(td1), 
     # .export = c('dat', 'td1'),
-    .packages = c("dplyr", 'lubridate')) %dopar% 
+    .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
       process_dummys(xx = ii, td2 = td1, dat1 = dat)
   stopCluster(cl)
 
@@ -194,8 +194,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
 
   sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / rev_scale
-# browser()
+
   #-----------------------------------------------------------------------------
+browser()  
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
     dummy_prev_days, dummy_prev_year_days, dummy_miss, miss_rev, miss_rev_adj,
