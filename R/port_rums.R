@@ -14,7 +14,10 @@
 
 port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
-  seed, ncores, r_c = 1, r_s = 10){
+  seed, ncores, r_c = 1, r_s = 10, ports){
+  
+  nports <- length(ports)
+  if(nports == 1) nports <- tolower(substr(paste0(ports[[1]], collapse = ""), 1, 3))
 
   #Run the models
   runs <- lapply(1:length(ports), FUN = function(yy){
@@ -37,9 +40,9 @@ port_rums <- function(m_y,
   coefs <- lapply(runs, FUN = function(xx) xx[[1]])
   names(coefs) <- ports_names
 
-  filename <- paste0("coefs", r_c, "_rev", r_s, '_focyr', f_y)
+  filename <- paste0("coefs", r_c, "_rev", r_s, '_focyr', f_y, "_nports", nports)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
-  filename <- paste0("runs", r_c, "_rev", r_s, '_focyr', f_y)
+  filename <- paste0("runs", r_c, "_rev", r_s, '_focyr', f_y, "_nports", nports)
   save(runs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
 
   return(coefs)
