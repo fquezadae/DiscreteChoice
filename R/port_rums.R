@@ -15,7 +15,7 @@
 port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
   seed, ncores, r_c = 1, r_s = 10){
-
+library(beepr)
   runs1 <- lapply(1:length(ports), FUN = function(yy){
     st_time <- Sys.time()
     rum <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
@@ -26,6 +26,7 @@ port_rums <- function(m_y,
     r_time <- Sys.time() - st_time
     print(r_time)
     print(rum[[1]])
+beep()    
     return(rum)
   })
   
