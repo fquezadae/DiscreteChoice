@@ -196,7 +196,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / rev_scale
 
   #-----------------------------------------------------------------------------
-browser()  
   #Format as mlogit.data
   rdo <- sampled_hauls %>% select(haul_id, unq_clust, haul_num, distance, fished, fished_haul, 
     dummy_prev_days, dummy_prev_year_days, dummy_miss, miss_rev, miss_rev_adj,
@@ -214,7 +213,6 @@ browser()
   #Fit the model for everything at once  
   the_tows <- mlogit.data(rdo, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
-
   # mf <- mFormula(fished ~ miss_rev * dummy_first + 
   #   distance * dummy_first + miss_rev * dummy_not_first +
   #   distance * dummy_not_first - distance - miss_rev - 1 - 
