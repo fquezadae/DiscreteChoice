@@ -1,4 +1,17 @@
 #----------------------------------------------------------------------------------------v
+# agg_effort <- obs_data %>% group_by(set_year) %>% summarize(nvess = length(unique(drvid)), 
+#                                                             ntows = length(unique(haul_id)),
+#                                                             avg_depth = mean(avg_depth))
+agg_effort <- tows_clust %>% group_by(set_year) %>% summarize(nvess = length(unique(drvid)), 
+                                                            ntows = length(unique(haul_id)),
+                                                            avg_depth = mean(avg_depth))
+
+
+agg_effort$set_year <- as.numeric(agg_effort$set_year)
+
+agg_effort1 <- agg_effort
+
+#----------------------------------------------------------------------------------------v
 #Figure 1
 png(width = 7, height = 7, units = 'in', res = 200, file = 'figs/ch4_fig1.png')
 par(mfrow = c(2, 1), mgp = c(.2, .5, 0), mar = c(.5, 1, 1, 0), oma = c(3, 3, 0, 0))
