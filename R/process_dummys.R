@@ -8,7 +8,6 @@
 process_dummys <- function(xx, td2 = td1, dat1 = dat){
   temp_dat <- td2[xx, ]
 
-# browser()
   #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
   clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
                               unq_clust <= temp_dat$unq_clust + 5) %>% 
@@ -30,11 +29,11 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
     depth_bin == temp_dat$depth_bin)
 
   #Did this vessel fish here within the past 30 days
-  towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter, 
+  towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter & 
     clust_dat$drvid ==  temp_dat$drvid)
 
   #Did this vessel fish here in the previous 30 days of last year?
-  towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter,
+  towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter &
     clust_dat$drvid == temp_dat$drvid)
 
   #------------------------------------------------------------
@@ -70,7 +69,7 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
 
   #  prev_days_rev = towed_prev_days_rev,
   # , prev_year_days_rev = towed_prev_year_days_rev)
-
+# browser()
   return(outs)
 
 }
