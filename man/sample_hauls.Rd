@@ -7,7 +7,7 @@ Function to Sample Hauls}
 \usage{
 sample_hauls(xx, hauls1 = hauls,
   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = 50,
-  depth_bin_proportions)
+  depth_bin_proportions, the_seed)
 }
 \arguments{
 \item{xx}{Index}
@@ -19,6 +19,8 @@ sample_hauls(xx, hauls1 = hauls,
 \item{nhauls_sampled1}{number of sampled hauls}
 
 \item{depth_bin_proportions}{Proportions of tows in each depth bin}
+
+\item{the_seed}{Seed for sampling tows}
 }
 \description{
 Function to Sample Hauls
