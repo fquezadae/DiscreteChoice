@@ -7,12 +7,15 @@
 #' @param dist_hauls_catch_shares1 df with distance after catch shares
 #' @param nhauls_sampled1 number of sampled hauls
 #' @param depth_bin_proportions Proportions of tows in each depth bin
-
+#' @param the_seed Seed for sampling tows
 #' @export
 
   sample_hauls <- function(xx, hauls1 = hauls, dist_hauls_catch_shares1 = dist_hauls_catch_shares,
-    nhauls_sampled1 = 50, depth_bin_proportions){
+    nhauls_sampled1 = 50, depth_bin_proportions, the_seed){
 
+   #Seed uses the row index in the foreach function of sampled_rums
+   set.seed(the_seed)
+   
    #Check to make sure there are enough samples of each thing to sample without replacement
    the_samples <- lapply(1:nrow(depth_bin_proportions), FUN = function(dd){
                       temp <- dist_hauls_catch_shares1 %>% filter(haul_id != hauls1[xx, 'haul_id'],

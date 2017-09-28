@@ -64,8 +64,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
   dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= 2011)
   
-  set.seed(seed)
-  
   #For each tow in the focus year, sample other tows
   #Hauls in focus year
   hauls <- dist_hauls %>% filter(set_year == focus_year) %>% arrange(trip_id, haul_num)
@@ -113,6 +111,10 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
  # sample_hauls(xx = 1, hauls1 = hauls, 
  #   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
  #   depth_bin_proportions = dbp)
+  
+  #Set seed
+  set.seed(seed)
+  seedz <- sample(1:1e7, size = nrow(hauls))
 
   #Sample hauls and calculate distances
   #For each haul in the focus year, sample nhauls_sampled tows
@@ -124,7 +126,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     .packages = c("dplyr", 'plyr', 'lubridate')) %dopar% 
       sample_hauls(xx = ii, hauls1 = hauls, 
         dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
-        depth_bin_proportions = dbp)
+        depth_bin_proportions = dbp, the_seed = seedz[ii])
   
   print("Done sampling hauls")  
   sampled_hauls <- plyr::ldply(sampled_hauls)
