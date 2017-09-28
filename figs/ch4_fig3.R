@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------------------
 #Figure 3, look at changes by depth and latitude
+tc_unq_hauls <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
 tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', group = 'set_year', 
   grid_size = c(25, .25),
   group_vec = 2007:2014)
-
 
 slopies <- tows_clust_bin_depth %>% group_by(unq) %>% mutate(nyears = length(unique(year))) %>%
   filter(nyears > 1) %>% arrange(year) %>%
@@ -18,27 +18,16 @@ slopies <- tows_clust_bin_depth %>% group_by(unq) %>% mutate(nyears = length(uni
 
 slopies$abs_slope <- abs(slopies$slope)
 slopies1 <- slopies
-spos <- slopies1 %>% filter(slope >= 0)
-sneg <- slopies1 %>% filter(slope < 0)
 
-# max_value <- 15
-slopies1$plot_value <- slopies1$abs_slope
 
-slopies1[which(slopies1$abs_slope >= max_value), 'plot_value'] <- max_value
-
-slopies1$scaled_value <- round(slopies1$plot_value / max(slopies1$plot_value) * 100, 
-  digits = 0)
-greys <- paste0('grey', 100 - slopies1$scaled_value)
-slopies1$greys <- rgb(t(col2rgb(greys)), maxColorValue = 255)
 
 slopies1 <- slopies1 %>% distinct(unq, .keep_all = T)
 slopies1$xmin <- round(slopies1$xmin)
+slopies1$ymin <- round(slopies1$ymin, digits = 2)
 
 spos <- slopies1 %>% filter(slope >= 0)
 sneg <- slopies1 %>% filter(slope < 0)
-spos$xmin <- round(spos$xmin)
-nrow(spos)
-nrow(sneg)
+
 
 #-------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------
@@ -47,6 +36,25 @@ png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig3.png')
 ch4_fig3(mv = 20, lev = 20)
 dev.off()
 
+
+color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), 
+  tick_labs, title='', Cex = .5) {
+    # browser()
+    scale = (length(lut)-1)/(max-min)
+    par(mgp = c(0, .5, 0))
+# browser()    
+    plot(c(0,10), c(min,max), type='n', xaxt='n', xlab='', yaxt='n', ylab="", main="", 
+      cex.lab=1.5, mgp = c(0, .05, 0), bg = 'white', bty = 'n')
+    axis(2, at = ticks, labels = tick_labs, las=1, cex = Cex)
+    mtext(side = 3, cex = Cex * 2.5, text = title, adj = .75, line = .75)
+    for (i in 1:(length(lut)-1)) {
+     y = (i-1)/scale + min
+     rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+    }
+}
+
+ch4_fig3(mv = 20, lev = 20)
+#Need to add color bar
 
 #-------------------------------------------------------------------------------------
 # Functions Used
@@ -57,7 +65,7 @@ ch4_fig3 <- function(mv, lev){
   #-------------------------------------------------------------------------------------
   #Positive Slopes
   format_fc_plot(spos, max_value = mv, the_levels = lev, xlims = c(0, 700),
-    ylims = c(34, 49))
+    ylims = c(34, 49), xint = 25)
   box()
   mtext(paste0(letters[1], ")", " Positive Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
   mtext(paste0("n = ", nrow(spos) ), side = 3, line = -2.75, adj = .03, cex = .8)
@@ -80,20 +88,19 @@ ch4_fig3 <- function(mv, lev){
   box()
   mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
   mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
+# browser()
+  par(mar = c(0, .5, 0, 0), fig = c(.75, 0.78, 0.02, .17), new = T)  
+  color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
+    Cex = .3, nticks = 5 , min = 0, max = 1, tick_labs = c(0, 5, 10,
+      15, ">=20"), title = "Magnitude")
+  
 }
 
 
 
-
-
-# unique(spos$xmin)
-# unique(spos$ymin)
-
-#Need to flip the x axis
-
 format_fc_plot <- function(input, max_value = 10, the_levels = 10, 
   xlims = c(0, 700), ylims = c(34, 49), flip_x_axis = TRUE, xint = 25, yint = .25){  
-  
+
   #Flip x axis values
   input$x <- input$xmin
   input$y <- input$ymin
@@ -117,14 +124,14 @@ format_fc_plot <- function(input, max_value = 10, the_levels = 10,
   pos <- data.frame(x = pos[, 1], y = pos[, 2])
   pos$x <- round(pos$x, digits = 0)
   pos$y <- round(pos$y, digits = 3)
-    
-  pos1 <- pos %>% left_join(input %>% select(x, y, abs_slope, plot_value, greys), by = c('x', 'y'),
+
+  pos1 <- pos %>% left_join(input %>% select(x, y, abs_slope, plot_value), by = c('x', 'y'),
     fill = 0)
   
   na_inds <- is.na(pos1$abs_slope)
   pos1[na_inds, 'abs_slope'] <- 0
   pos1[na_inds, 'plot_value'] <- 0
-  pos1[na_inds, 'greys'] <- 'white'
+  # pos1[na_inds, 'greys'] <- 'white'
 
   zz <- matrix(pos1$plot_value, nrow = length(xx), ncol = length(yy))
   
@@ -133,7 +140,6 @@ format_fc_plot <- function(input, max_value = 10, the_levels = 10,
     axes = F, ylim = ylims, xlim = xlims )
   
 }
-
 
 
 filled.contour2 <-
