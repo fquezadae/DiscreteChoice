@@ -65,10 +65,10 @@ ports <- list(c("MOSS LANDING", "SAN FRANCISCO"),
      c("ILWACO/CHINOOK", "WESTPORT"))
 
 
-rum10 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
+rum1 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
                     min_year = 2011, max_year = 2012,
                     risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                    seed = 301, ncores = 10, rev_scale = 10)
+                    seed = 301, ncores = 10, rev_scale = 11)
 print(rum1[[1]])
 rum10 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
                      min_year = 2011, max_year = 2012,
@@ -84,9 +84,25 @@ print(rum100[[1]])
 
 
 rum10 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                     min_year = 2011, max_year = 2012,
-                     risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                     seed = 300, ncores = 10, rev_scale = 1)
+                     min_year = 2009, max_year = 2011,
+                     risk_coefficient = 1, ndays = 30, focus_year = 2011, nhauls_sampled = 75,
+                     seed = 301, ncores = 10, rev_scale = 10)
+print(rum10[[1]])
+beep()
+rum10_303 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
+                      min_year = 2009, max_year = 2011,
+                      risk_coefficient = 1, ndays = 30, focus_year = 2011, nhauls_sampled = 75,
+                      seed = 303, ncores = 10, rev_scale = 10)
+print(rum10_303[[1]])
+beep()
+
+
+
+rum100 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
+                      min_year = 2011, max_year = 2014,
+                      risk_coefficient = 1, ndays = 30, focus_year = 2014, nhauls_sampled = 50,
+                      seed = 301, ncores = 10, rev_scale = 100)
+
 #------------------------------------------------------------------------------
 #Run test runs for the relatively quick ones ports
 runs1 <- lapply(c(1, 2, 3), FUN = function(yy){
