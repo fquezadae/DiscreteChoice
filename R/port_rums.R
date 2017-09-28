@@ -36,7 +36,7 @@ port_rums <- function(m_y,
   
 #   coefs1 <- lapply(runs1, FUN = function(xx) xx[[1]])
 #   names(coefs1) <- ports_names
-
+browser()
   filename <- paste0("coefs", r_c, "_rev", r_s, '_focyr', f_y,)
   save(coefs1, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   filename <- paste0("runs", r_c, "_rev", r_s, '_focyr', f_y,)
