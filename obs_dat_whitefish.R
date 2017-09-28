@@ -47,14 +47,7 @@ states_map <- map_data("state")
 load("//udrive.uw.edu//udrive//tows_clust_925_depth_bin.Rdata")
 
 #--------------------------------------------------------------------------------- 
-#morro bay runs in like 20 seconds
-#Newport takes like 3 minutes to run this
-
-# rc0 <- sampled_rums(data_in = filt_clusts, the_port = 'NEWPORT', min_year = 2011, max_year = 2014,
-#   risk_coefficient = 0, ndays = 30, focus_year = 2013, 
-
-#   nhauls_sampled = 50, seed = 310, ncores = 6)
-
+#Define the ports
 ports <- list(c("MOSS LANDING", "SAN FRANCISCO"),
      "FORT BRAGG",
      "EUREKA",
@@ -63,45 +56,6 @@ ports <- list(c("MOSS LANDING", "SAN FRANCISCO"),
      "NEWPORT", 
      "ASTORIA / WARRENTON", 
      c("ILWACO/CHINOOK", "WESTPORT"))
-
-
-rum1 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                    min_year = 2011, max_year = 2012,
-                    risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                    seed = 301, ncores = 10, rev_scale = 11)
-print(rum1[[1]])
-rum10 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                     min_year = 2011, max_year = 2012,
-                     risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                     seed = 301, ncores = 10, rev_scale = 10)
-print(rum10[[1]])
-rum100 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                      min_year = 2011, max_year = 2012,
-                      risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                      seed = 301, ncores = 10, rev_scale = 100)
-print(rum100[[1]])
-
-
-
-rum10 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                     min_year = 2009, max_year = 2011,
-                     risk_coefficient = 1, ndays = 30, focus_year = 2011, nhauls_sampled = 75,
-                     seed = 301, ncores = 10, rev_scale = 10)
-print(rum10[[1]])
-beep()
-rum10_303 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                      min_year = 2009, max_year = 2011,
-                      risk_coefficient = 1, ndays = 30, focus_year = 2011, nhauls_sampled = 75,
-                      seed = 303, ncores = 10, rev_scale = 10)
-print(rum10_303[[1]])
-beep()
-
-
-
-rum100 <- sampled_rums(data_in = tows_clust, the_port = ports[[1]],
-                      min_year = 2011, max_year = 2014,
-                      risk_coefficient = 1, ndays = 30, focus_year = 2014, nhauls_sampled = 50,
-                      seed = 301, ncores = 10, rev_scale = 100)
 
 #------------------------------------------------------------------------------
 #Run test runs for the relatively quick ones ports
@@ -118,16 +72,29 @@ runs1 <- lapply(c(1, 2, 3), FUN = function(yy){
 })
 
 
-
 #------------------------------------------------------------------------------
-#For 2013 as focus year
+#Run for years in succession
 #--------------------------Runs with risk coefficient of 1
+#2011
+port_rums(m_y = 2009, f_y = 2011, nhauls_sampled = 75,
+          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+#2012
+port_rums(m_y = 2010, f_y = 2012, nhauls_sampled = 75,
+          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+#2013
+port_rums(m_y = 2011, f_y = 2013, nhauls_sampled = 75,
+          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+#2014
+port_rums(m_y = 2011, f_y = 2014, nhauls_sampled = 75,
+          ncores = 10, seed = 300, r_c = 1, r_s = 10)
+
 runs1 <- lapply(1:length(ports), FUN = function(yy){
 # runs1 <- lapply(1, FUN = function(yy){
   st_time <- Sys.time()
   rum <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
                       min_year = 2011, max_year = 2014,
-                      risk_coefficient = 1, ndays = 30, focus_year = 2013, nhauls_sampled = 50,
+                      risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+                      nhauls_sampled = 75,
                       seed = 301, ncores = 10)
   r_time <- Sys.time() - st_time
   print(r_time)
