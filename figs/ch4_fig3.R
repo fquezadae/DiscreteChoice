@@ -14,11 +14,6 @@ tows_clust_bin_depth <- tows_clust_bin_depth %>% group_by(unq) %>%
   mutate(nyears = length(unique(year)), 
     bef_aft = if_else(length(unique(when)) == 2, TRUE, FALSE))  %>% as.data.frame
 
-
-
-
-# tows_clust_bin_depth %>% filter(nyears > 2, bef_aft == TRUE) %>% head
-
 tows_clust_bin_depth <- tows_clust_bin_depth %>% arrange(year)
 
 #Only use clusters that had values before and after catch shares
@@ -197,14 +192,12 @@ ch4_fig3 <- function(mv, lev){
 # browser()
   par(mar = c(0, .5, 0, 0), fig = c(.75, 0.78, 0.02, .17), new = T)  
   color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
-    Cex = .3, nticks = 10, min = 0, max = 1, tick_labs = c(0, 2, 4,
+    Cex = .3, nticks = 6, min = 0, max = 1, tick_labs = c(0, 2, 4,
       6, 8,">=10"), title = "Magnitude")
   
 }
-plot(1:lev, col = grey.colors(n = lev, start = 1, end = 0), pch = 19)
 
-color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
-    Cex = .3, nticks = 10, min = 0, max = 1, tick_labs = 1:10, title = "Magnitude")
+
 
 
 filled.contour2 <-
