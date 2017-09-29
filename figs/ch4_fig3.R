@@ -5,21 +5,41 @@ tc_unq_hauls <- tows_clust %>% distinct(haul_id, .keep_all = T)
 tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', group = 'set_year', 
   grid_size = c(25, .25),
   group_vec = 2007:2014)
+tows_clust_bin_depth$when <- 'before'
+tows_clust_bin_depth[which(tows_clust_bin_depth$year >= 2011), 'when'] <- 'after'
 
-slopies <- tows_clust_bin_depth %>% group_by(unq) %>% mutate(nyears = length(unique(year))) %>%
-  filter(nyears > 1) %>% arrange(year) %>%
+
+#Add columns indicating the number of years and if vessel fished before and after catch shares
+tows_clust_bin_depth <- tows_clust_bin_depth %>% group_by(unq) %>% 
+  mutate(nyears = length(unique(year)), 
+    bef_aft = if_else(length(unique(when)) == 2, TRUE, FALSE))  %>% as.data.frame
+
+
+
+
+# tows_clust_bin_depth %>% filter(nyears > 2, bef_aft == TRUE) %>% head
+
+tows_clust_bin_depth <- tows_clust_bin_depth %>% arrange(year)
+
+#Only use clusters that had values before and after catch shares
+slopies <- tows_clust_bin_depth %>% filter(nyears > 2, bef_aft == TRUE) %>%
+  # arrange(year) %>%
   group_by(unq) %>%
   do({
     mod <- lm(count ~ year, data = .)
     slope <- mod$coefficients[2]
+    p_val <- summary(mod)[[4]][, 4][2]
     names(slope) <- NULL
-    data.frame(., slope)
+    names(p_val) <- NULL
+# data.frame(., slope, p_val)    
+    data.frame(., slope, p_val)
   }) %>% as.data.frame
 
+#Find the proportion of slopes that had significant changes
+slopies$sig <- "no"
+slopies[which(slopies$p_val <= 0.05), 'sig'] <- 'yes'
 slopies$abs_slope <- abs(slopies$slope)
 slopies1 <- slopies
-
-
 
 slopies1 <- slopies1 %>% distinct(unq, .keep_all = T)
 slopies1$xmin <- round(slopies1$xmin)
@@ -28,75 +48,50 @@ slopies1$ymin <- round(slopies1$ymin, digits = 2)
 spos <- slopies1 %>% filter(slope >= 0)
 sneg <- slopies1 %>% filter(slope < 0)
 
+#-------------------------------------------------------------------------------------
+###Table Values
+#Number
+
+#Total number of locations
+nlocs <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>% select(unq) %>% nrow
+
+#Locations with not enough years or not fished before/after catch shares
+not_enough <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>%
+  filter(bef_aft == FALSE, nyears < 3) %>% select(unq) %>% nrow
+not_enough / nlocs; nlocs
+
+#------Increases
+#Percentage of increases
+perc_increase <- slopies %>% filter(slope > 0) %>% distinct(unq) %>% nrow / nlocs
+perc_increase <- round(perc_increase, digits = 2)
+
+#Significant increases
+slopies %>% filter(sig == 'yes', slope > 0) %>% distinct(unq) %>% nrow / nlocs
+perc_increase_sig <- round(slopies %>% filter(sig == 'yes', slope > 0) %>% 
+    distinct(unq) %>% nrow / nlocs, digits = 2)
+
+#------Decreases
+#Percentage of increases
+perc_decrease <- round(slopies %>% filter(slope < 0) %>% distinct(unq) %>% nrow / nlocs, digits = 2)
+
+#Significant increases
+perc_decrease_sig <- round(slopies %>% 
+  filter(sig == 'yes', slope < 0) %>% distinct(unq) %>% nrow / nlocs, digits = 2)
+
+ss <- slopies %>% distinct(abs_slope) 
+quantile(ss$abs_slope, .95)
+length(which(ss >= 20)) / nrow(ss)
+
+quantile(ss$abs_slope, 20)
 
 #-------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------
 #The actual plot
 png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig3.png')
-ch4_fig3(mv = 20, lev = 20)
+ch4_fig3(mv = 10, lev = 20)
 dev.off()
 
-
-color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), 
-  tick_labs, title='', Cex = .5) {
-    # browser()
-    scale = (length(lut)-1)/(max-min)
-    par(mgp = c(0, .5, 0))
-# browser()    
-    plot(c(0,10), c(min,max), type='n', xaxt='n', xlab='', yaxt='n', ylab="", main="", 
-      cex.lab=1.5, mgp = c(0, .05, 0), bg = 'white', bty = 'n')
-    axis(2, at = ticks, labels = tick_labs, las=1, cex = Cex)
-    mtext(side = 3, cex = Cex * 2.5, text = title, adj = .75, line = .75)
-    for (i in 1:(length(lut)-1)) {
-     y = (i-1)/scale + min
-     rect(0,y,10,y+1/scale, col=lut[i], border=NA)
-    }
-}
-
-ch4_fig3(mv = 20, lev = 20)
-#Need to add color bar
-
-#-------------------------------------------------------------------------------------
-# Functions Used
-
-ch4_fig3 <- function(mv, lev){
-  par(mfcol = c(1, 3), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
-  
-  #-------------------------------------------------------------------------------------
-  #Positive Slopes
-  format_fc_plot(spos, max_value = mv, the_levels = lev, xlims = c(0, 700),
-    ylims = c(34, 49), xint = 25)
-  box()
-  mtext(paste0(letters[1], ")", " Positive Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
-  mtext(paste0("n = ", nrow(spos) ), side = 3, line = -2.75, adj = .03, cex = .8)
-  axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
-  axis(side = 2, las = 2, cex.axis = 1.2)
-  mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1)
-  
-  #-------------------------------------------------------------------------------------
-  #Negative slopes
-  format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(0, 700), ylims = c(34, 49))
-  box()
-  axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
-  mtext(paste0(letters[2], ")", " Negative Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
-  mtext(paste0("n = ", nrow(sneg) ), side = 3, line = -2.75, adj = .03, cex = .8)
-  
-  #-------------------------------------------------------------------------------------
-  #Map
-  map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
-      mar = c(0, 0, 0, 0))
-  box()
-  mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
-  mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
-# browser()
-  par(mar = c(0, .5, 0, 0), fig = c(.75, 0.78, 0.02, .17), new = T)  
-  color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
-    Cex = .3, nticks = 5 , min = 0, max = 1, tick_labs = c(0, 5, 10,
-      15, ">=20"), title = "Magnitude")
-  
-}
-
-
+# ch4_fig3(mv = 10, lev = 20)
 
 format_fc_plot <- function(input, max_value = 10, the_levels = 10, 
   xlims = c(0, 700), ylims = c(34, 49), flip_x_axis = TRUE, xint = 25, yint = .25){  
@@ -119,7 +114,7 @@ format_fc_plot <- function(input, max_value = 10, the_levels = 10,
   
   xx <- seq(xlims[1], xlims[2], by = xint)
   yy <- seq(ylims[1], ylims[2], by = yint)
-  
+
   pos <- expand.grid(xx, yy)
   pos <- data.frame(x = pos[, 1], y = pos[, 2])
   pos$x <- round(pos$x, digits = 0)
@@ -134,12 +129,82 @@ format_fc_plot <- function(input, max_value = 10, the_levels = 10,
   # pos1[na_inds, 'greys'] <- 'white'
 
   zz <- matrix(pos1$plot_value, nrow = length(xx), ncol = length(yy))
-  
+# browser()  
   filled.contour2(xx, yy, zz, nlevels = the_levels, 
     col = grey.colors(n = the_levels , start = 1, end = 0), ann = F,
-    axes = F, ylim = ylims, xlim = xlims )
+    axes = F, ylim = ylims, xlim = xlims )  
+}
+
+# ch4_fig3(mv = 20, lev = 20)
+
+
+color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), 
+  tick_labs, title='', Cex = .5) {
+    # browser()
+    scale = (length(lut)-1)/(max-min)
+# scale = (length(lut)1)/(max-min)
+    par(mgp = c(0, .5, 0))
+
+    plot(c(0,10), c(min,max), type='n', xaxt='n', xlab='', yaxt='n', ylab="", main="", 
+      cex.lab=1.5, mgp = c(0, .05, 0), bg = 'white', bty = 'n')
+    axis(2, at = ticks, labels = tick_labs, las=1, cex = Cex)
+    mtext(side = 3, cex = Cex * 2.5, text = title, adj = .75, line = .75)
+    for (i in 1:(length(lut)-1)) {
+     y = (i-1)/scale + min
+     rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+    }
+}
+
+# ch4_fig3(mv = 20, lev = 20)
+#Need to add color bar
+
+#-------------------------------------------------------------------------------------
+# Functions Used
+
+ch4_fig3 <- function(mv, lev){
+  par(mfcol = c(1, 3), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
+  
+  #-------------------------------------------------------------------------------------
+  #Positive Slopes
+  format_fc_plot(spos, max_value = mv, the_levels = lev, xlims = c(0, 700),
+    ylims = c(34, 49), xint = 25)
+  box()
+  mtext(paste0(letters[1], ") ", perc_increase * 100, "% positive"), side = 3, line = -1.5, adj = .03, cex = .8)
+  mtext(paste0("      ", 100 * perc_increase_sig, "% significant"), side = 3, line = -2.75, adj = .03, cex = .8)
+  mtext(paste0("      n = ", nlocs), side = 3, line = -4, adj = .03, cex = .8)
+  axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
+  axis(side = 2, las = 2, cex.axis = 1.2)
+  mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1)
+  
+  #-------------------------------------------------------------------------------------
+  #Negative slopes
+  format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(0, 700), ylims = c(34, 49))
+  box()
+  axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
+  mtext(paste0(letters[1], ") ", perc_decrease * 100, "% negative"), side = 3, line = -1.5, adj = .03, cex = .8)
+  mtext(paste0("    ", 100 * perc_decrease_sig, "% significant"), side = 3, line = -2.75, adj = .03, cex = .8)
+  mtext(paste0("      n = ", nlocs), side = 3, line = -4, adj = .03, cex = .8)
+  # mtext(paste0(letters[2], ")", " Negative Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
+  # mtext(paste0("n = ", nrow(sneg) ), side = 3, line = -2.75, adj = .03, cex = .8)
+  
+  #-------------------------------------------------------------------------------------
+  #Map
+  map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
+      mar = c(0, 0, 0, 0))
+  box()
+  mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
+  mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
+# browser()
+  par(mar = c(0, .5, 0, 0), fig = c(.75, 0.78, 0.02, .17), new = T)  
+  color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
+    Cex = .3, nticks = 10, min = 0, max = 1, tick_labs = c(0, 2, 4,
+      6, 8,">=10"), title = "Magnitude")
   
 }
+plot(1:lev, col = grey.colors(n = lev, start = 1, end = 0), pch = 19)
+
+color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
+    Cex = .3, nticks = 10, min = 0, max = 1, tick_labs = 1:10, title = "Magnitude")
 
 
 filled.contour2 <-
