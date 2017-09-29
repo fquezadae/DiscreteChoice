@@ -18,7 +18,7 @@
 #' @export
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
-  min_year = 2011, max_year = 2012, risk_coefficient = 1,
+  min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale){
 
 #Start by sampling 50 tows within the same fleet  
@@ -62,7 +62,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
   #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
   #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
-  dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= 2011)
+  dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= min_year)
   
   #For each tow in the focus year, sample other tows
   #Hauls in focus year
