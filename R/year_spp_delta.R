@@ -6,7 +6,6 @@
 
 #' @export
 
-
 year_spp_delta <- function(year, spp){
   tt <- tows_clust %>% filter(set_year == year) 
   all_tows <- tt %>% distinct(haul_id)
@@ -20,5 +19,5 @@ year_spp_delta <- function(year, spp){
   
   skew <- calc_skew(log(subset(the_tows, apounds != 0)$apounds))
   
-  return(prop_zero, skew)
+  return(data.frame(species = spp, year = year, prop_zero = prop_zero, skew = skew))
 }
