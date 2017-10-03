@@ -1,45 +1,69 @@
-#Delta plots
-
-# Something with shortspines
-# thornys <- tows_clust[grep("Thornyhead", tows_clust$species), ]
-# thornys %>% group_by(set_year, species) %>% summarize(apounds = sum(apounds)) %>% arrange(species) %>%
-#   as.data.frame
+#----- All deprecated
 
 
-#Do this with tows clust
-spp_years <- tows_clust %>% filter(type != 'other') %>% distinct(set_year, species)
+# #Delta plots
 
-delts <- mclapply(1:nrow(spp_years), FUN = function(mm) {
-  outs <- year_spp_delta(year = spp_years[mm, "set_year"], 
-    spp = spp_years[mm, 'species'])
-  return(outs)
-}, mc.cores = 6)
+# # Something with shortspines
+# # thornys <- tows_clust[grep("Thornyhead", tows_clust$species), ]
+# # thornys %>% group_by(set_year, species) %>% summarize(apounds = sum(apounds)) %>% arrange(species) %>%
+# #   as.data.frame
 
-delts <- ldply(delts)
-delts <-  delts %>% arrange(species, year)
-delts$when <- 'before'
-delts[which(delts$year >= 2011), 'when'] <- 'after'
 
-ggplot(delts) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
+# #Do this with tows clust
+# spp_years <- tows_clust %>% filter(type != 'other') %>% distinct(set_year, species)
 
-#Plot targets
-types <- tows_clust %>% filter(type != 'other') %>% distinct(type, species)
-delts <- delts %>% left_join(types, by = "species")
+# delts <- mclapply(1:nrow(spp_years), FUN = function(mm) {
+#   outs <- year_spp_delta(year = spp_years[mm, "set_year"], 
+#     spp = spp_years[mm, 'species'])
+#   return(outs)
+# }, mc.cores = 6)
 
-targs <- filter(delts, type == 'targets')
-ggplot(targs) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
-tspp <- unique(targs$species) #target species
+# delts <- ldply(delts)
+# delts <-  delts %>% arrange(species, year)
+# delts$when <- 'before'
+# delts[which(delts$year >= 2011), 'when'] <- 'after'
 
-#Targets
-source("figs/ch4_targ_delta.R")
+# # ggplot(delts) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
 
-weaks <- filter(delts, type == 'weaks')
-wspp <- unique(weaks$species) #target species
+# #Plot targets
+# types <- tows_clust %>% filter(type != 'other') %>% distinct(type, species)
+# delts <- delts %>% left_join(types, by = "species")
 
-#Weaks 
-source('figs/ch4_weak_delta.R')
+# targs <- filter(delts, type == 'targets')
+# ggplot(targs) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
+# tspp <- unique(targs$species) #target species
 
-ggplot(weaks) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
+# #Targets
+# source("figs/ch4_targ_delta.R")
+
+
+
+# #Weaks 
+# source('figs/ch4_weak_delta.R')
+
+# ggplot(weaks) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
+
+
+
+# ggplot(delts_befaft) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + 
+#   facet_wrap(~ type)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
