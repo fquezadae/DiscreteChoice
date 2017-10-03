@@ -6,9 +6,9 @@
 
 #' @export
 
-when_spp_delta <- function(when, spp){
+when_spp_delta <- function(period, spp){
 # browser()  
-  tt <- tows_clust %>% filter(when == when) 
+  tt <- tows_clust %>% ungroup %>% filter(when == period) 
   all_tows <- tt %>% distinct(haul_id)
   
   spp_catch <- tt %>% filter(species == spp) %>% select(haul_id, apounds)
@@ -19,11 +19,11 @@ when_spp_delta <- function(when, spp){
   prop_zero <- zeroes / nrow(the_tows)
   
   skew <- calc_skew(log(subset(the_tows, apounds != 0)$apounds))
-  
+# browser()  
   #Make sure to include species type in the output
   the_type <- unique(subset(tt, species == spp)$type)
-  when
+  # spp
 # browser()
-  return(data.frame(species = spp, when = when, prop_zero = prop_zero, skew = skew, 
+  return(data.frame(species = spp, when = period, prop_zero = prop_zero, skew = skew, 
     type = the_type))
 }
