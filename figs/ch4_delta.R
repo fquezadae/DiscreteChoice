@@ -1,7 +1,7 @@
 #Delta plots
 
-#Something with shortspines
-thornys <- tows_clust[grep("Thornyhead", tows_clust$species), ]
+# Something with shortspines
+# thornys <- tows_clust[grep("Thornyhead", tows_clust$species), ]
 # thornys %>% group_by(set_year, species) %>% summarize(apounds = sum(apounds)) %>% arrange(species) %>%
 #   as.data.frame
 

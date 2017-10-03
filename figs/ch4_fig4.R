@@ -66,11 +66,42 @@ lat_long_anova <- rbind(both_sig, long_sig, lat_sig, none_sig)
 shifts <- shifts %>% left_join(lat_long_anova %>% select(drvid, sig), by = 'drvid')
 
 #------------------------------------------------------------------------
+
+#------------------------------------------------------------------------
 #Shorter trips, shorter hauls?
+tows_clust$d_date <- paste(tows_clust$dyear, tows_clust$dmonth, tows_clust$dday, sep = "-")
+tows_clust$d_date <- ymd(tows_clust$d_date)
+
+tows_clust$r_date <- paste(tows_clust$ryear, tows_clust$rmonth, tows_clust$rday, sep = "-")
+tows_clust$r_date <- ymd(tows_clust$r_date)
+
+tows_clust$trip_length <- tows_clust$r_date - tows_clust$d_date
+tows_clust$trip_length <- as.numeric(tows_clust$trip_length)
+
+tows_clust %>% distinct(trip_id, .keep_all = T) %>% group_by(drvid, dyear) %>%
+  summarize(avg_trip = mean(trip_length))
+
+tows_clust %>% distinct(trip_id, .keep_all = T) %>% group_by(dyear) %>%
+  summarize(avg_trip = mean(trip_length))
+
+#Average tow duration
+tows_clust %>% distinct(haul_id, .keep_all = T) %>% group_by(set_year) %>%
+  summarize(avg_haul = mean(haul_duration))
+
+
+
+
+tows_clust %>% group_by(drvid, dyear) %>% summarize(avg_trip = mean(trip_duration, na.rm = T))
+
 
 
 #------------------------------------------------------------------------
 #Shifts for fleets in each state
+
+
+
+
+
 
 #------------------------------------------------------------------------
 shifts <- left_join(shifts, tows_clust %>% distinct(d_port, d_state), by = 'd_port')
