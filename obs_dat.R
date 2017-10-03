@@ -33,7 +33,6 @@ library(ch2vms)
 #States Map
 states_map <- map_data("state")
 
-
 #---------------------------------------------------------------------------------
 load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
 
