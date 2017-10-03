@@ -7,7 +7,7 @@
 
 
 #Do this with tows clust
-spp_years <- tows_clust %>% filter(type != 'other') %>% distinct(set_year, species)
+# spp_years <- tows_clust %>% filter(type != 'other') %>% distinct(set_year, species)
 
 # delts <- mclapply(1:nrow(spp_years), FUN = function(mm) {
 #   outs <- year_spp_delta(year = spp_years[mm, "set_year"], 
@@ -21,14 +21,15 @@ spp_years <- tows_clust %>% filter(type != 'other') %>% distinct(set_year, speci
 # delts[which(delts$year >= 2011), 'when'] <- 'after'
 
 # save(delts, file = 'output/delts.Rdata')
+
 #------------------------------------------------------------------------------------------------------------
 load(file = 'output/delts.Rdata')
 
 # ggplot(delts) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
 
 #Plot targets
-types <- tows_clust %>% filter(type != 'other') %>% distinct(type, species)
-delts <- delts %>% left_join(types, by = "species")
+# types <- tows_clust %>% filter(type != 'other') %>% distinct(type, species)
+# delts <- delts %>% left_join(types, by = "species")
 
 targs <- filter(delts, type == 'targets')
 # ggplot(targs) + geom_point(aes(x = prop_zero, y = skew, colour = when)) + facet_wrap(~ species)
@@ -47,9 +48,9 @@ for(ii in 1:6){
   plot(temp$prop_zero, temp$skew, xlim = c(0, 1), ylim = c(-2, .5), ann = F, axes = F,
     type = 'n')
   # points(bef$prop_zero, bef$skew, pch = 19, col = adjustcolor( "black", alpha.f = 0.5), cex = 1.2)
-  points(aft$prop_zero, aft$skew, pch = 19, col = adjustcolor( "black", alpha.f = 0.5), cex = 1.5)
+  points(aft$prop_zero, aft$skew, pch = 19, col = adjustcolor( "black", alpha.f = 0.5), cex = 1.7)
   # points(aft$prop_zero, aft$skew, pch = 21, col = rgb(0, 0, 0, .85), cex = 1.2)
-  points(bef$prop_zero, bef$skew, pch = 21, col = rgb(0, 0, 0, .85), cex = 1.5)
+  points(bef$prop_zero, bef$skew, pch = 21, col = rgb(0, 0, 0, .85), cex = 1.7)
   abline(h = 0, lty = 2)
   box()
   #Add axes
@@ -58,7 +59,7 @@ for(ii in 1:6){
   if(ii > 3) axis(side = 1, mgp = c(0, .5, 0), at = c(0, .2, .4, .6, .8))
   if(ii == 3) legend('bottomright', bty = 'n', legend = c("Before", "After"), pch = c(21, 19),
     col = c(adjustcolor('black', alpha.f = 0.5), 
-      adjustcolor('black', alpha.f = 0.5)), pt.bg = c('white', 'gray80'), pt.cex = 1.2)
+      adjustcolor('black', alpha.f = 0.5)), pt.bg = c('white', 'gray80'), pt.cex = 1.7)
   mtext(side = 3, text = paste0(letters[ii], ") ", tspp[ii]), cex = .7, adj = .04,
    line = -1.25)
 }
