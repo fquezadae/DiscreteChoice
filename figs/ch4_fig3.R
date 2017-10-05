@@ -130,14 +130,8 @@ image(xx, yy, zz)
 #-------------------------------------------------------------------------------------
 format_fc_plot <- function(input, max_value = 10, the_levels = 10, 
   xlims = c(1, 15), ylims = c(1, 31), flip_x_axis = TRUE, xint = 25, yint = .25){  
-browser()  
-  #Flip x axis values
-  # input$x <- input$xmin
-  # input$y <- input$ymin
-  
-input$x <- input$xbin 
-input$y <- input$ybin
-# input
+  input$x <- input$xbin 
+  input$y <- input$ybin
 
   if(flip_x_axis == T){
     input$x <- xlims[2] - input$x
@@ -147,39 +141,26 @@ input$y <- input$ybin
   input$plot_value <- input$abs_slope
   input[which(input$abs_slope >= max_value), 'plot_value'] <- max_value
   
-  #Format matrices for filled_contour plot
-  # input$x <- round(input$x)
-  # input$y <- round(input$y, digits = 3)
-# input$y <- round(input$y, digits = 0)  
-  
-  # xx <- seq(xlims[1], xlims[2], by = xint)
-  # yy <- seq(ylims[1], ylims[2], by = yint)
-xx <- seq(xlims[1], xlims[2], by = 1)
-yy <- seq(ylims[1], ylims[2], by = 1)
+  xx <- seq(xlims[1], xlims[2], by = 1)
+  yy <- seq(ylims[1], ylims[2], by = 1)
 
   pos <- expand.grid(xx, yy)
   pos <- data.frame(x = pos[, 1], y = pos[, 2])
-  # pos$x <- round(pos$x, digits = 0)
-  # pos$y <- round(pos$y, digits = 3)
-# pos$y <- round(pos$y, digits = 0)
+
   pos1 <- pos %>% left_join(input %>% select(x, y, abs_slope, plot_value), by = c('x', 'y'),
     fill = 0)
   
   na_inds <- is.na(pos1$abs_slope)
   pos1[na_inds, 'abs_slope'] <- 0
   pos1[na_inds, 'plot_value'] <- 0
-  # pos1[na_inds, 'greys'] <- 'white'
-# pos1[which(pos1$x == 15 & pos1$y == 31), 'plot_value'] <- 50
   
   zz <- matrix(pos1$plot_value, nrow = length(xx), ncol = length(yy))
-
+# browser()  
   image(xx + .5, yy, zz, col = grey.colors(n = the_levels, start = 1, end = 0), ann = F,
     axes = F, xlim = xlims, ylim = ylims, bg = 'black')
   
-  # filled.contour2(xx, yy, zz, nlevels = the_levels, 
-  #   col = grey.colors(n = the_levels , start = 1, end = 0), ann = F,
-  #   axes = F, ylim = ylims, xlim = xlims )  
 }
+
 
 # ch4_fig3(mv = 20, lev = 20)
 
