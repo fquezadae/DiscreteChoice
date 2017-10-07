@@ -23,9 +23,14 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
+  
+  #---------------------------------------------------------------
   ##Filter the data
-  dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
-    set_year <= max_year)
+  # dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
+  #   set_year <= max_year)
+  
+  dat <- data_in %>% filter(set_year >= min_year, set_year <= max_year, 
+    fleet_name == the_port)
   
   #---------------------------------------------------------------
   #Calculate haul revenues
@@ -37,11 +42,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   # print("only weak stock species adjusted for risk")  
   dat$net_price <- dat$exval_pound
-  weak_inds <- which(dat$type == 'weaks')
-  dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
-    dat$avg_quota_price[weak_inds]
-  # dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
+  dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
 
+  # weak_inds <- which(dat$type == 'weaks')
+  # dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
+  #   dat$avg_quota_price[weak_inds]
+  
 ####Change net_price for groundfish and other species to 0
   # dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
   dat[which(dat$type == 'other'), 'net_price'] <- 0
@@ -55,38 +61,38 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #Create data set, for each tow
   dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
-    drvid, trip_id, set_day, set_year, haul_net_revenue,
-    haul_num, avg_long, avg_lat, avg_depth, depth_bin, unq) %>% as.data.frame  
+    drvid, trip_id, set_day, set_year, haul_net_revenue, set_long, set_lat, 
+    haul_num, avg_long, avg_lat, avg_depth, depth_bin, unq, up_long, up_lat) %>% as.data.frame  
   
-
   # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
   #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
   #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
   dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= min_year)
-  
+
   #For each tow in the focus year, sample other tows
   #Hauls in focus year
   hauls <- dist_hauls %>% filter(set_year == focus_year) %>% arrange(trip_id, haul_num)
   hauls$prev_haul_num <- hauls$haul_num - 1
   
   #Data frame of previous haul locations
-  prev_hauls <- hauls %>% select(trip_id, haul_num, avg_long, avg_lat)
-  
+  # prev_hauls <- hauls %>% select(trip_id, haul_num, avg_long, avg_lat)
+  prev_hauls <- hauls %>% select(trip_id, haul_num, up_long, up_lat)
+
   #add in zero haul_num values
   zero_hauls <- prev_hauls %>% distinct(trip_id)  
   zero_hauls$haul_num <- 0
-  
+
   port_locs <- dat %>% ungroup %>% distinct(trip_id, d_port_long, d_port_lat)
   zero_hauls <- zero_hauls %>% left_join(port_locs, by = "trip_id")
-  zero_hauls <- plyr::rename(zero_hauls, c("d_port_long" = "avg_long", 
-    "d_port_lat" = 'avg_lat'))
+  zero_hauls <- plyr::rename(zero_hauls, c("d_port_long" = "up_long", 
+    "d_port_lat" = 'up_lat'))
 
   # zero_hauls$avg_long <- unique(dat$d_port_long)
   # zero_hauls$avg_lat <- unique(dat$d_port_lat)
   
   #Add into previous hauls data frame
   prev_hauls <- rbind(prev_hauls, zero_hauls) %>% arrange(trip_id, haul_num)
-  names(prev_hauls)[2:4] <- c('prev_haul_num', "prev_avg_long", 'prev_avg_lat')
+  names(prev_hauls)[2:4] <- c('prev_haul_num', "prev_up_long", 'prev_up_lat')
   
   #Add this into the hauls data frame
   hauls <- hauls %>% left_join(prev_hauls, by = c('trip_id', 'prev_haul_num'))
@@ -150,7 +156,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
 
   #-----------------------------------------------------------------------------  
-# pd <- process_dummys(xx = 2, td2 = td1, dat1 = dat)  
+#pd <- process_dummys(xx = 2, td2 = td1, dat1 = dat)  
   
   dummys <- foreach::foreach(ii = 1:nrow(td1), 
     # .export = c('dat', 'td1'),
