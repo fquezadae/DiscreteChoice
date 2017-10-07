@@ -7,7 +7,7 @@
 
 process_dummys <- function(xx, td2 = td1, dat1 = dat){
   temp_dat <- td2[xx, ]
-
+# browser()
   #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
   clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
                               unq_clust <= temp_dat$unq_clust + 5) %>% 
@@ -15,12 +15,17 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
         filter(set_date <= temp_dat$set_date)
   
   #Convert degrees to radians
-  clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
-  clust_dat$avg_lat <- deg2rad(clust_dat$avg_lat)
+  # clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
+  # clust_dat$avg_lat <- deg2rad(clust_dat$avg_lat)
 
+  #Use set points instead, to see if they set in that area recently
+  clust_dat$set_long <- deg2rad(clust_dat$set_long)
+  clust_dat$set_lat <- deg2rad(clust_dat$set_lat)
+
+#Change this to set points and end points...?
   #Calculate distances
-  clust_dat$dist_from_samp_tow <- gcd_slc(temp_dat$avg_long, temp_dat$avg_lat,
-    clust_dat$avg_long, clust_dat$avg_lat)
+  clust_dat$dist_from_samp_tow <- gcd_slc(temp_dat$set_long, temp_dat$set_lat,
+    clust_dat$set_long, clust_dat$set_lat)
 
   #------------------------------------------------------------
   ######Add Dummys for points within 5 miles (8.05 km)
@@ -39,6 +44,8 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
   #------------------------------------------------------------
   #Now filter the data to calculate revenues and dumMissing
 
+##Add depth bin here too
+##Make sure this can be from the entire fleet
   #Remove points that are greater than 5 km away
   clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
     
@@ -69,7 +76,7 @@ process_dummys <- function(xx, td2 = td1, dat1 = dat){
 
   #  prev_days_rev = towed_prev_days_rev,
   # , prev_year_days_rev = towed_prev_year_days_rev)
-# browser()
+
   return(outs)
 
 }
