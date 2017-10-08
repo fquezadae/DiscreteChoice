@@ -61,8 +61,6 @@ dba$plot_type <- c("other", 'other', 'targets', 'targets', 'weaks', 'weaks', 'gr
 dba$plot_val <- c('Other', "", "Targets", "", "Weaks", "", "Groundfish", "")
 
 
-dba <- dba[]
-
 #------------------------------------------------------------------------------------------------------------
 #Plot only the targets and rebuilding species
 #Add in significance also
@@ -73,15 +71,29 @@ delts_befaft <- subset(delts_befaft, plot_type != 'other')
 
 delts_befaft$spp_abb <- substr(delts_befaft$species, 1, 3)
 
+#Manually adjust
+delts_befaft[which(delts_befaft$species == "Greenstriped Rockfish"), 'spp_abb'] <- "Gst"
+delts_befaft[which(delts_befaft$species == "Greenspotted Rockfish"), 'spp_abb'] <- "Gsp"
+delts_befaft[which(delts_befaft$species == "Longnose Skate"), 'spp_abb'] <- "Lsk"
 
-# png(width = 3.6, height = 6.5, file = 'figs/ch4_delt_all_old.png', units = 'in', res = 200)
-par(mfrow = c(3, 2), oma = c(3, 3, 2, 0), mar = c(0, 0, 0, .5))
+#Also which species are significant?
+
+#------------------------------------------------------------------------------------------------------------
+delts_befaft <- delts_befaft %>% left_join(delta_sigs, by = 'species')
+
+png(width = 5.4, height = 7, file = 'figs/ch4_delt_all.png', units = 'in', res = 200)
+
+par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, .5), mar = c(0, 0, .5, 0))
 for(ii in 1:6){
-  temp <- subset(delts_befaft, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
   
-  plot(temp$prop_zero, temp$skew, xlim = c(0, 1.05), ylim = c(-2, 1.5), pch = 19, 
+  temp <- subset(delts_befaft, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
+  both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes')
+  one_sig <- temp %>% filter(skew_sig != 'yes' | prop_sig != 'yes')
+
+  plot(both_sig$prop_zero, both_sig$skew, xlim = c(0, 1.1), ylim = c(-2, 1.5), pch = 19, 
     col = adjustcolor( "black", alpha.f = 0.2), ann = F, axes = F, xaxs = 'i',
-    yaxs = 'i', cex = 1.7)
+    yaxs = 'i', cex = 2.5)
+  points(one_sig$prop_zero, one_sig$skew, pch = 21, cex = 2.5)
   # if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.2)
   if(ii == 1){
     one <- temp[5, ]
@@ -91,37 +103,49 @@ for(ii in 1:6){
     #Split out dover and sablefish
   }
   
+  if(ii == 2){
+    # legend('topright', legend = c("sig", 'ns'), bty = 'n', cex = c(19, 21))
+    
+    legend('topright', bty = 'n', pt.cex = 2, c("Significant", "Non-significant"),
+      pch = c(19, 21), col = c(adjustcolor( "black", alpha.f = 0.2), "black"))
+  }
+
   if(ii == 3){
     boca <- temp[1, ]
     two <- temp[-1, ]
-    text(two$prop_zero, two$skew, two$spp_abb, adj = 1.2)
+    text(two$prop_zero, two$skew, two$spp_abb, adj = 1.5)
     text(boca$prop_zero, boca$skew, boca$spp_abb, adj = c(.5, -1.1))
   }
 
   if(ii == 5){
-    text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.2)
+    par(xpd = T)
+    rights <- temp[which(temp$species %in% c("Black Rockfish", "Widow Rockfish", 
+          "Greenspotted Rockfish")), ]
+    lefts <- temp[which(temp$species %in% c("Black Rockfish", "Widow Rockfish", 
+          "Greenspotted Rockfish") == FALSE), ]
+    
+    text(lefts$prop_zero, lefts$skew, lefts$spp_abb, adj = 1.5)
+    text(rights$prop_zero, rights$skew, rights$spp_abb, adj = -.2)
   }
-  if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.2)
+  if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.4)
   
   # points(temp_targs$prop_zero, temp_targs$skew, pch = 0, col = 'black', cex = 1.2)
   abline(h = 0, lty = 2)
   box()
   if(ii >= 5) {axis(side = 1, mgp = c(0, .5, 0), labels = c('0', .2, .4, .6, .8, "1"),
-      at = c(0, .2, .4, .6, .8, 1))}
+      at = c(0, .2, .4, .6, .8, 1), cex.axis = 1.2)}
   if(ii %in% c(1, 3, 5, 7)) axis(side = 2, las = 2, mgp = c(0, .5, 0),
-    at = c(-2, -1, 0, 1))
+    at = c(-2, -1, 0, 1), cex.axis = 1.2)
   
-  mtext(side = 3, line = -1.2, paste0(letters[ii], ") ", dba2[ii, 'plot_val']), adj = .02, cex = .7)
+  mtext(side = 3, line = -1.3, paste0(letters[ii], ") ", dba2[ii, 'plot_val']), adj = .02, cex = .9)
   
   # mtext(side = 3, line = -1.2, dba[ii, 2], adj = .15, cex = .7)
 }
 
-mtext(side = 3, "Before", outer = T, line = .5, cex = .8, adj = 0)
-mtext(side = 3, "After", outer = T, line = .5, cex = .8, adj = .55)
-mtext(side = 1, "Proportion Zero", outer = T, line = 1.7, cex = .9)
-mtext(side = 2, "Skew", outer = T, line = 1.7, cex = .9)
-
-
+mtext(side = 3, "Before", outer = T, line = .1, cex = 1.1, adj = 0)
+mtext(side = 3, "After", outer = T, line = .1, cex = 1.1, adj = .55)
+mtext(side = 1, "Proportion Zero", outer = T, line = 1.8, cex = 1.2)
+mtext(side = 2, "Skew", outer = T, line = 1.7, cex = 1.2)
 
 dev.off()
 
