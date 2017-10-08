@@ -5,7 +5,8 @@
 \title{port_rums function
 Function to run and save RUM data for 8 top ports}
 \usage{
-port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10)
+port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10,
+  ports)
 }
 \arguments{
 \item{m_y}{Minimum year}
