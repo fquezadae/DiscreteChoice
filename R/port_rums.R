@@ -28,7 +28,24 @@ port_rums <- function(m_y,
                             nhauls_sampled = nhauls_sampled,
                             seed = seed, ncores = ncores, rev_scale = r_s),
       error = function(e) NULL)
+    
     r_time <- Sys.time() - st_time
+
+    the_port <- ports[[yy]]
+    the_port <- paste(the_port, collapse = "_")
+    port_sv <- substr(the_port, 1, 3)
+
+    filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
+      "_seed", seed)
+
+    mod <- rum[[2]]    
+    if(Sys.info()[['sysname']] == "Darwin"){
+      save(mod, file = paste0("/Volumes/udrive/", filename, '.Rdata'))
+    }
+    
+    if(Sys.info()[['sysname']] != "Darwin"){
+      save(mod, file = paste0("/Volumes/udrive/", filename, '.Rdata'))
+    }
     print(r_time)
     print(rum[[1]])
     return(rum)
@@ -44,10 +61,10 @@ port_rums <- function(m_y,
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
     "_seed", seed)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
-  filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
-    "_seed", seed)
+  # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
+  #   "_seed", seed)
   # filename <- paste0("runs", r_c, "_rev", r_s, '_focyr', f_y, "_nports", nports)
-  save(runs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
+  # save(runs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
 
   return(coefs)
 }
