@@ -44,7 +44,7 @@ port_rums <- function(m_y,
     }
     
     if(Sys.info()[['sysname']] != "Darwin"){
-      save(mod, file = paste0("/Volumes/udrive/", filename, '.Rdata'))
+      save(mod, file = paste0("//udrive.uw.edu//udrive//", filename, '.Rdata'))
     }
     print(r_time)
     print(rum[[1]])
