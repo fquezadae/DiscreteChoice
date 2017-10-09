@@ -26,9 +26,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #---------------------------------------------------------------
   ##Filter the data
-  # dat <- data_in %>% filter(dport_desc %in% the_port, set_year >= min_year,
-  #   set_year <= max_year)
-  
   dat <- data_in %>% filter(set_year >= min_year, set_year <= max_year, 
     fleet_name == the_port)
   
@@ -64,9 +61,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     drvid, trip_id, set_day, set_year, haul_net_revenue, set_long, set_lat, 
     haul_num, avg_long, avg_lat, avg_depth, depth_bin, unq, up_long, up_lat) %>% as.data.frame  
   
-  # dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
-  #   drvid, trip_id, set_day, set_year, haul_net_revenue, avg_long_clust, avg_lat_clust,
-  #   haul_num, avg_long, avg_lat, avg_depth, unq, unq_clust_bin) %>% as.data.frame
   dist_hauls_catch_shares <- dist_hauls %>% filter(set_year >= min_year)
 
   #For each tow in the focus year, sample other tows
@@ -219,10 +213,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Fit the model for everything at once  
   the_tows <- mlogit.data(rdo, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
-  # mf <- mFormula(fished ~ miss_rev * dummy_first + 
-  #   distance * dummy_first + miss_rev * dummy_not_first +
-  #   distance * dummy_not_first - distance - miss_rev - 1 - 
-  #   dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days + dummy_miss)
   
   mf <- mFormula(fished ~ miss_rev_adj * dummy_first + 
     distance * dummy_first + miss_rev_adj * dummy_not_first +
@@ -232,10 +222,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   #List coefficients and rename to align with jeem paper
   coefs <- coef(res)
-  # coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
-  #   "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
-  #   "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
-  #   "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
   
   coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
     "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
@@ -246,11 +232,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   ps <- summary(res)$CoefTable[, 4]
 
-  # ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
-  #   "dummy_prev_year_days" = "dum30y", "miss_rev:dummy_first" = "rev1",
-  #   "dummy_first:distance" = 'dist1', "miss_rev:dummy_not_first" = "rev",
-  #   "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
-  
   ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
     "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
     "dummy_first:distance" = 'dist1', "miss_rev_adj:dummy_not_first" = "rev",
