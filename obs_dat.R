@@ -62,18 +62,55 @@ tows_clust <- tows_clust %>% left_join(port_locz, by = 'fleet_name')
 #Calculate net prices for tows
 tows_clust$net_price <- tows_clust$exval_pound - tows_clust$avg_quota_price
 
+#Calculate gross revenue
+tows_clust$gross_rev <- tows_clust$hpounds * tows_clust$exval_pound
+
+#Calculate net price
+# tows_clust$quota_val <- tows_clust$hpounds * tows_clust$avg_quota_price
+
+#calculate haul revenue
+# tows_clust  %>% group_by(fleet_name, set_year) %>% 
+#   summarize(gross_rev = sum(gross_rev, na.rm = T), quota_val = sum(quota_val, na.rm = T),
+#     net_rev = gross_rev - quota_val) %>% filter(set_year == 2012) %>% select(gross_rev,
+#     quota_val) 
+  
+# tows_clust %>% filter(haul_id == 67434, type != 'other') %>% 
+#   select(haul_id, species, type, set_date, hpounds, exval_pound, avg_quota_price, gross_rev,
+#     quota_val) %>% group_by(haul_id)
+
+#---------------------------
+
 # weak_inds <- which(tows_clust$type == 'weaks')
 # tows_clust[weak_inds, 'net_price'] <- tows_clust[weak_inds, "exval_pound"] - tows_clust[weak_inds, 
 #   'avg_quota_price']
 
-tows_clust$spp_value <- tows_clust$hpounds * (tows_clust$net_price)
+# tows_clust$spp_value <- tows_clust$hpounds * (tows_clust$net_price)
 
-tows_clust <- tows_clust %>% group_by(haul_id) %>% 
-  mutate(haul_value = sum(spp_value, na.rm = T)) %>% 
-  as.data.frame
+# tows_clust <- tows_clust %>% group_by(haul_id) %>% 
+#   mutate(haul_value = sum(spp_value, na.rm = T)) %>% 
+#   as.data.frame
 
-tows_clust %>% distinct(haul_id, .keep_all = T) %>% group_by(set_year, fleet_name) %>% 
-  summarize(tot_value = sum(haul_value, na.rm = T)) %>% filter(set_year == 2011)
+#add column for the quota value of weak stock species
+weak_quota_value <- tows_clust %>% filter(type == 'weaks') %>% group_by(haul_id, type) %>% 
+  summarize(weak_quota_value = sum(quota_val, na.rm = T))
+tows_clust <- tows_clust %>% left_join(weak_quota_value %>% select(-type), by = 'haul_id')
+
+#add column for the quota value of target and groundfish species
+tg_rev <- tows_clust %>% filter(type %in% c('targets', 'groundfish')) %>% group_by(haul_id) %>%
+  summarize(tg_rev = sum(gross_rev, na.rm = T))
+tows_clust <- tows_clust %>% left_join(tg_rev, by = 'haul_id')
+
+tgo_rev <- tows_clust %>% filter(type %in% c('targets', 'groundfish', 'other')) %>% group_by(haul_id) %>%
+  summarize(tgo_rev = sum(gross_rev, na.rm = T))
+tows_clust <- tows_clust %>% left_join(tgo_rev, by = 'haul_id')
+
+tgow_rev <- tows_clust %>% group_by(haul_id) %>%
+  summarize(tgow_rev = sum(gross_rev, na.rm = T))
+tows_clust <- tows_clust %>% left_join(tgow_rev, by = 'haul_id')
+tows_clust[is.na(tows_clust$weak_quota_value), 'weak_quota_value'] <- 0
+
+# tows_clust %>% arrange(desc(tgo_rev)) %>% head
+# tows_clust %>% filter(haul_id == "79037") %>% select(species, apounds, exval_pound, gross_rev, tg_rev)
 
 #---------------------------------------------------------------------------------
 
