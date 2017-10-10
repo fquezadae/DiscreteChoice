@@ -23,8 +23,9 @@ rev_distance <- 5
   dum30 <- dum30 %>% filter(dist <= habit_distance)
   
   #Add dummy coefficient
-  dum30_val <- 0
-  if(nrow(dum30) > 0) dum30_val <- 1
+  dum30_val <- nrow(dum30)
+  # dum30_val <- 0
+  # if(nrow(dum30) > 0) dum30_val <- 1
 
   #-----------------------------------------------------------------------------------------------
   # Vessel fish in the past 30 days of last year?
@@ -39,8 +40,8 @@ rev_distance <- 5
   dum30y <- dum30y %>% filter(dist <= habit_distance)
   
   #Add dummy coefficient
-  dum30y_val <- 0
-  if(nrow(dum30y) > 0) dum30y_val <- 1
+  dum30y_val <- nrow(dum30y)
+  # if(nrow(dum30y) > 0) dum30y_val <- 1
   
   #-----------------------------------------------------------------------------------------------
   #Calculate the revenues within a finer radius and from the whole fleet, rather than individual vessel
@@ -53,28 +54,39 @@ rev_distance <- 5
     long2 = deg2rad(dum_rev$set_long), lat2 = deg2rad(dum_rev$set_lat))
   dum_rev <- dum_rev %>% filter(dist <= rev_distance)
 
-  #Calculate revenue
-  dum_rev_val <- 0
-  dum_rev_dollars <- 0
+# browser()
 
-  if(nrow(dum_rev) > 0){
-    dum_rev_val <- 1
-    #Split weaks and non weaks
-    the_revs <- dat1 %>% filter(haul_id %in% dum_rev$haul_id)
+  #Calculate revenue in a faster way with fewer if statements
+  dum_rev_val <- nrow(dum_rev)
+
+#####Here control whether you use value of all species or just target and groundfish species
+  #Right now including all species "tgow_rev"
+  # dum_rev[is.na(dum_rev$weak_quota_value), 'weak_quota_value'] <- 0
+  mean_rev <- mean(dum_rev$tgow_rev)
+  mean_rev <- replace(mean_rev, is.na(mean_rev), 0)
+  mean_weak <- mean(dum_rev$weak_quota_value, na.rm = T)
+  mean_weak <- replace(mean_weak, is.na(mean_weak), 0)
+  
+  dum_rev_dollars <- mean_rev - mean_weak
+  
+  # if(nrow(dum_rev) > 0){
+  #   dum_rev_val <- 1
+  #   #Split weaks and non weaks
+  #   the_revs <- dat1 %>% filter(haul_id %in% dum_rev$haul_id)
     
-    managed <- the_revs %>% filter(type != 'other') %>% group_by(haul_id) %>% 
-      summarize(gross_rev = sum(gross_rev, na.rm = T)) %>% mutate(avg_rev = mean(gross_rev))
-    managed_val <- unique(managed$avg_rev)
+  #   managed <- the_revs %>% filter(type != 'other') %>% group_by(haul_id) %>% 
+  #     summarize(gross_rev = sum(gross_rev, na.rm = T)) %>% mutate(avg_rev = mean(gross_rev))
+  #   managed_val <- unique(managed$avg_rev)
     
-    weaks <- the_revs %>% filter(type == 'weaks') %>% group_by(haul_id) %>% 
-      summarize(quota_val = sum(quota_val, na.rm = T)) %>% mutate(avg_quota_val = mean(quota_val))
+  #   weaks <- the_revs %>% filter(type == 'weaks') %>% group_by(haul_id) %>% 
+  #     summarize(quota_val = sum(quota_val, na.rm = T)) %>% mutate(avg_quota_val = mean(quota_val))
     
-    if(nrow(weaks) == 0) weak_val <- 0
-    if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_quota_val)
+  #   if(nrow(weaks) == 0) weak_val <- 0
+  #   if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_quota_val)
     
-    #Calculate net revenue value
-    dum_rev_dollars <- managed_val - weak_val
-  }
+  #   #Calculate net revenue value
+  #   dum_rev_dollars <- managed_val - weak_val
+  # }
 
   temp_dat$dummy_prev_days <- dum30_val
   temp_dat$dummy_prev_year_days <- dum30y_val
