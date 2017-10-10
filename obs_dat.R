@@ -119,7 +119,10 @@ mb1 <- port_rums(data_in = tows_clust, the_port = "CRESCENT CITY",
   risk_coefficient = 1, ndays = 30, focus_year = 2012, 
   nhauls_sampled = 50, seed = 50, ncores = 6, rev_scale = 100)
 
-
+# cc <- sampled_rums(data_in = tows_clust, the_port = "CRESCENT CITY", 
+#   min_year = 2007, max_year = 2013,
+#   risk_coefficient = 1, ndays = 30, focus_year = 2013, 
+#   nhauls_sampled = 50, seed = 300, ncores = 6, rev_scale = 100)
 #---------------------------------------------------------------------------------
 #Compare to
 set_year <- tows_clust1 %>% filter(set_year %in% c(2010, 2011, 2012)) %>%
