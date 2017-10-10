@@ -56,6 +56,7 @@ rev_distance <- 5
   #Calculate revenue
   dum_rev_val <- 0
   dum_rev_dollars <- 0
+
   if(nrow(dum_rev) > 0){
     dum_rev_val <- 1
     #Split weaks and non weaks
@@ -66,9 +67,10 @@ rev_distance <- 5
     managed_val <- unique(managed$avg_rev)
     
     weaks <- the_revs %>% filter(type == 'weaks') %>% group_by(haul_id) %>% 
-      summarize(quota_val = sum(quota_val, na.rm = T))
+      summarize(quota_val = sum(quota_val, na.rm = T)) %>% mutate(avg_quota_val = mean(quota_val))
+    
     if(nrow(weaks) == 0) weak_val <- 0
-    if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_rev)
+    if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_quota_val)
     
     #Calculate net revenue value
     dum_rev_dollars <- managed_val - weak_val
