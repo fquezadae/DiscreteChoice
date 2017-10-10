@@ -44,76 +44,19 @@ states_map <- map_data("state")
 # load("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 # load("//udrive.uw.edu//udrive//filt_clusts_w_monthly_prices.Rdata")
 # load("//udrive.uw.edu//udrive//tows_clust_921.Rdata")
-load("//udrive.uw.edu//udrive//tows_clust_925_depth_bin.Rdata")
-
-dan_ports <- read.csv(file = 'data/dan_port_assignments.csv', stringsAsFactors = FALSE)
-dan_ports <- dan_ports[, c(1, 2)]
-tows_clust1 <- tows_clust %>% left_join(dan_ports, by = 'drvid')
-
-fltz <- data.frame(fleet_num = c(8, 9, 10, 12, 13, 14, 16, 17, 18),
-                   fleet_name = c('FORT BRAGG', "EUREKA", "CRESCENT CITY", "BROOKINGS", "CHARLESTON (COOS BAY)", 
-                                  "NEWPORT", "ASTORIA / WARRENTON", "ILWACO/CHINOOK", "WESTPORT"))
-tows_clust1 <- tows_clust1 %>% left_join(fltz, by = 'fleet_num')
-
-tows_clust <- tows_clust1
-tows_clust[which(tows_clust$dport_desc == "ILWACO"), "dport_desc"] <- "ILWACO/CHINOOK"
-
-#Update departure port lat and long
-port_locz <- tows_clust %>% distinct(dport_desc, d_port_long, d_port_lat)
-names(port_locz) <- c('fleet_name', 'fleet_name_long', 'fleet_name_lat')
-port_locz <- port_locz %>% filter(is.na(fleet_name_long) == FALSE)
-
-tows_clust <- tows_clust %>% left_join(port_locz, by = 'fleet_name') 
-#--------------------------------------------------------------------------------- 
-#Define the ports
-
-ports <- list(c("MOSS LANDING", "SAN FRANCISCO"),
-     "FORT BRAGG",
-     "EUREKA",
-     c("CRESCENT CITY", "BROOKINGS"),
-     "CHARLESTON (COOS BAY)",
-     "NEWPORT", 
-     "ASTORIA / WARRENTON", 
-     c("ILWACO/CHINOOK", "WESTPORT"))
+# load("//udrive.uw.edu//udrive//tows_clust_925_depth_bin.Rdata")
+load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 
 #------------------------------------------------------------------------------
-rum <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
-                    min_year = 2010, max_year = 2012,
-                    risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                    seed = 305, ncores = 10, rev_scale = 100)
+#Test ILWACO
+#Check the sensitivity to seeds for Crescent City
+start_time <- Sys.time()
+ic <- sampled_rums(data_in = tows_clust, the_port = "ILWACO/CHINOOK",
+                   min_year = 2009, max_year = 2011,
+                   risk_coefficient = 1, ndays = 30, focus_year = 2011,
+                   nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 100)
+run_time <- Sys.time() - start_time; run_time
 
-rum13 <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
-                    min_year = 2011, max_year = 2013,
-                    risk_coefficient = 1, ndays = 30, focus_year = 2012, nhauls_sampled = 50,
-                    seed = 305, ncores = 10, rev_scale = 100)
-
-#------------------------------------------------------------------------------
-#Run test runs for the relatively quick ones ports
-# runs1 <- lapply(c(1, 2, 3), FUN = function(yy){
-#   st_time <- Sys.time()
-#   rum <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
-#                       min_year = 2011, max_year = 2013,
-#                       risk_coefficient = 1, ndays = 30, focus_year = 2013, nhauls_sampled = 50,
-#                       seed = 305, ncores = 10)
-#   r_time <- Sys.time() - st_time
-#   print(r_time)
-#   print(rum[[1]])
-#   return(rum)
-# })
-# 
-# rums_iw <- port_rums(m_y = 2010, f_y = 2012, nhauls_sampled = 70,
-#                      ncores = 10, seed = 305, r_c = 1, r_s = 10, 
-#                      ports =  list(c("ILWACO/CHINOOK", "WESTPORT")))
-# 
-# newp_12 <- sampled_rums(data = tows_clust, the_port = "NEWPORT", min_year = 2010, max_year = 2012, focus_year = 2012, 
-#              nhauls_sampled = 50, seed = 301, ncores = 10, rev_scale = 100)
-# 
-# newp_12_303 <- sampled_rums(data = tows_clust, the_port = "NEWPORT", min_year = 2010, max_year = 2012, focus_year = 2012, 
-#                         nhauls_sampled = 50, seed = 303, ncores = 10, rev_scale = 100)
-# 
-# newp_12_303 <- sampled_rums(data = tows_clust, the_port = "NEWPORT", min_year = 2010, max_year = 2012, focus_year = 2012, 
-#                             nhauls_sampled = 70, seed = 303, ncores = 10, rev_scale = 100)
-# beep("mario")
 
 #------------------------------------------------------------------------------
 #Run for years in succession
@@ -122,18 +65,6 @@ rum13 <- sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
 nine_ports <-list("ILWACO/CHINOOK", "NEWPORT", 
                  "BROOKINGS", 'CHARLESTON (COOS BAY)', "EUREKA",
                  "FORT BRAGG", "ASTORIA / WARRENTON")
-  
-  # list(c("MOSS LANDING", "SAN FRANCISCO"),
-  #             "FORT BRAGG",
-  #             "EUREKA",
-  #             c("CRESCENT CITY", "BROOKINGS"),
-  #             "CHARLESTON (COOS BAY)",
-  #             "NEWPORT", 
-  #             # "ASTORIA / WARRENTON", 
-  #             c("ILWACO/CHINOOK", "WESTPORT"))
-
-
-
 
 
 #2011
