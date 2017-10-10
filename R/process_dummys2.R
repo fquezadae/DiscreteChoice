@@ -74,11 +74,16 @@ rev_distance <- 5
     dum_rev_dollars <- managed_val - weak_val
   }
 
-  outs <- data_frame(dummy_prev_days = dum30_val, dummy_prev_year_days = dum30y_val, 
-    dummy_miss = dum_rev_val, miss_rev = dum_rev_dollars)
+  temp_dat$dummy_prev_days <- dum30_val
+  temp_dat$dummy_prev_year_days <- dum30y_val
+  temp_dat$dummy_miss <- dum_rev_val
+  temp_dat$miss_rev <- dum_rev_dollars
+  return(temp_dat)
+  # outs <- data_frame(dummy_prev_days = dum30_val, dummy_prev_year_days = dum30y_val, 
+  #   dummy_miss = dum_rev_val, miss_rev = dum_rev_dollars)
 
   #-----------------------------------------------------------------------------------------------
-  return(outs)
+  # return(outs)
 
 }
   
