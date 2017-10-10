@@ -24,9 +24,7 @@ rev_distance <- 5
   
   #Add dummy coefficient
   dum30_val <- nrow(dum30)
-  # dum30_val <- 0
-  # if(nrow(dum30) > 0) dum30_val <- 1
-
+  
   #-----------------------------------------------------------------------------------------------
   # Vessel fish in the past 30 days of last year?
   dum30y <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$prev_year_days_inter,
@@ -54,8 +52,6 @@ rev_distance <- 5
     long2 = deg2rad(dum_rev$set_long), lat2 = deg2rad(dum_rev$set_lat))
   dum_rev <- dum_rev %>% filter(dist <= rev_distance)
 
-# browser()
-
   #Calculate revenue in a faster way with fewer if statements
   dum_rev_val <- nrow(dum_rev)
 
@@ -69,38 +65,13 @@ rev_distance <- 5
   
   dum_rev_dollars <- mean_rev - mean_weak
   
-  # if(nrow(dum_rev) > 0){
-  #   dum_rev_val <- 1
-  #   #Split weaks and non weaks
-  #   the_revs <- dat1 %>% filter(haul_id %in% dum_rev$haul_id)
-    
-  #   managed <- the_revs %>% filter(type != 'other') %>% group_by(haul_id) %>% 
-  #     summarize(gross_rev = sum(gross_rev, na.rm = T)) %>% mutate(avg_rev = mean(gross_rev))
-  #   managed_val <- unique(managed$avg_rev)
-    
-  #   weaks <- the_revs %>% filter(type == 'weaks') %>% group_by(haul_id) %>% 
-  #     summarize(quota_val = sum(quota_val, na.rm = T)) %>% mutate(avg_quota_val = mean(quota_val))
-    
-  #   if(nrow(weaks) == 0) weak_val <- 0
-  #   if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_quota_val)
-    
-  #   #Calculate net revenue value
-  #   dum_rev_dollars <- managed_val - weak_val
-  # }
-
   temp_dat$dummy_prev_days <- dum30_val
   temp_dat$dummy_prev_year_days <- dum30y_val
   temp_dat$dummy_miss <- dum_rev_val
   temp_dat$miss_rev <- dum_rev_dollars
   return(temp_dat)
-  # outs <- data_frame(dummy_prev_days = dum30_val, dummy_prev_year_days = dum30y_val, 
-  #   dummy_miss = dum_rev_val, miss_rev = dum_rev_dollars)
-
-  #-----------------------------------------------------------------------------------------------
-  # return(outs)
-
+  
 }
   
 
 
-  # }, mc.cores = ncores)
