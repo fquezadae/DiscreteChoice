@@ -27,31 +27,11 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #---------------------------------------------------------------
   ##Filter the data
   dat <- data_in %>% filter(set_year >= min_year, set_year <= max_year, 
-    fleet_name == the_port)
-
+    fleet_name %in% the_port)
 
   #---------------------------------------------------------------
   #Calculate net revenues for each haul
   
-  #Turn NA prices into zeroes
-#   dat[which(is.na(dat$avg_quota_price)), 'avg_quota_price'] <- 0
-  
-#   #Adjust the net prices based on risk coefficient
-#   dat$rc <- risk_coefficient
-
-#   # print("only weak stock species adjusted for risk")  
-#   dat$net_price <- dat$exval_pound
-#   dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
-
-#   # weak_inds <- which(dat$type == 'weaks')
-#   # dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
-#   #   dat$avg_quota_price[weak_inds]
-  
-# ####Change net_price for groundfish and other species to 0
-#   # dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
-#   dat[which(dat$type == 'other'), 'net_price'] <- 0
-# ####  
-
   #add placeholder for haul_net_revenue
   dat$net_revenue <- 999
 
@@ -112,10 +92,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   dbp[max_dbp, 'n_samp'] <- dbp[max_dbp, 'n_samp'] + (nhauls_sampled - sum(round(dbp$n_samp)))
  
   #-----------------------------------------------------------------------------
- # sample_hauls(xx = 1, hauls1 = hauls, 
- #   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
- #   depth_bin_proportions = dbp)
-  
+  #Sample Hauls  
   #Set seed
   set.seed(seed)
   seedz <- sample(1:1e7, size = nrow(hauls))
@@ -163,14 +140,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   # td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   td1 <- tow_dates
+  
   #-----------------------------------------------------------------------------  
+  #Process dummy variables
 # pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
 # browser()
-
-  # dummys <- foreach::foreach(ii = 1:nrow(td1), 
-  #   .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
-  #     process_dummys(xx = ii, td2 = td1, dat1 = dat)
-
+  
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
       process_dummys2(xx = ii, td2 = td1, dat1 = dat)
@@ -178,18 +153,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   print("Done calculating dummys and revenues")    
 
-# browser()
-# dummys22 <- ldply(dummys2)
-#Compare the dummy calculations
-
-  # dummys1 <- ldply(dummys)
-
-  #Change values to be 0 and 1 for dummy variables
-  # tow_dates <- cbind(tow_dates, dummys1)
-  # td1 <- cbind(td1, dummys1)
   td1 <- ldply(dummys2)
 
-#Check to see that this value is right 
+  #Check to see that this value is right 
   #converte set_date to character string to merge with the sampled_hauls
   tow_dates$set_date_chr <- as.character(tow_dates$set_date)
   td1$set_date_chr <- as.character(td1$set_date)
@@ -210,12 +176,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls[which(sampled_hauls$dummy_not_first == 0), "dummy_not_first"] <- 1
   sampled_hauls[which(sampled_hauls$dummy_not_first == 2), "dummy_not_first"] <- 0
   
-  #Make sure that missing values have dummy variable value of 1 for prev_days
-  # sampled_hauls[which(sampled_hauls$dummy_prev_days != 0), 'dummy_prev_days'] <- 1
-  # sampled_hauls[which(sampled_hauls$dummy_prev_year_days != 0), 'dummy_prev_year_days'] <- 1
-  # sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
-  # sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
-  # sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / rev_scale    
   
   td1[which(td1$dummy_prev_days != 0), 'dummy_prev_days'] <- 1
   td1[which(td1$dummy_prev_year_days != 0), 'dummy_prev_year_days'] <- 1
@@ -227,6 +187,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   #Add dummy values into sampled_hauls
   sum(sampled_hauls$haul_id == td1$haul_id)
+
   sampled_hauls <- cbind(sampled_hauls, 
     td1[, c('dummy_prev_days', 'dummy_prev_year_days', "dummy_miss", 'miss_rev', 'miss_rev_adj')] )
 
@@ -240,8 +201,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #-----------------------------------------------------------------------------
   #Fit mlogit models returning the coefficients, the models, and the data going into the 
-  # models
-
   #Filter out tows with missing values for distance
   rdo <- rdo %>% filter(is.na(distance) == FALSE)
 
@@ -290,8 +249,49 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
 
 #Scrap Code
+  #Turn NA prices into zeroes
+#   dat[which(is.na(dat$avg_quota_price)), 'avg_quota_price'] <- 0
+  
+#   #Adjust the net prices based on risk coefficient
+#   dat$rc <- risk_coefficient
+
+#   # print("only weak stock species adjusted for risk")  
+#   dat$net_price <- dat$exval_pound
+#   dat$net_price <- (dat$exval_pound - dat$rc * dat$avg_quota_price)
+
+#   # weak_inds <- which(dat$type == 'weaks')
+#   # dat[weak_inds, 'net_price'] <- dat$exval_pound[weak_inds] - dat$rc[weak_inds] * 
+#   #   dat$avg_quota_price[weak_inds]
+  
+# ####Change net_price for groundfish and other species to 0
+#   # dat[which(dat$type == 'groundfish'), 'net_price'] <- 0
+#   dat[which(dat$type == 'other'), 'net_price'] <- 0
+# ####  
 
 # ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
 #   "dummy_prev_year_days" = "dum30y", "prev_days_rev:dummy_first" = "rev1",
 #   "dummy_first:distance" = 'dist1', "prev_days_rev:dummy_not_first" = "rev",
 #   "distance:dummy_not_first" = 'dist'))
+
+  #Make sure that missing values have dummy variable value of 1 for prev_days
+  # sampled_hauls[which(sampled_hauls$dummy_prev_days != 0), 'dummy_prev_days'] <- 1
+  # sampled_hauls[which(sampled_hauls$dummy_prev_year_days != 0), 'dummy_prev_year_days'] <- 1
+  # sampled_hauls[which(sampled_hauls$miss_rev != 0), 'dummy_miss'] <- 0
+  # sampled_hauls[which(sampled_hauls$miss_rev == 0), 'dummy_miss'] <- 1
+  # sampled_hauls$miss_rev_adj <- sampled_hauls$miss_rev / rev_scale    
+
+# browser()
+# dummys22 <- ldply(dummys2)
+#Compare the dummy calculations
+  # dummys <- foreach::foreach(ii = 1:nrow(td1), 
+  #   .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
+  #     process_dummys(xx = ii, td2 = td1, dat1 = dat)
+  # dummys1 <- ldply(dummys)
+
+  #Change values to be 0 and 1 for dummy variables
+  # tow_dates <- cbind(tow_dates, dummys1)
+  # td1 <- cbind(td1, dummys1)
+
+# sample_hauls(xx = 1, hauls1 = hauls, 
+ #   dist_hauls_catch_shares1 = dist_hauls_catch_shares, nhauls_sampled1 = nhauls_sampled,
+ #   depth_bin_proportions = dbp)
