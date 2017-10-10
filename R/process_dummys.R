@@ -7,7 +7,7 @@
 
 process_dummys <- function(xx, td2 = td1, dat1 = dat){
   temp_dat <- td2[xx, ]
-# browser()
+  # browser()
   #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
   clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
                               unq_clust <= temp_dat$unq_clust + 5) %>% 
