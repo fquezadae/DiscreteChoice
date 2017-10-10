@@ -7,92 +7,77 @@
 
 process_dummys2 <- function(xx, td2 = td1, dat1 = dat){
   temp_dat <- td2[xx, ]
-browser()
+# browser()
+habit_distance <- 8
+rev_distance <- 5  
+  #-----------------------------------------------------------------------------------------------
+  #Did vessel fish in past 30 days?
+  dum30 <- dat1 %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
+    depth_bin == temp_dat$depth_bin, drvid == temp_dat$fished_drvid, 
+    fleet_name == temp_dat$fleet_name)
+  dum30 <- dum30 %>% distinct(haul_id, .keep_all = T)
   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  #Filter based on unq_bin rather than cluster, I may be missing data by using clusters    
-  clust_dat <- dat1 %>% filter(unq_clust >= temp_dat$unq_clust - 5, 
-                              unq_clust <= temp_dat$unq_clust + 5) %>% 
-        distinct(haul_id, .keep_all = T) %>%
-        filter(set_date <= temp_dat$set_date)
+  #calculate distances
+  dum30$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
+    long2 = deg2rad(dum30$set_long), deg2rad(dum30$set_lat))
+  dum30 <- dum30 %>% filter(dist <= habit_distance)
   
-  #Convert degrees to radians
-  # clust_dat$avg_long <- deg2rad(clust_dat$avg_long)
-  # clust_dat$avg_lat <- deg2rad(clust_dat$avg_lat)
+  #Add dummy coefficient
+  dum30_val <- 0
+  if(nrow(dum30) > 0) dum30_val <- 1
 
-  #Use set points instead, to see if they set in that area recently
-  clust_dat$set_long <- deg2rad(clust_dat$set_long)
-  clust_dat$set_lat <- deg2rad(clust_dat$set_lat)
+  #-----------------------------------------------------------------------------------------------
+  # Vessel fish in the past 30 days of last year?
+  dum30y <- dat1 %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$prev_year_days_inter,
+    depth_bin == temp_dat$depth_bin, drvid == temp_dat$fished_drvid, 
+    fleet_name == temp_dat$fleet_name)
+  dum30y <- dum30y %>% distinct(haul_id, .keep_all = T)
+  
+  #calculate distances
+  dum30y$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
+    long2 = deg2rad(dum30y$set_long), deg2rad(dum30y$set_lat))
+  dum30y <- dum30y %>% filter(dist <= habit_distance)
+  
+  #Add dummy coefficient
+  dum30y_val <- 0
+  if(nrow(dum30y) > 0) dum30y_val <- 1
+  
+  #-----------------------------------------------------------------------------------------------
+  #Calculate the revenues within a finer radius and from the whole fleet, rather than individual vessel
+  dum_rev <- dat1 %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
+    depth_bin == temp_dat$depth_bin, fleet_name == temp_dat$fleet_name)
+  dum_rev <- dum_rev %>% distinct(haul_id, .keep_all = T)
 
-#Change this to set points and end points...?
-  #Calculate distances
-  clust_dat$dist_from_samp_tow <- gcd_slc(temp_dat$set_long, temp_dat$set_lat,
-    clust_dat$set_long, clust_dat$set_lat)
+  #Calculate distance
+  dum_rev$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
+    long2 = deg2rad(dum_rev$set_long), lat2 = deg2rad(dum_rev$set_lat))
+  dum_rev <- dum_rev %>% filter(dist <= rev_distance)
 
-  #------------------------------------------------------------
-  ######Add Dummys for points within 5 miles (8.05 km)
-  #These are the dum30 and dum30y coefficients
-  clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 8.05, 
-    depth_bin == temp_dat$depth_bin)
-
-  #Did this vessel fish here within the past 30 days
-  towed_prev_days <- sum(clust_dat$set_date %within% temp_dat$days_inter & 
-    clust_dat$drvid ==  temp_dat$drvid)
-
-  #Did this vessel fish here in the previous 30 days of last year?
-  towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter &
-    clust_dat$drvid == temp_dat$drvid)
-
-  #------------------------------------------------------------
-  #Now filter the data to calculate revenues and dumMissing
-
-##Add depth bin here too
-##Make sure this can be from the entire fleet
-  #Remove points that are greater than 5 km away
-  clust_dat <- clust_dat %>% filter(dist_from_samp_tow <= 5)
+  #Calculate revenue
+  dum_rev_val <- 0
+  dum_rev_dollars <- 0
+  if(nrow(dum_rev) > 0){
+    dum_rev_val <- 1
+    #Split weaks and non weaks
+    the_revs <- dat1 %>% filter(haul_id %in% dum_rev$haul_id)
     
-  #Filter based on the depths also, hard coded to be within 50fm range
-  # clust_dat <- clust_dat %>% filter(avg_depth >= temp_dat$avg_depth - 25,
-  #   avg_depth <= temp_dat$avg_depth + 25)
-
-  #If towed in the previous ndays 
-  towed_miss <- sum(clust_dat$set_date %within% temp_dat$days_inter)
-  towed_miss_rev <- 0
-  if(towed_miss != 0){
-    hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$days_inter) %>% 
-      distinct(haul_id, .keep_all = T) 
-    towed_miss_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
+    managed <- the_revs %>% filter(type != 'other') %>% group_by(haul_id) %>% 
+      summarize(gross_rev = sum(gross_rev, na.rm = T)) %>% mutate(avg_rev = mean(gross_rev))
+    managed_val <- unique(managed$avg_rev)
+    
+    weaks <- the_revs %>% filter(type == 'weaks') %>% group_by(haul_id) %>% 
+      summarize(quota_val = sum(quota_val, na.rm = T))
+    if(nrow(weaks) == 0) weak_val <- 0
+    if(nrow(weaks) > 0) weak_val <- unique(weaks$avg_rev)
+    
+    #Calculate net revenue value
+    dum_rev_dollars <- managed_val - weak_val
   }
 
-  #If towed in the previous year's ndays 
-  # towed_prev_year_days <- sum(clust_dat$set_date %within% temp_dat$prev_year_days_inter)
-  # towed_prev_year_days_rev <- 0
-  # if(towed_prev_year_days != 0){
-  #   hauls_in_period <- clust_dat %>% filter(set_date %within% temp_dat$prev_year_days_inter) %>% 
-  #     distinct(haul_id, .keep_all = T) 
-  #   towed_prev_year_days_rev <- mean(hauls_in_period$haul_net_revenue, na.rm = TRUE)
-  # }
-  
-  outs <- data_frame(dummy_prev_days = towed_prev_days, dummy_prev_year_days = towed_prev_year_days,
-    dummy_miss = towed_miss, miss_rev = towed_miss_rev)
+  outs <- data_frame(dummy_prev_days = dum30, dummy_prev_year_days = dum30y, 
+    dummy_miss = dum_rev_val, miss_rev = dum_rev_dollars)
 
-  #  prev_days_rev = towed_prev_days_rev,
-  # , prev_year_days_rev = towed_prev_year_days_rev)
-
+  #-----------------------------------------------------------------------------------------------
   return(outs)
 
 }
