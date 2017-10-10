@@ -5,7 +5,7 @@
 \title{Function to calculate values for delta plots
 Skew and proportion of zeroes specifically}
 \usage{
-when_spp_delta(when, spp)
+when_spp_delta(period, spp)
 }
 \arguments{
 \item{when}{Time period to focus on}
