@@ -143,8 +143,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   #Add in the vessel that's doing the fishing
   fd <- sampled_hauls %>% distinct(fished_haul, drvid)
-  names(fd)[1] <- 'fished_drvid'
-  
+  fd <- plyr::rename(fd, c("drvid" = 'fished_drvid'))
+  # names(fd)[1] <- 'fished_drvid'
+
   sampled_hauls <- sampled_hauls %>% left_join(fd, by = "fished_haul")
 
   #What were the average revenues in each location
@@ -163,8 +164,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   # td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   td1 <- tow_dates
   #-----------------------------------------------------------------------------  
-# pd <- process_dummys2(xx = 2, td2 = td1, dat1 = dat)  
-
+# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
 # browser()
 
   # dummys <- foreach::foreach(ii = 1:nrow(td1), 
