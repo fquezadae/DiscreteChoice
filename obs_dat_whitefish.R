@@ -51,12 +51,25 @@ load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 #Test ILWACO
 #Check the sensitivity to seeds for Crescent City
 start_time <- Sys.time()
-ic <- sampled_rums(data_in = tows_clust, the_port = "ILWACO/CHINOOK",
+eur <- sampled_rums(data_in = tows_clust, the_port = "EUREKA",
                    min_year = 2009, max_year = 2011,
                    risk_coefficient = 1, ndays = 30, focus_year = 2011,
                    nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 100)
 run_time <- Sys.time() - start_time; run_time
+#Eureka took 53 minutes
 
+start_time <- Sys.time()
+ccb <- sampled_rums(data_in = tows_clust, the_port = c("CRESCENT CITY", "BROOKINGS"),
+                    min_year = 2010, max_year = 2012,
+                    risk_coefficient = 1, ndays = 30, focus_year = 2011,
+                    nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 10)
+run_time <- Sys.time() - start_time; run_time
+#22 minutes
+
+cc <- sampled_rums(data_in = tows_clust, the_port = "CRESCENT CITY",
+                   min_year = 2010, max_year = 2012,
+                   risk_coefficient = 1, ndays = 30, focus_year = 2011,
+                   nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 10)
 
 #------------------------------------------------------------------------------
 #Run for years in succession
