@@ -1,6 +1,6 @@
 #---------------------------------------------------------------------------------
 #Specify Computer
-setwd('/Users/peterkuriyama/School/Research/ch4')
+setwd('/Users/peterkuriyama/Dropbox/ch4')
 # setwd('c://Users//Peter//ch4')
 
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
@@ -31,14 +31,103 @@ devtools::install_github("peterkuriyama/ch2vms/ch2vms")
 library(ch2vms)
 
 #States Map
-states_map <- map_data("state")
+states_map <- map_data("state") 
 
 #---------------------------------------------------------------------------------
-load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
+#Load the data
+# load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
+load(file = "/Volumes/udrive/tows_clust_109_prices.Rdata")
+
+#Add in fleet names
+dan_ports <- read.csv(file = 'data/dan_port_assignments.csv', stringsAsFactors = FALSE)
+dan_ports <- dan_ports[, c(1, 2)]
+tows_clust1 <- tows_clust %>% left_join(dan_ports, by = 'drvid')
+
+fltz <- data.frame(fleet_num = c(8, 9, 10, 12, 13, 14, 16, 17, 18),
+  fleet_name = c('FORT BRAGG', "EUREKA", "CRESCENT CITY", "BROOKINGS", "CHARLESTON (COOS BAY)", 
+    "NEWPORT", "ASTORIA / WARRENTON", "ILWACO/CHINOOK", "WESTPORT"))
+tows_clust1 <- tows_clust1 %>% left_join(fltz, by = 'fleet_num')
+
+tows_clust <- tows_clust1
+tows_clust[which(tows_clust$dport_desc == "ILWACO"), "dport_desc"] <- "ILWACO/CHINOOK"
+
+#Update departure port lat and long
+port_locz <- tows_clust %>% distinct(dport_desc, d_port_long, d_port_lat)
+names(port_locz) <- c('fleet_name', 'fleet_name_long', 'fleet_name_lat')
+port_locz <- port_locz %>% filter(is.na(fleet_name_long) == FALSE)
+
+tows_clust <- tows_clust %>% left_join(port_locz, by = 'fleet_name') 
+
+#---------------------------
+#Calculate net prices for tows
+tows_clust$net_price <- tows_clust$exval_pound - tows_clust$avg_quota_price
+
+# weak_inds <- which(tows_clust$type == 'weaks')
+# tows_clust[weak_inds, 'net_price'] <- tows_clust[weak_inds, "exval_pound"] - tows_clust[weak_inds, 
+#   'avg_quota_price']
+
+tows_clust$spp_value <- tows_clust$hpounds * (tows_clust$net_price)
+
+tows_clust <- tows_clust %>% group_by(haul_id) %>% 
+  mutate(haul_value = sum(spp_value, na.rm = T)) %>% 
+  as.data.frame
+
+tows_clust %>% distinct(haul_id, .keep_all = T) %>% group_by(set_year, fleet_name) %>% 
+  summarize(tot_value = sum(haul_value, na.rm = T)) %>% filter(set_year == 2011)
+
+#---------------------------------------------------------------------------------
+
+mb1 <- port_rums(data_in = tows_clust, the_port = "CRESCENT CITY", 
+  min_year = 2010, max_year = 2012,
+  risk_coefficient = 1, ndays = 30, focus_year = 2012, 
+  nhauls_sampled = 50, seed = 50, ncores = 6, rev_scale = 100)
+
+
+#---------------------------------------------------------------------------------
+#Compare to
+set_year <- tows_clust1 %>% filter(set_year %in% c(2010, 2011, 2012)) %>%
+  group_by(set_year, fleet_num) %>% summarize(nhauls = length(unique(haul_id))) %>% 
+  dcast(fleet_num ~ set_year, value.var = 'nhauls', fill = 0)
+
+dan <- read.csv("data/dan_port_tow_counts.csv", stringsAsFactors = FALSE)
+set_year <- set_year %>% left_join(dan, by = 'fleet_num')
+
+set_year$diff10 <- set_year$X2010 - set_year[, 2]
+set_year$diff11 <- set_year$X2011 - set_year[, 3]
+set_year$diff12 <- set_year$X2012 - set_year[, 4]
+
+set_year %>% select(fleet_num, diff10, diff11, diff12)
+
+set_year$prop10 <- set_year$diff10 / set_year[, 2]
+set_year$prop11 <- set_year$diff11 / set_year[, 3]
+set_year$prop12 <- set_year$diff12 / set_year[, 4]
+
+set_year[, c('prop10', 'prop11', 'prop12')] <- round(set_year[, c("prop10", 'prop11', 'prop12')], digits = 2)
+
+set_year %>% select(fleet_num, prop10, prop11, prop12) %>% filter(fleet_num %in% c(8, 9, 10, 12,
+  13, 14, 16, 17, 18))
+
+#Look at the tows in each depth bin
+
+#---------------------------------------------------------------------------------
+
+tows_clust1 %>% filter(set_year %in% c(2011, 2012)) %>% group_by(fleet_num, depth_bin, set_year) %>% 
+  summarize(ntows = length(unique(haul_id))) %>% 
+  dcast(set_year + fleet_num ~ depth_bin, value.var = 'ntows')
+
+
+#---------------------------------------------------------------------------------
+
+tows_clust %>% filter(dport_desc == "CRESCENT CITY") %>% 
+ group_by(set_year) %>% summarize(nhauls = length(unique(haul_id)))
+
+tows_clust %>% filter(set_year >= 2010, set_year <= 2012) %>% 
+  group_by(set_year, r_port) %>% summarize(nhauls = length(unique(haul_id))) %>% 
+  dcast(r_port ~ set_year, value.var = "nhauls")
 
 #Add in depth bins to tows_clust
 
-mb1 <- sampled_rums(data_in = tows_clust, the_port = "FORT BRAGG", 
+mb1 <- sampled_rums(data_in = tows_clust1, the_port = 8, 
   min_year = 2011, max_year = 2014,
   risk_coefficient = 1, ndays = 30, focus_year = 2012, 
   nhauls_sampled = 50, seed = 300, ncores = 6)
