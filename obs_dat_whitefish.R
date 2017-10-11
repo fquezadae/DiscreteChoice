@@ -61,46 +61,58 @@ run_time <- Sys.time() - start_time; run_time
 start_time <- Sys.time()
 ccb <- sampled_rums(data_in = tows_clust, the_port = c("CRESCENT CITY", "BROOKINGS"),
                     min_year = 2010, max_year = 2012,
-                    risk_coefficient = 1, ndays = 30, focus_year = 2011,
+                    risk_coefficient = 5, ndays = 30, focus_year = 2011,
                     nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 10)
 run_time <- Sys.time() - start_time; run_time
-#22 minutes
+#Takes 5 minutes
 
-cc <- sampled_rums(data_in = tows_clust, the_port = "CRESCENT CITY",
-                   min_year = 2010, max_year = 2012,
-                   risk_coefficient = 1, ndays = 30, focus_year = 2011,
+
+
+start_time <- Sys.time()
+ccb_7 <- sampled_rums(data_in = tows_clust, the_port = c("CRESCENT CITY", "BROOKINGS"),
+                   min_year = 2007, max_year = 2012,
+                   risk_coefficient = 1, ndays = 30, focus_year = 2012,
                    nhauls_sampled = 50, seed = 300, ncores = 10, rev_scale = 10)
+run_time <- Sys.time() - start_time; run_time
 
 #------------------------------------------------------------------------------
 #Run for years in succession
 #--------------------------Runs with risk coefficient of 1
-#Run Without Astoria because it takes so long
-nine_ports <-list("ILWACO/CHINOOK", "NEWPORT", 
-                 "BROOKINGS", 'CHARLESTON (COOS BAY)', "EUREKA",
-                 "FORT BRAGG", "ASTORIA / WARRENTON")
 
+
+#--------------------------
+#Test this with only two ports
+tows_clust %>% filter(fleet_name %in% c("CRESCENT CITY", 'BROOKINGS'), set_year == 2012) %>%
+  distinct(haul_id) %>% nrow
+
+tows_clust %>% filter(fleet_name %in% "FORT BRAGG", set_year == 2011) %>%
+  distinct(haul_id) %>% nrow
+
+two_ports <- list("FORT BRAGG", c("CRESCENT CITY", "BROOKINGS"))
+rums_11 <- port_rums(m_y = 2009, f_y = 2011, nhauls_sampled = 50,
+                     ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = two_ports)
+
+#--------------------------------------------------------------------------------------------------------
+the_ports <- list("FORT BRAGG", "EUREKA", c("CRESCENT CITY", 'BROOKINGS'),
+                  "CHARLESTON (COOS BAY)", "NEWPORT", "ASTORIA / WARRENTON")
 
 #2011
-rums_11 <- port_rums(m_y = 2009, f_y = 2011, nhauls_sampled = 50,
-             ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = nine_ports)
+rums_11 <- port_rums(m_y = 2007, f_y = 2011, nhauls_sampled = 50,
+             ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = the_ports)
 
 #2012
-rums_12 <- port_rums(m_y = 2010, f_y = 2012, nhauls_sampled = 50,
-          ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = nine_ports)
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+             ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = the_ports)
+
 #2013
-rums_13 <- port_rums(m_y = 2011, f_y = 2013, nhauls_sampled = 50,
-          ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = nine_ports)
+rums_13 <- port_rums(m_y = 2007, f_y = 2013, nhauls_sampled = 50,
+             ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = the_ports)
 
 #2014
-rums_14 <- port_rums(m_y = 2012, f_y = 2014, nhauls_sampled = 50,
-          ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = nine_ports)
+rums_14 <- port_rums(m_y = 2007, f_y = 2014, nhauls_sampled = 50,
+             ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = the_ports)
 
-nine_ports[[8]]
 
-rums_11[[8]]
-rums_12[[8]]
-rums_13[[8]]
-rums_14[[8]]
 #--
 #Run ASTORIA only
 
