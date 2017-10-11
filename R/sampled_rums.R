@@ -146,7 +146,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #-----------------------------------------------------------------------------  
   #Process dummy variables
-# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
+pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
 # browser()
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 

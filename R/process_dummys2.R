@@ -11,6 +11,7 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat){
 
 habit_distance <- 5
 rev_distance <- 5  
+  
   # fleets <- 
   fltz <- strsplit(temp_dat$fleet_name, "_")[[1]]
   #-----------------------------------------------------------------------------------------------
