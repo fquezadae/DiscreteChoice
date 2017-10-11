@@ -28,6 +28,11 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     fleet_name %in% the_port)
 
   #---------------------------------------------------------------
+  #Modify the weak stock catches to see if 
+# browser()  
+  dat$weak_quota_value <- dat$weak_quota_value * risk_coefficient
+
+  #---------------------------------------------------------------
   #Calculate net revenues for each haul
   
   #add placeholder for haul_net_revenue
@@ -151,7 +156,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   stopCluster(cl)
 
   print("Done calculating dummys and revenues")    
-
+# browser()
   td1 <- ldply(dummys2)
 
   #Check to see that this value is right 
