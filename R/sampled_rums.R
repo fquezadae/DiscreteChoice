@@ -20,10 +20,8 @@
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale){
-
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
-  
   #---------------------------------------------------------------
   ##Filter the data
   dat <- data_in %>% filter(set_year >= min_year, set_year <= max_year, 
@@ -119,7 +117,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls$prev_year_days_date <- sampled_hauls$prev_days_date - days(365)
 
   #Add in the vessel that's doing the fishing
-  fd <- sampled_hauls %>% distinct(fished_haul, drvid)
+  fd <- sampled_hauls %>% filter(fished == TRUE) %>% distinct(fished_haul, drvid)
   fd <- plyr::rename(fd, c("drvid" = 'fished_drvid'))
   # names(fd)[1] <- 'fished_drvid'
 
@@ -135,7 +133,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   tow_dates$days_inter <- interval(tow_dates$prev_days_date, tow_dates$set_date)
   tow_dates$prev_year_days_inter <- interval(tow_dates$prev_year_days_date, tow_dates$prev_year_set_date)
 
-# browser()  
   #add in the fleet name
 # paste(the_port, collapse = "_")
   paste_port <- paste(the_port, collapse = "_")
@@ -143,11 +140,10 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   # td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   td1 <- tow_dates
-  
+
   #-----------------------------------------------------------------------------  
   #Process dummy variables
-# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
-
+# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
@@ -157,7 +153,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   print("Done calculating dummys and revenues")    
 
   td1 <- ldply(dummys2)
-browser()
+
   #Check to see that this value is right 
   #converte set_date to character string to merge with the sampled_hauls
   tow_dates$set_date_chr <- as.character(tow_dates$set_date)
