@@ -134,9 +134,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   # td1 <- tow_dates %>% distinct(unq_clust, set_date)
   tow_dates$days_inter <- interval(tow_dates$prev_days_date, tow_dates$set_date)
   tow_dates$prev_year_days_inter <- interval(tow_dates$prev_year_days_date, tow_dates$prev_year_set_date)
-  
+
+# browser()  
   #add in the fleet name
-  tow_dates$fleet_name <- the_port
+# paste(the_port, collapse = "_")
+  paste_port <- paste(the_port, collapse = "_")
+  tow_dates$fleet_name <- paste_port
   
   # td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   td1 <- tow_dates
