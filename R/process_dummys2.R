@@ -6,15 +6,19 @@
 #' @export
 
 process_dummys2 <- function(xx, td2 = td1, dat1 = dat){
+# browser()
   temp_dat <- td2[xx, ]
-habit_distance <- 8
+
+habit_distance <- 5
 rev_distance <- 5  
+  # fleets <- 
+  fltz <- strsplit(temp_dat$fleet_name, "_")[[1]]
   #-----------------------------------------------------------------------------------------------
   #Did vessel fish in past 30 days?
   
   dum30 <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
     depth_bin == temp_dat$depth_bin, drvid == temp_dat$fished_drvid, 
-    fleet_name == temp_dat$fleet_name)
+    fleet_name %in% fltz)
   dum30 <- dum30 %>% distinct(haul_id, .keep_all = T)
   
   #calculate distances
@@ -29,7 +33,7 @@ rev_distance <- 5
   # Vessel fish in the past 30 days of last year?
   dum30y <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$prev_year_days_inter,
     depth_bin == temp_dat$depth_bin, drvid == temp_dat$fished_drvid, 
-    fleet_name == temp_dat$fleet_name)
+    fleet_name %in% fltz)
   dum30y <- dum30y %>% distinct(haul_id, .keep_all = T)
   
   #calculate distances
@@ -44,7 +48,7 @@ rev_distance <- 5
   #-----------------------------------------------------------------------------------------------
   #Calculate the revenues within a finer radius and from the whole fleet, rather than individual vessel
   dum_rev <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
-    depth_bin == temp_dat$depth_bin, fleet_name == temp_dat$fleet_name)
+    depth_bin == temp_dat$depth_bin, fleet_name %in% fltz)
   dum_rev <- dum_rev %>% distinct(haul_id, .keep_all = T)
 
   #Calculate distance
