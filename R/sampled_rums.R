@@ -146,8 +146,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   #-----------------------------------------------------------------------------  
   #Process dummy variables
-pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
-# browser()
+# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)  
+
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
@@ -157,7 +157,7 @@ pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)
   print("Done calculating dummys and revenues")    
 
   td1 <- ldply(dummys2)
-
+browser()
   #Check to see that this value is right 
   #converte set_date to character string to merge with the sampled_hauls
   tow_dates$set_date_chr <- as.character(tow_dates$set_date)
