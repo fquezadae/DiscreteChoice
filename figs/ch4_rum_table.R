@@ -2,70 +2,131 @@
 #Make table of RUM coefficients
 library(xtable)
 
-
-#-----------------------------------------------------------------
-#Load data 
-load("/Volumes/udrive/coefs1.Rdata")
-load("/Volumes/udrive/coefs50.Rdata")
-
-#Format Data
-port_names <- c('Moss Landing / San Francisco', "Fort Bragg", 'Eureka',
-  "Crescent City / Brookings", "Charleston", 'Newport', 'Astoria', 'Ilwaco / Newport')
-
-names(coefs1) <- port_names
-names(coefs50) <- port_names
-
 #-----------------------------------------------------------------
 #Paste significance values to 
 #-------------------------------------------------------------------------------------
 
-load("/Volumes/udrive/coefs1_rev10_minyr2009_focyr2011_nports7_seed305.Rdata")
+#2011 coefficients
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2011_nports6_seed7.Rdata")
 coefs1 <- coefs
 
-load("/Volumes/udrive/coefs1_rev10_minyr2010_focyr2012_nports7_seed305.Rdata")
+#2012 coefficients
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2012_nports6_seed7.Rdata")
 coefs2 <- coefs
 
-load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2013_nports7_seed305.Rdata")
+#2013 coefficients
+# load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2013_nports7_seed305.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2013_nports6_seed7.Rdata")
 coefs3 <- coefs
 
-load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2014_nports7_seed305.Rdata")
-coefs4 <- coefs
+#2014 coefficients
+# load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2014_nports7_seed305.Rdata")
+# coefs4 <- coefs
 
+#-------------------------------------------------------------------------------------
+#Look at coefficients from 2011-2013
 
-tbl1 <- format_coefs(coefs = coefs1)
-tbl2 <- format_coefs(coefs = coefs2)
-tbl3 <- format_coefs(coefs = coefs3)
-tbl4 <- format_coefs(coefs = coefs4)
+coefs1 <- lapply(coefs1, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2011
+  return(xx)
+})
+coefs1 <- ldply(coefs1)
+coefs1 <- plyr::rename(coefs1, c(".id" = 'port'))
 
-
-#Combine them to track over time
-tbls <- vector('list', length = 7)
-
-lapply(1:7, FUN = function(aa){
-  t1 <- as.character(tbl1[, aa])
-  t2 <- as.character(tbl2[, aa])
-  t3 <- as.character(tbl3[, aa])
-  t4 <- as.character(tbl4[, aa])
-  temp <- cbind(t1, t2, t3, t4)
-  temp <- as.data.frame(temp)
-  row.names(temp) <- row.names(tbl1)
-  names(temp) <- c("2011", '2012', '2013', '2014')
-  names(tbl2) <- gsub("/", "_", names(tbl2))
-  filename <- paste0('figs/', names(tbl2)[aa], '.csv')
-  write.csv(temp, file = filename)
+coefs2 <- lapply(coefs2, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2012
+  return(xx)
 })
 
-{
-  tbl1
-}
+coefs2 <- ldply(coefs2)
+coefs2 <- plyr::rename(coefs2, c(".id" = 'port'))
 
-for(ii in 1:7){
-  l
-}
+coefs3 <- lapply(coefs3, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2013
+  return(xx)
+})
+
+coefs3 <- ldply(coefs3)
+coefs3 <- plyr::rename(coefs3, c(".id" = 'port'))
+
+
+#-------------------------------------------------------------------------------------
+#Combine them all into one data frame
+all_coefs <- rbind(coefs1, coefs2, coefs3)
+
+all_coefs$value_sig <- paste(all_coefs$value, all_coefs$significance)
+cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
+
+portz <- unique(all_coefs$port)
+
+#Format all the coefficients
+
+the_coefs <- lapply(portz, FUN = function(xx){
+  out <- all_coefs %>% filter(port == xx) %>% 
+    dcast(port + coef_type ~ year, value.var = 'value_sig') %>%
+    slice(match(cc, coef_type)) %>% as.data.frame
+})
+
+the_coefs <- ldply(the_coefs)
+
+write.csv(the_coefs, file = 'output/the_coefs_11_13.csv')
 
 
 
-# format_coefs <- function(coefs1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ldply(coefs1)
+
+
+
+
+
+
+
+# tbl1 <- format_coefs(coefs = coefs1)
+# tbl2 <- format_coefs(coefs = coefs2)
+# tbl3 <- format_coefs(coefs = coefs3)
+# tbl4 <- format_coefs(coefs = coefs4)
+
+
+# #Combine them to track over time
+# tbls <- vector('list', length = 7)
+
+# lapply(1:7, FUN = function(aa){
+#   t1 <- as.character(tbl1[, aa])
+#   t2 <- as.character(tbl2[, aa])
+#   t3 <- as.character(tbl3[, aa])
+#   t4 <- as.character(tbl4[, aa])
+#   temp <- cbind(t1, t2, t3, t4)
+#   temp <- as.data.frame(temp)
+#   row.names(temp) <- row.names(tbl1)
+#   names(temp) <- c("2011", '2012', '2013', '2014')
+#   names(tbl2) <- gsub("/", "_", names(tbl2))
+#   filename <- paste0('figs/', names(tbl2)[aa], '.csv')
+#   write.csv(temp, file = filename)
+# })
+
+
+
+# # format_coefs <- function(coefs1)
 
 
 # coefs1 <- lapply(coefs1, FUN = function(xx){
@@ -142,36 +203,15 @@ c50_table <- c50_table[-1, ]
 names(c50_table) <- c("MOS/SF", "FTB", "EUR", "CC/B", "CHA",
   "NEW", "AST", "ILW/NEW")
 
-# xtable(c50_table)
-print(xtable(c50_table), file = 'figs/coefs50.tex')
 
+#-----------------------------------------------------------------
+#Load data 
+# load("/Volumes/udrive/coefs1.Rdata")
+# load("/Volumes/udrive/coefs50.Rdata")
 
+# #Format Data
+# port_names <- c('Moss Landing / San Francisco', "Fort Bragg", 'Eureka',
+#   "Crescent City / Brookings", "Charleston", 'Newport', 'Astoria', 'Ilwaco / Newport')
 
-xtable(c1_table)
-print(xtable(c1_table), file = 'figs/coefs50.tex')
-
-
-
-
-
-
-
-
-
-as.vector(c1_table[1, ])
-
-coefs1$c
-
-coefs_table <- 
-
-xtable()
-
-
-coefs1[[1]]$coefs - coefs50[[1]]$coefs
-coefs50[[1]]
-
-obs_data <- obs_data %>% arrange(trip_id, haul_num)
-
-
-
-
+# names(coefs1) <- port_names
+# names(coefs50) <- port_names
