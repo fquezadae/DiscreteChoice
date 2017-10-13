@@ -20,8 +20,8 @@ load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2013_nports6_seed7.Rdata")
 coefs3 <- coefs
 
 #2014 coefficients
-# load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2014_nports7_seed305.Rdata")
-# coefs4 <- coefs
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2014_nports6_seed7.Rdata")
+coefs4 <- coefs
 
 #-------------------------------------------------------------------------------------
 #Look at coefficients from 2011-2013
@@ -55,10 +55,19 @@ coefs3 <- lapply(coefs3, FUN = function(xx){
 coefs3 <- ldply(coefs3)
 coefs3 <- plyr::rename(coefs3, c(".id" = 'port'))
 
+coefs4 <- lapply(coefs4, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2014
+  return(xx)
+})
+
+coefs4 <- ldply(coefs4)
+coefs4 <- plyr::rename(coefs4, c(".id" = 'port'))
 
 #-------------------------------------------------------------------------------------
 #Combine them all into one data frame
-all_coefs <- rbind(coefs1, coefs2, coefs3)
+all_coefs <- rbind(coefs1, coefs2, coefs3, coefs4)
 
 all_coefs$value_sig <- paste(all_coefs$value, all_coefs$significance)
 cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
@@ -75,7 +84,7 @@ the_coefs <- lapply(portz, FUN = function(xx){
 
 the_coefs <- ldply(the_coefs)
 
-write.csv(the_coefs, file = 'output/the_coefs_11_13.csv')
+write.csv(the_coefs, file = 'output/the_coefs_11_14.csv', row.names = F)
 
 
 
