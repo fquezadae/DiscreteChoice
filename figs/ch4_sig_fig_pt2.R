@@ -20,7 +20,7 @@ layout(matlay, heights = c(lcm(4), lcm(4), rep(lcm(3), 4)),
 # names(port_plot) <- sapply(port_plot, FUN = function(xx) xx[[1]])
 # sapply(port_plot, FUN = function(xx) xx[[1]])
 
-par(mar = c(0, 0, 0, 0), oma = c(2, 2, 1, 0))
+par(mar = c(0, 0, 0, 0), oma = c(2, 2, 1, 3))
 
 for(pp in 6:1){  
   plot_dat <- port_plot[[pp]]
@@ -38,12 +38,23 @@ for(pp in 6:1){
     box()
     mtext(side = 3, text = paste0(plot_dat$letts[yy], ")"), adj = 0.02, line = -1,
       cex = .8)
+    
+    #-----Add coefficient significance
+    rect(xleft = -122.32, xright = -122, ybottom = plot_dat$ylims[1], ytop = plot_dat$ylims[1] + 2, 
+      col = 'white', border = NULL)
+    points(rep(-122.15, 7), seq(plot_dat$ylims[1] + .1, plot_dat$ylims[1] + 1.9, length.out = 7), 
+      pch = plot_dat$coefs[, yy + 2], bg = 'gray70',
+      xpd = T, cex = 1.7, col = 'gray70')
+# seq(plot_dat$ylims[1], plot_dat$ylims[1] + 2, length.out = 7)
+# (((plot_dat$ylims[1] + 2) - plot_dat$ylims[1]) / 7)
+
+    #-----Add Axes
     if(yy == 1){
       axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs)
       mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
     } 
-    if(pp == 1) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -124, -123, -122), 
-      labels = c(125, 125, 123, 122))
+    if(pp == 1) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -124, -123), 
+      labels = c(125, 125, 123))
   }
 }
 

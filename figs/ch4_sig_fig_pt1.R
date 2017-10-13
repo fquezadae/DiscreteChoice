@@ -99,22 +99,41 @@ br_port <- c(-124.2697, 42.0470)
 #Remove Brookings from this
 port_plot <- port_plot[-4]
 #------------------------------------------------------------------------------------------------------
+#add significance values also
+coefs <- read.csv('output/the_coefs_11_14.csv', stringsAsFactors = F)
+coefs <- melt(coefs, id.vars = c('port', 'coef_type'))
+coefs$variable <- as.character(coefs$variable)
+coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
+coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
+coefs$pch <- 15
+coefs[which(coefs$sig == ""), 'pch'] <- 0
+coefs$variable <- substr(coefs$variable, 2, 5)
+
+#Add coefficients as a data frame to port_plot
+cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
+coefs <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'pch')
+coefs <- coefs %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
+
+#------------------------------------------------------------------------------------------------------
 #Modify the 
 port_plot[[1]]$xlims <- c(-126, -122)
 port_plot[[1]]$ylims <- c(38, 40)
 port_plot[[1]]$ylabs <- c(38, 39, 40)
 port_plot[[6]]$letts <- c('a', 'b', 'c', 'd')
+port_plot[[1]]$coefs <- coefs %>% filter(port == "FORT BRAGG")
 
 port_plot[[2]]$xlims <- c(-126, -122)
 port_plot[[2]]$ylims <- c(40, 42)
 port_plot[[2]]$ylabs <- c(40, 41, 42)
 port_plot[[5]]$letts <- c('e', 'f', 'g', 'h')
+port_plot[[2]]$coefs <- coefs %>% filter(port == "EUREKA")
 
 port_plot[[3]]$port_name <- "ccb"
 port_plot[[3]]$xlims <- c(-126, -122)
 port_plot[[3]]$ylims <- c(41, 43)
 port_plot[[3]]$ylabs <- c(41, 42, 43)
 port_plot[[4]]$letts <- c('i', 'j', 'k', 'l')
+port_plot[[3]]$coefs <- coefs %>% filter(port == "CRESCENT CITY_BROOKINGS")
 
 # port_plot[[4]]$xlims <- c(-126, -122)
 # port_plot[[4]]$ylims <- c(41, 43)
@@ -123,17 +142,20 @@ port_plot[[4]]$xlims <- c(-126, -122)
 port_plot[[4]]$ylims <- c(42, 44)
 port_plot[[4]]$ylabs <- c(42, 43, 44)
 port_plot[[3]]$letts <- c('m', 'n', 'o', 'p')
-
+port_plot[[4]]$coefs <- coefs %>% filter(port == "CHARLESTON (COOS BAY)")
 
 port_plot[[5]]$xlims <- c(-126, -122)
 port_plot[[5]]$ylims <- c(43.5, 46)
 port_plot[[5]]$ylabs <- c(44, 45, 46)
 port_plot[[2]]$letts <- c('q', 'r', 's', 't')
+port_plot[[5]]$coefs <- coefs %>% filter(port == "NEWPORT")
 
 port_plot[[6]]$xlims <- c(-126, -122)
 port_plot[[6]]$ylims <- c(45, 48.5)
 port_plot[[6]]$ylabs <- c(45, 46, 47, 48)
 port_plot[[1]]$letts <- c('u', 'v', 'w', 'x')
+port_plot[[6]]$coefs <- coefs %>% filter(port == "ASTORIA / WARRENTON")
+
 
 #------------------------------------------------------------------------------------------------------
 #Manually change the limits
