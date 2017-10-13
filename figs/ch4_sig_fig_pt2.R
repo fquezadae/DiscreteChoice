@@ -1,7 +1,7 @@
 
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 5.5, height = 8.28)
-
+png(width = 5.621951, height = 8.36, units = 'in', file = 'figs/ch4_sig_fig.png', res = 200)
 matlay <- matrix(c(1, 2, 3, 4,
                    5, 6, 7, 8, 
                    9, 10, 11, 12,
@@ -20,7 +20,7 @@ layout(matlay, heights = c(lcm(4), lcm(4), rep(lcm(3), 4)),
 # names(port_plot) <- sapply(port_plot, FUN = function(xx) xx[[1]])
 # sapply(port_plot, FUN = function(xx) xx[[1]])
 
-par(mar = c(0, 0, 0, 0), oma = c(2, 2, 1, 3))
+par(mar = c(0, 0, 0, 0), oma = c(2, 2.75, 1, 3))
 
 for(pp in 6:1){  
   plot_dat <- port_plot[[pp]]
@@ -55,9 +55,15 @@ for(pp in 6:1){
     } 
     if(pp == 1) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -124, -123), 
       labels = c(125, 125, 123))
+    if(yy == 4){
+      axis(side = 4, las = 2, mgp = c(0, .5, 0), 
+        at = seq(plot_dat$ylims[1] + .1, plot_dat$ylims[1] + 1.9, length.out = 7),
+        labels = c('dum30y', 'dum30', 'dmiss', 'rev', 'rev1', 'dist', "dist1"))
+    }
   }
 }
+mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = .5, cex = 1.2)
+mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.2, cex = 1.2)
 
 
-
-# dev.off()
+dev.off()
