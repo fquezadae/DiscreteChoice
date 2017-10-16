@@ -5,6 +5,26 @@ library(xtable)
 #-----------------------------------------------------------------
 #Paste significance values to 
 #-------------------------------------------------------------------------------------
+#2009 coefficient
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2009_nports6_seed7.Rdata")
+coefs9 <- coefs
+
+load("/Volumes/udrive/AST_coefs1_rev100_minyr2007_focyr_2009_seed7.Rdata")
+ast_coefs9 <- coefs
+coefs9[[6]] <- ast_coefs9
+names(coefs9)[6] <- "ASTORIA / WARRENTON"
+rm(coefs)
+
+#2010 coefficients
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2010_nports6_seed7.Rdata")
+coefs10 <- coefs
+rm(coefs)
+# coefs10[[6]] <- NULL
+
+load("/Volumes/udrive/AST_coefs1_rev100_minyr2007_focyr_2010_seed7.Rdata")
+coefs10[[6]] <- coefs
+names(coefs10)[6] <- "ASTORIA / WARRENTON" 
+rm(coefs)
 
 #2011 coefficients
 load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2011_nports6_seed7.Rdata")
@@ -24,6 +44,26 @@ load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2014_nports6_seed7.Rdata")
 coefs4 <- coefs
 
 #-------------------------------------------------------------------------------------
+#coefs from 2009 and 2010
+coefs9 <- lapply(coefs9, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2009
+  return(xx)
+})
+coefs9 <- ldply(coefs9)
+coefs9 <- plyr::rename(coefs9, c(".id" = 'port'))
+
+#2010
+coefs10 <- lapply(coefs10, FUN = function(xx){
+  xx$coef_type <- row.names(xx)
+  xx <- plyr::rename(xx, c('coefs' = 'value'))
+  xx$year <- 2010
+  return(xx)
+})
+coefs10 <- ldply(coefs10)
+coefs10 <- plyr::rename(coefs10, c(".id" = 'port'))
+
 #Look at coefficients from 2011-2013
 
 coefs1 <- lapply(coefs1, FUN = function(xx){
@@ -67,7 +107,7 @@ coefs4 <- plyr::rename(coefs4, c(".id" = 'port'))
 
 #-------------------------------------------------------------------------------------
 #Combine them all into one data frame
-all_coefs <- rbind(coefs1, coefs2, coefs3, coefs4)
+all_coefs <- rbind(coefs9, coefs10, coefs1, coefs2, coefs3, coefs4)
 
 all_coefs$value_sig <- paste(all_coefs$value, all_coefs$significance)
 cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
@@ -84,9 +124,19 @@ the_coefs <- lapply(portz, FUN = function(xx){
 
 the_coefs <- ldply(the_coefs)
 
-write.csv(the_coefs, file = 'output/the_coefs_11_14.csv', row.names = F)
+#add more descriptive names
+coef_desc <- the_coefs %>% distinct(coef_type)
+coef_desc$coef_type_desc <- c("First Tow Distance", "Later Tow Distance", 
+  "First Tow Revenue", "Later Tow Revenue", "Fleet Habit", "Individual Habit",
+  "Individual Habit Last Year")
+
+the_coefs <- the_coefs %>% left_join(coef_desc, by = 'coef_type')
 
 
+write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+
+#-------------------------------------------------------------------------------------
+#process the coefficients in a different way
 
 
 

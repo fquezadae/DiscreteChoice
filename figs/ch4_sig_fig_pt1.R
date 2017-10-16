@@ -100,61 +100,90 @@ br_port <- c(-124.2697, 42.0470)
 port_plot <- port_plot[-4]
 #------------------------------------------------------------------------------------------------------
 #add significance values also
-coefs <- read.csv('output/the_coefs_11_14.csv', stringsAsFactors = F)
-coefs <- melt(coefs, id.vars = c('port', 'coef_type'))
+coefs <- read.csv('output/the_coefs_09_14.csv', stringsAsFactors = F)
+coefs <- melt(coefs, id.vars = c('port', 'coef_type', 'coef_type_desc'))
+
 coefs$variable <- as.character(coefs$variable)
 coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
 coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
 coefs$pch <- 15
-coefs[which(coefs$sig == ""), 'pch'] <- 0
+coefs[which(coefs$sig %in% c('.', "")), 'pch'] <- 0
 coefs$variable <- substr(coefs$variable, 2, 5)
 
 #Add coefficients as a data frame to port_plot
 cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
-coefs <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'pch')
-coefs <- coefs %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
+
+coef_colors <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f")
+# coef_colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628")
+coef_colors <- coefs %>% distinct(coef_type) %>% mutate(coef_colors = coef_colors)
+
+coefs <- coefs %>% left_join(coef_colors, by = 'coef_type')
+
+#Adjust colors
+coef_sigs <- coefs %>% distinct(sig) 
+coef_sigs$alpha <- c(1, .2, .5, .8 , 0)
+coefs <- coefs %>% left_join(coef_sigs, by = 'sig')
+coefs$sig_color <- apply(coefs, MAR = 1, FUN = function(xx) adjustcolor(xx['coef_colors'], xx['alpha']))
+
+coefs %>% distinct(value, sig, alpha)
+
+coefs <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'sig_color')
+cc <- rev(c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y'))
+coefs <- coefs %>% group_by(port) %>%  slice(match(cc, coef_type)) %>% as.data.frame
 
 #------------------------------------------------------------------------------------------------------
 #Modify the 
-port_plot[[1]]$xlims <- c(-126, -122)
+port_plot[[1]]$xlims <- c(-126, -123)
 port_plot[[1]]$ylims <- c(38, 40)
 port_plot[[1]]$ylabs <- c(38, 39, 40)
-port_plot[[6]]$letts <- c('a', 'b', 'c', 'd')
+port_plot[[6]]$letts <- letters[1:6]
 port_plot[[1]]$coefs <- coefs %>% filter(port == "FORT BRAGG")
+# port_plot[[1]]$coefs <- port_plot[[1]]$coefs[7:1, ]
 
-port_plot[[2]]$xlims <- c(-126, -122)
+
+port_plot[[2]]$xlims <- c(-126, -123)
 port_plot[[2]]$ylims <- c(40, 42)
 port_plot[[2]]$ylabs <- c(40, 41, 42)
-port_plot[[5]]$letts <- c('e', 'f', 'g', 'h')
+port_plot[[5]]$letts <- letters[7:12]
 port_plot[[2]]$coefs <- coefs %>% filter(port == "EUREKA")
+# port_plot[[2]]$coefs <- port_plot[[2]]$coefs[7:1, ]
+
 
 port_plot[[3]]$port_name <- "ccb"
-port_plot[[3]]$xlims <- c(-126, -122)
+port_plot[[3]]$xlims <- c(-126, -123)
 port_plot[[3]]$ylims <- c(41, 43)
 port_plot[[3]]$ylabs <- c(41, 42, 43)
-port_plot[[4]]$letts <- c('i', 'j', 'k', 'l')
+# port_plot[[4]]$letts <- c('i', 'j', 'k', 'l')
+port_plot[[4]]$letts <- letters[13:18]
 port_plot[[3]]$coefs <- coefs %>% filter(port == "CRESCENT CITY_BROOKINGS")
 
-# port_plot[[4]]$xlims <- c(-126, -122)
+# port_plot[[3]]$coefs <- port_plot[[3]]$coefs[7:1, ]
+# port_plot[[4]]$xlims <- c(-126, -123)
 # port_plot[[4]]$ylims <- c(41, 43)
 
-port_plot[[4]]$xlims <- c(-126, -122)
+port_plot[[4]]$xlims <- c(-126, -123)
 port_plot[[4]]$ylims <- c(42, 44)
 port_plot[[4]]$ylabs <- c(42, 43, 44)
-port_plot[[3]]$letts <- c('m', 'n', 'o', 'p')
+port_plot[[3]]$letts <- letters[19:24]
 port_plot[[4]]$coefs <- coefs %>% filter(port == "CHARLESTON (COOS BAY)")
+# port_plot[[4]]$coefs <- port_plot[[4]]$coefs[7:1, ]
 
-port_plot[[5]]$xlims <- c(-126, -122)
+port_plot[[5]]$xlims <- c(-126, -123)
 port_plot[[5]]$ylims <- c(43.5, 46)
 port_plot[[5]]$ylabs <- c(44, 45, 46)
-port_plot[[2]]$letts <- c('q', 'r', 's', 't')
+port_plot[[2]]$letts <- c(letters[25:26], 'aa', 'bb', 'cc', 'dd')
 port_plot[[5]]$coefs <- coefs %>% filter(port == "NEWPORT")
+# port_plot[[5]]$coefs <- port_plot[[5]]$coefs[7:1, ]
 
-port_plot[[6]]$xlims <- c(-126, -122)
+port_plot[[6]]$xlims <- c(-126, -123)
 port_plot[[6]]$ylims <- c(45, 48.5)
 port_plot[[6]]$ylabs <- c(45, 46, 47, 48)
-port_plot[[1]]$letts <- c('u', 'v', 'w', 'x')
+# port_plot[[1]]$letts <- c('u', 'v', 'w', 'x')
+port_plot[[1]]$letts <- c('ee', 'ff', 'gg', 'hh', 'ii', 'jj')
 port_plot[[6]]$coefs <- coefs %>% filter(port == "ASTORIA / WARRENTON")
+# port_plot[[6]]$coefs <- port_plot[[6]]$coefs[7:1, ]
+
+#Add colors in for significance
 
 
 #------------------------------------------------------------------------------------------------------
@@ -177,7 +206,7 @@ some_port_locs[[4]][2, 'd_port_lat'] <- 42.0470
 
 some_port_locs <- some_port_locs[6:1]
 
-yrz <- 2011:2014
+yrz <- 2009:2014
 #------------------------------------------------------------------------------------------------------
 
 
@@ -227,11 +256,11 @@ yrz <- 2011:2014
 # astoria <- port_bins %>% filter(fleet_name == 'ASTORIA / WARRENTON')
 # astoria <- port_bins %>% filter(fleet_name == 'NEWPORT')
 
-# map('state', fill = FALSE, col = 'gray95', xlim = c(-126, -122), ylim = c(38, 48.5), 
+# map('state', fill = FALSE, col = 'gray95', xlim = c(-126, -123), ylim = c(38, 48.5), 
 #   mar = c(0, 0, 0, 0))
 # points(astoria$x, astoria$y, pch = 15, cex = .6, col = port_bins$greys)
 # # points(port_bins$x, port_bins$y, pch = 15, cex = .6, col = port_bins$greys)
-# map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -122), ylim = c(38, 48.5), add = T)
+# map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -123), ylim = c(38, 48.5), add = T)
 # points(some_port_locs$d_port_long, some_port_locs$d_port_lat, pch = 19, col = 'red')
 
 
@@ -264,11 +293,11 @@ yrz <- 2011:2014
 
 #   #Add axes
 #   if(ii %in% c(1, 5)) axis(side = 2, las = 2, mgp = c(0, .5, 0))
-#   if(ii >= 5) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -122, -121), labels = c('125', '123', '121'))
+#   if(ii >= 5) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -123, -121), labels = c('125', '123', '121'))
 # }
 
 # #Add Color Bar
-# rect(xleft = -122.9, ybottom = 42.75, xright = -120.55, ytop = 48, col = 'white', border = 'black')
+# rect(xleft = -123.9, ybottom = 42.75, xright = -120.55, ytop = 48, col = 'white', border = 'black')
 
 
 
