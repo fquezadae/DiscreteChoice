@@ -106,14 +106,18 @@ coefs <- melt(coefs, id.vars = c('port', 'coef_type', 'coef_type_desc'))
 coefs$variable <- as.character(coefs$variable)
 coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
 coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
-coefs$pch <- 15
-coefs[which(coefs$sig %in% c('.', "")), 'pch'] <- 0
+coefs$pch <- 0
+
+coefs[which(coefs$sig %in% c('', ".")), 'pch'] <- 19
 coefs$variable <- substr(coefs$variable, 2, 5)
 
 #Add coefficients as a data frame to port_plot
 cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
 
-coef_colors <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f")
+require(RColorBrewer)
+coef_colors <- brewer.pal(7,"Dark2")
+
+# coef_colors <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f")
 # coef_colors <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628")
 coef_colors <- coefs %>% distinct(coef_type) %>% mutate(coef_colors = coef_colors)
 
@@ -121,23 +125,40 @@ coefs <- coefs %>% left_join(coef_colors, by = 'coef_type')
 
 #Adjust colors
 coef_sigs <- coefs %>% distinct(sig) 
-coef_sigs$alpha <- c(1, .2, .5, .8 , 0)
+coef_sigs$alpha <- c(1, 0, 1, 1 , 0)
 coefs <- coefs %>% left_join(coef_sigs, by = 'sig')
 coefs$sig_color <- apply(coefs, MAR = 1, FUN = function(xx) adjustcolor(xx['coef_colors'], xx['alpha']))
 
-coefs %>% distinct(value, sig, alpha)
+# coefs %>% distinct(value, sig, alpha)
 
-coefs <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'sig_color')
+#figure out 
+
+#Colors
+coefs_colors <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'sig_color')
 cc <- rev(c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y'))
-coefs <- coefs %>% group_by(port) %>%  slice(match(cc, coef_type)) %>% as.data.frame
+coefs_colors <- coefs_colors %>% group_by(port) %>%  slice(match(cc, coef_type)) %>% as.data.frame
 
+#Which ones to add points to?
+coefs$add_point <- "no"
+coefs[which(coefs$sig == "***"), 'add_point'] <- 'yes'
+coefs_point <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'add_point')
+coefs_point <- coefs_point %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
+
+coefs_pch <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'pch')
+coefs_pch <- coefs_pch %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
+
+base_colors <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'coef_colors')
+base_colors <- base_colors %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
 #------------------------------------------------------------------------------------------------------
 #Modify the 
 port_plot[[1]]$xlims <- c(-126, -123)
 port_plot[[1]]$ylims <- c(38, 40)
 port_plot[[1]]$ylabs <- c(38, 39, 40)
 port_plot[[6]]$letts <- letters[1:6]
-port_plot[[1]]$coefs <- coefs %>% filter(port == "FORT BRAGG")
+port_plot[[1]]$coefs_colors <- coefs_colors %>% filter(port == "FORT BRAGG")
+port_plot[[1]]$base_colors <- base_colors %>% filter(port == "FORT BRAGG")
+port_plot[[1]]$coefs_point <- coefs_point %>% filter(port == "FORT BRAGG")
+port_plot[[1]]$coefs_pch <- coefs_pch %>% filter(port == "FORT BRAGG")
 # port_plot[[1]]$coefs <- port_plot[[1]]$coefs[7:1, ]
 
 
@@ -145,7 +166,10 @@ port_plot[[2]]$xlims <- c(-126, -123)
 port_plot[[2]]$ylims <- c(40, 42)
 port_plot[[2]]$ylabs <- c(40, 41, 42)
 port_plot[[5]]$letts <- letters[7:12]
-port_plot[[2]]$coefs <- coefs %>% filter(port == "EUREKA")
+port_plot[[2]]$coefs_colors <- coefs_colors %>% filter(port == "EUREKA")
+port_plot[[2]]$base_colors <- base_colors %>% filter(port == "EUREKA")
+port_plot[[2]]$coefs_point <- coefs_point %>% filter(port == "EUREKA")
+port_plot[[2]]$coefs_pch <- coefs_pch %>% filter(port == "EUREKA")
 # port_plot[[2]]$coefs <- port_plot[[2]]$coefs[7:1, ]
 
 
@@ -155,7 +179,11 @@ port_plot[[3]]$ylims <- c(41, 43)
 port_plot[[3]]$ylabs <- c(41, 42, 43)
 # port_plot[[4]]$letts <- c('i', 'j', 'k', 'l')
 port_plot[[4]]$letts <- letters[13:18]
-port_plot[[3]]$coefs <- coefs %>% filter(port == "CRESCENT CITY_BROOKINGS")
+port_plot[[3]]$coefs_colors <- coefs_colors %>% filter(port == "CRESCENT CITY_BROOKINGS")
+port_plot[[3]]$base_colors <- base_colors %>% filter(port == "CRESCENT CITY_BROOKINGS")
+port_plot[[3]]$coefs_point <- coefs_point %>% filter(port == "CRESCENT CITY_BROOKINGS")
+port_plot[[3]]$coefs_pch <- coefs_pch %>% filter(port == "CRESCENT CITY_BROOKINGS")
+
 
 # port_plot[[3]]$coefs <- port_plot[[3]]$coefs[7:1, ]
 # port_plot[[4]]$xlims <- c(-126, -123)
@@ -165,14 +193,20 @@ port_plot[[4]]$xlims <- c(-126, -123)
 port_plot[[4]]$ylims <- c(42, 44)
 port_plot[[4]]$ylabs <- c(42, 43, 44)
 port_plot[[3]]$letts <- letters[19:24]
-port_plot[[4]]$coefs <- coefs %>% filter(port == "CHARLESTON (COOS BAY)")
+port_plot[[4]]$coefs_colors <- coefs_colors %>% filter(port == "CHARLESTON (COOS BAY)")
+port_plot[[4]]$base_colors <- base_colors %>% filter(port == "CHARLESTON (COOS BAY)")
+port_plot[[4]]$coefs_point <- coefs_point %>% filter(port == "CHARLESTON (COOS BAY)")
+port_plot[[4]]$coefs_pch <- coefs_pch %>% filter(port == "CHARLESTON (COOS BAY)")
 # port_plot[[4]]$coefs <- port_plot[[4]]$coefs[7:1, ]
 
 port_plot[[5]]$xlims <- c(-126, -123)
 port_plot[[5]]$ylims <- c(43.5, 46)
 port_plot[[5]]$ylabs <- c(44, 45, 46)
 port_plot[[2]]$letts <- c(letters[25:26], 'aa', 'bb', 'cc', 'dd')
-port_plot[[5]]$coefs <- coefs %>% filter(port == "NEWPORT")
+port_plot[[5]]$coefs_colors <- coefs_colors %>% filter(port == "NEWPORT")
+port_plot[[5]]$base_colors <- base_colors %>% filter(port == "NEWPORT")
+port_plot[[5]]$coefs_point <- coefs_point %>% filter(port == "NEWPORT")
+port_plot[[5]]$coefs_pch <- coefs_pch %>% filter(port == "NEWPORT")
 # port_plot[[5]]$coefs <- port_plot[[5]]$coefs[7:1, ]
 
 port_plot[[6]]$xlims <- c(-126, -123)
@@ -180,7 +214,10 @@ port_plot[[6]]$ylims <- c(45, 48.5)
 port_plot[[6]]$ylabs <- c(45, 46, 47, 48)
 # port_plot[[1]]$letts <- c('u', 'v', 'w', 'x')
 port_plot[[1]]$letts <- c('ee', 'ff', 'gg', 'hh', 'ii', 'jj')
-port_plot[[6]]$coefs <- coefs %>% filter(port == "ASTORIA / WARRENTON")
+port_plot[[6]]$coefs_colors <- coefs_colors %>% filter(port == "ASTORIA / WARRENTON")
+port_plot[[6]]$base_colors <- base_colors %>% filter(port == "ASTORIA / WARRENTON")
+port_plot[[6]]$coefs_point <- coefs_point %>% filter(port == "ASTORIA / WARRENTON")
+port_plot[[6]]$coefs_pch <- coefs_pch %>% filter(port == "ASTORIA / WARRENTON")
 # port_plot[[6]]$coefs <- port_plot[[6]]$coefs[7:1, ]
 
 #Add colors in for significance
