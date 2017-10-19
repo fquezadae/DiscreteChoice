@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 8.75, height = 8.34)
 # 
-png(width = 8.75, height = 8.34, units = 'in', file = 'figs/ch4_sig_fig.png', res = 250)
+png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
 # pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
 # dev.new(width = 8.75, height = 8.34)
@@ -16,6 +16,10 @@ matlay <- matrix(c( 1,  2, 0,  3,  4,  5,  6,
 layout(matlay, widths = c(lcm(2.5), lcm(2.5), lcm(.25), rep(lcm(2.5), 4)), 
   heights = lcm(2.75 * c(1.75, 1.25, 1, 1, 1, 1)))
 
+#no color for no significance, 
+#color for significance at .05
+#point on top of color for very significant coefficients
+
 #------------------------------------------------------------------------------------------------------
 par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0)) #small numbers
 
@@ -24,7 +28,9 @@ for(pp in 6:1){
   temp_bin <- port_bins %>% filter(fleet_name_comb %in% plot_dat$port_name)
   port_locz <- some_port_locs[[pp]]
   yrects <- seq(plot_dat$ylims[1], plot_dat$ylims[1] + 2, length.out = 8)
-  print(yrects)
+ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
+
+# axis(side = 2, at = plot_dat$ylabs, labels = ylabels, las = 2)
 
   for(yy in 1:length(yrz)){  
     par(mar = c(0, 0, 0, 0))
@@ -44,30 +50,36 @@ for(pp in 6:1){
     rect(xleft = -123.32, xright = -123, ybottom = plot_dat$ylims[1], ytop = plot_dat$ylims[1] + 2, 
       col = 'white', border = FALSE)
     
+    #Add rectangles
     for(fc in 1:7){
       rect(xleft = -123.32, xright = -123, ybottom = yrects[fc], 
-        ytop = yrects[fc + 1], col = plot_dat$coefs[fc, yy + 2], border = FALSE)  
+        ytop = yrects[fc + 1], col = plot_dat$coefs_colors[fc, yy + 2], border = FALSE)  
     }
+
+    #Add points to significant and nonsignificant points
+    ypoints <- yrects[1:7] + diff(yrects)/2
+    # points(x = rep(-123.16, 7), y = ypoints, pch = plot_dat$coefs_point)
+    # points(x = rep(-123.16, 7), y = ypoints, pch = (plot_dat$coefs_pch[, yy + 2]), 
+    #   col = plot_dat$base_colors[, yy + 2])
+
+    #Add black points if very significant
+    ptz <- plot_dat$coefs_point[, c(1, 2, (yy + 2))]
+    ptz$pch <- NA
+    ptz[which(ptz[, 3] == 'yes'), 4] <- 19
     
-    # rect(xleft = -123.32, xright = -123, ybottom = yrects[yy], 
-    #   ytop = yrects[yy + 1], col = 'gray70', border = FALSE)
-  
-    
-    #add rectangles in instead of 
-    # points(rep(-123.16, 7), seq(plot_dat$ylims[1] + .1, plot_dat$ylims[1] + 1.9, length.out = 7), 
-    #   pch = plot_dat$coefs[, yy + 2], bg = 'gray70',
-    #   xpd = T, cex = 1.7, col = 'gray70')
+    points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6)
 
     #-----Add Axes
     if(yy == 1 & pp != 6){
-      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs)
+      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs, labels = 
+        ylabels)
       mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
     } 
     
     if(pp == 6 & yy == 1){
       # paste0("'", substr(yrz[yy], 3, 4))
       # mtext(side = 3, paste0("'", substr(yrz[yy], 3, 4)), adj = 0, outer = F)
-      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs)
+      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs, labels = ylabels)
       mtext(side = 3, yrz[yy], adj = 1, outer = F)
       mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
     }
@@ -75,9 +87,13 @@ for(pp in 6:1){
       mtext(side = 3, yrz[yy], adj = 1, outer = F)
     }
 
+xlabels <- c(expression("126"~degree ~ W),
+             expression("125"~degree ~ W),
+             expression("124"~degree ~ W))
+  
     if(pp == 1){
       axis(side = 1, mgp = c(0, .5, 0), at = c(-126, -125, -124), 
-        labels = c(126, 125, 124))
+        labels = xlabels, las = 3)
     } 
     if(yy == 6){
       axis(side = 4, las = 2, mgp = c(0, .5, 0), 
@@ -88,8 +104,9 @@ for(pp in 6:1){
     }
   }
 }
-mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = -1.5, cex = 1.2)
-mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = -8, cex = 1.2)
+# mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = -1.5, cex = 1.2)
+# mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = -8, cex = 1.2)
+
 
 dev.off()
 # dev.off()
