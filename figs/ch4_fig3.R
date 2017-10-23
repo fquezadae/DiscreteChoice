@@ -51,14 +51,16 @@ sneg <- slopies1 %>% filter(slope < 0)
 
 # spos <- spos %>% arrange(x, y)
 
-
 #-------------------------------------------------------------------------------------
 ###Table Values
 #Number
-
+14 * 29
 #Total number of locations
 nlocs <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>% select(unq) %>% nrow
+length(unique(tows_clust_bin_depth$x))
+length(unique(tows_clust_bin_depth$y))
 
+nlocs <- 406
 #Locations with not enough years or not fished before/after catch shares
 not_enough <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>%
   filter(bef_aft == FALSE, nyears < 3) %>% select(unq) %>% nrow
@@ -81,6 +83,10 @@ perc_decrease <- round(slopies %>% filter(slope < 0) %>% distinct(unq) %>% nrow 
 #Significant increases
 perc_decrease_sig <- round(slopies %>% 
   filter(sig == 'yes', slope < 0) %>% distinct(unq) %>% nrow / nlocs, digits = 2)
+
+perc_increase
+perc_decrease 
+ + not_enough / nlocs
 
 ss <- slopies %>% distinct(abs_slope) 
 quantile(ss$abs_slope, .95)
