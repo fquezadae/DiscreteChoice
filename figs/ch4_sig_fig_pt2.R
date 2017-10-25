@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------------------------------
-# dev.new(width = 8.75, height = 8.34)
+# dev.new(width = 8.95, height = 8.43)
 # 
 png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
@@ -28,7 +28,7 @@ for(pp in 6:1){
   temp_bin <- port_bins %>% filter(fleet_name_comb %in% plot_dat$port_name)
   port_locz <- some_port_locs[[pp]]
   yrects <- seq(plot_dat$ylims[1], plot_dat$ylims[1] + 2, length.out = 8)
-ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
+  ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
 
 # axis(side = 2, at = plot_dat$ylabs, labels = ylabels, las = 2)
 
@@ -52,9 +52,15 @@ ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
     
     #Add rectangles
     for(fc in 1:7){
-      rect(xleft = -123.32, xright = -123, ybottom = yrects[fc], 
-        ytop = yrects[fc + 1], col = plot_dat$coefs_colors[fc, yy + 2], border = FALSE)  
+      points(x = -123.16, y = mean(c(yrects[fc], yrects[fc + 1])), 
+        pch = plot_dat$coefs_pch[fc, yy + 2], 
+        col = plot_dat$coefs_colors[fc, yy + 2], cex = 2)  
     }
+    
+    # for(fc in 1:7){
+    #   rect(xleft = -123.32, xright = -123, ybottom = yrects[fc], 
+    #     ytop = yrects[fc + 1], col = plot_dat$coefs_colors[fc, yy + 2], border = FALSE)  
+    # }
 
     #Add points to significant and nonsignificant points
     ypoints <- yrects[1:7] + diff(yrects)/2
@@ -67,7 +73,7 @@ ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
     ptz$pch <- NA
     ptz[which(ptz[, 3] == 'yes'), 4] <- 19
     
-    points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6)
+    points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6, col = 'white')
 
     #-----Add Axes
     if(yy == 1 & pp != 6){
@@ -82,11 +88,20 @@ ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
       axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs, labels = ylabels)
       mtext(side = 3, yrz[yy], adj = 1, outer = F)
       mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
+      
     }
-    if(pp == 6 & yy != 1){
+    if(pp == 6 & yy == 3) mtext(side = 3, line = 1.2, "After", adj = 0, cex = 1.2)
+    if(pp == 6 & yy == 2){
       mtext(side = 3, yrz[yy], adj = 1, outer = F)
+      mtext(side = 3, line = 1.2, "Before", adj = 1, cex = 1.2)
     }
 
+    if(pp == 6 & yy >= 3){
+      mtext(side = 3, yrz[yy], adj = 0, outer = F)
+    }
+
+    
+    
 xlabels <- c(expression("126"~degree ~ W),
              expression("125"~degree ~ W),
              expression("124"~degree ~ W))
@@ -104,9 +119,35 @@ xlabels <- c(expression("126"~degree ~ W),
     }
   }
 }
-# mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = -1.5, cex = 1.2)
-# mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = -8, cex = 1.2)
+
+#----------------------------------------------
+#Add legend
+add_legend <- function(...) {
+  opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 
+    mar=c(0, 0, 0, 0), new=TRUE)
+  on.exit(par(opar))
+  plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n')
+  legend(...)
+}
+
+#Add first legend
+add_legend(x = .72, y = .97, legend = c('   positive', '   negative', 
+  ''), pch = c(15, 19, 15), 
+  xpd = TRUE, pt.cex = c(1.5, 1.5), bty = 'n')  
+add_legend(x = .72, y = .97, legend = c('', '', 
+  ''), pch = c(NA, NA, 19), col = 'white',
+  xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
+
+#Add second point
+add_legend(x = .74, y = .97, legend = c("", "", "highly significant"),
+  pch = c(NA, NA, 19), pt.cex = 1.5, bty = 'n')
+add_legend(x = .74, y = .97, legend = c('', '', 
+  ''), pch = c(NA, NA, 19), col = 'white',
+  xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
+
+# add_legend(x = .72, y = .97, legend = c('', '', 
+#   ''), pch = c(NA, NA, 19), col = 'white',
+#   xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
 
 
 dev.off()
-# dev.off()
