@@ -104,9 +104,13 @@ coefs <- read.csv('output/the_coefs_09_14.csv', stringsAsFactors = F)
 coefs <- melt(coefs, id.vars = c('port', 'coef_type', 'coef_type_desc'))
 
 coefs$variable <- as.character(coefs$variable)
-coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
-coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
+
+coefs$cc <- sapply(strsplit(coefs$value, " "), FUN = function(xx) xx[1])
+coefs$sig <- sapply(strsplit(coefs$value, " "), FUN = function(xx) xx[2])
 coefs$pch <- 0
+
+# coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
+# coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
 
 coefs[which(coefs$sig %in% c('', ".")), 'pch'] <- 19
 coefs$variable <- substr(coefs$variable, 2, 5)
@@ -144,6 +148,8 @@ coefs[which(coefs$sig == "***"), 'add_point'] <- 'yes'
 coefs_point <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'add_point')
 coefs_point <- coefs_point %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
 
+coefs[which(coefs$cc > 0), 'pch'] <- 19
+coefs[which(coefs$cc < 0), 'pch'] <- 15
 coefs_pch <- coefs %>% dcast(port + coef_type ~ variable, value.var = 'pch')
 coefs_pch <- coefs_pch %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
 
