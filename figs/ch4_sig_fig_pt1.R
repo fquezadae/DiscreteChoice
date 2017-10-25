@@ -111,6 +111,7 @@ coefs$pch <- 0
 
 # coefs <- cbind(coefs, ldply(strsplit((coefs$value), " ")))
 # coefs <- plyr::rename(coefs, c("V1" = "cc", "V2" = "sig"))
+coefs[is.na(coefs$sig), 'sig'] <- ""
 
 coefs[which(coefs$sig %in% c('', ".")), 'pch'] <- 19
 coefs$variable <- substr(coefs$variable, 2, 5)
@@ -129,7 +130,10 @@ coefs <- coefs %>% left_join(coef_colors, by = 'coef_type')
 
 #Adjust colors
 coef_sigs <- coefs %>% distinct(sig) 
-coef_sigs$alpha <- c(1, 0, 1, 1 , 0)
+coef_sigs$alpha <- 1
+coef_sigs[which(coef_sigs$sig %in% c(".", "")), 'alpha'] <- 0
+
+# coef_sigs$alpha <- c(1, 1, 0, 0 , 1)
 coefs <- coefs %>% left_join(coef_sigs, by = 'sig')
 coefs$sig_color <- apply(coefs, MAR = 1, FUN = function(xx) adjustcolor(xx['coef_colors'], xx['alpha']))
 
