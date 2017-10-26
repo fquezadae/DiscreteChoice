@@ -130,14 +130,14 @@ coefs <- coefs %>% left_join(coef_colors, by = 'coef_type')
 
 #Adjust colors
 coef_sigs <- coefs %>% distinct(sig) 
-coef_sigs$alpha <- 1
+coef_sigs$alpha <- .4
 coef_sigs[which(coef_sigs$sig %in% c(".", "")), 'alpha'] <- 0
+coef_sigs[which(coef_sigs$sig == "***"), 'alpha'] <- 1
+
 
 # coef_sigs$alpha <- c(1, 1, 0, 0 , 1)
 coefs <- coefs %>% left_join(coef_sigs, by = 'sig')
 coefs$sig_color <- apply(coefs, MAR = 1, FUN = function(xx) adjustcolor(xx['coef_colors'], xx['alpha']))
-
-# coefs %>% distinct(value, sig, alpha)
 
 #figure out 
 
@@ -254,10 +254,15 @@ some_port_locs[[4]][2, 'd_port_lat'] <- 42.0470
 some_port_locs <- some_port_locs[6:1]
 
 yrz <- 2009:2014
+
+
+
+
+
+
+
+
 #------------------------------------------------------------------------------------------------------
-
-
-
 #Come up with rule to manipulate the layout to stretch y axis enough so that x axis is consistent
 #for all plots
 # # png()
