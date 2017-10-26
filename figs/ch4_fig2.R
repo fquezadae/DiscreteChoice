@@ -1,38 +1,78 @@
-  #------------------------------------------------------------------------
+#------------------------------------------------------------------------
 #Figure 2
 #------------------------------------------------------------------------
 #Format the Data
-# load("/Volumes/udrive/tows_clust_921.Rdata")
 
+#Find unique tows
 tows_clust_unq <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
-tows_clust_bin <- bin_data(tows_clust_unq, x_col = 'avg_long', y_col = 'avg_lat', group = 'set_year', grid_size = c(.0909, .11),
+tows_clust_bin <- bin_data(tows_clust_unq, x_col = 'avg_long', y_col = 'avg_lat', 
+  group = 'set_year', grid_size = c(.0909, .11),
   group_vec = 2007:2014)
 
-range(tows_clust_bin$count)
-
+#Specify maximum value
 scaled_value <- 200
-
-# max_value <- 15
 tows_clust_bin$plot_value <- tows_clust_bin$count
 tows_clust_bin[which(tows_clust_bin$plot_value >= scaled_value), 'plot_value'] <- scaled_value
 
 tows_clust_bin$plot_value <- round(tows_clust_bin$plot_value / max(tows_clust_bin$plot_value) * 100,
   digits = 0)
 
-tows_clust_bin$greys <- paste0('grey', 100 - tows_clust_bin$plot_value)
-tows_clust_bin$greys <- rgb(t(col2rgb(tows_clust_bin$greys)), maxColorValue = 255)
+# gray.colors(10, start = 0, end = 1)
+
+#Specify gray colors to use, make minimum a darker shade of grey
+greys <- gray.colors(100, start = 0, end = .9)
+greys <- data_frame(greys = greys, plot_value = rev(1:100)) %>% as.data.frame
+
+tows_clust_bin <- tows_clust_bin %>% left_join(greys, by = 'plot_value')
+tows_clust_bin[is.na(tows_clust_bin$greys), 'greys'] <- "#FFFFFF"
+
+# tows_clust_bin$greys <- paste0('grey', 100 - tows_clust_bin$plot_value)
+# tows_clust_bin$greys <- rgb(t(col2rgb(tows_clust_bin$greys)), maxColorValue = 255)
 
 gg <- tows_clust_bin %>% 
   distinct(plot_value, .keep_all = T) %>% 
   arrange(plot_value) %>% select(greys)
 
+#------------------------------------------------------------------------
+#Count number of vessels in each grid cell
+
+# tows_clust_bin <- bin_data(tows_clust, x_col = 'avg_long', y_col = 'avg_lat', group = 'set_year', grid_size = c(.0909, .11),
+#   group_vec = 2007:2014)
+
+#Back assign the clustered values
+unq_bins <- tows_clust_bin %>% distinct(unq, .keep_all = T)
+
+#Loop through all the unq_bins rows
+tows_clust$unq <- "999"
+tows_clust$bin_x <- "999"
+tows_clust$bin_y <- "999"
+
+for(ii in 1:nrow(unq_bins)){
+  tb <- unq_bins[ii, ]
+  the_inds <- which(tows_clust$avg_long > tb$xmin & tows_clust$avg_long < tb$xmax &
+    tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
+  tows_clust[the_inds, 'unq'] <- tb$unq
+  tows_clust[the_inds, 'bin_x'] <- tb$x
+  tows_clust[the_inds, 'bin_y'] <- tb$y
+}
+
+tows_clust$bin_x <- round(as.numeric(tows_clust$bin_x), digits = 4)
+tows_clust$bin_y <- round(as.numeric(tows_clust$bin_y), digits = 4)
+
+#unq columns and set year that I can keep
+keepers <- tows_clust %>% group_by(unq, set_year) %>% summarize(nvess = length(unique(drvid))) 
+keepers <- plyr::rename(keepers, c('set_year' = "year"))
+
+tows_clust_bin <- tows_clust_bin %>% left_join(keepers, by = c('unq', "year")) 
+tows_clust_bin <- tows_clust_bin %>% filter(nvess >= 3)
+
+#------------------------------------------------------------------------
+#Figure
 # dev.new(width = 4.68, height = 7)
 png(width = 3.8, height = 6.6, res = 200, units = 'in',
   file = 'figs/ch4_fig2.png')
-
-# mat <- matrix(1:8, 2, 4, byrow = TRUE)
-# layout(mat, widths = rep(1, 8), heights = rep(3, 8))
+# pdf(width = 3.8, height = 6.6, file = 'figs/ch4_fig2.pdf')
 
 par(mar = c(0, 0, 0, 0), oma = c(3, 3, 0, 0.25), mfrow = c(2, 4))
 yrz <- 2007:2014
@@ -41,13 +81,16 @@ for(ii in 1:8){
   tt <- tows_clust_bin %>% filter(year == yrz[ii])
   map('state', fill = FALSE, col = 'white', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
     mar = c(0, 0, 0, 0))
-  points(tt$x, tt$y, pch = 15, cex = .65, xlim = c(-126, -120.5), ylim = c(34, 49), col = tt$greys)
+  points(tt$x, tt$y, pch = 15, cex = .3, xlim = c(-126, -120.5), ylim = c(34, 49), col = tt$greys)
   map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
     mar = c(0, 0, 0, 0), add = T)
   box()
   
-  mtext(paste0(letters[ii], ".", ") ", yrz[ii]), adj = .05, cex = .6, side = 1,
+  mtext(yrz[ii], adj = .05, cex = .6, side = 1,
     line = -1.2, bg = 'white')
+  #Add letters
+  # mtext(paste0(letters[ii], ") ", yrz[ii]), adj = .05, cex = .6, side = 1,
+  #   line = -1.2, bg = 'white')
 
   #Add axes
   if(ii %in% c(1, 5)) axis(side = 2, las = 2, mgp = c(0, .5, 0))
@@ -55,11 +98,11 @@ for(ii in 1:8){
 }
 
 #Add Color Bar
-rect(xleft = -122.9, ybottom = 42.75, xright = -120.55, ytop = 48, col = 'white', border = 'black')
+rect(xleft = -123.3, ybottom = 42.75, xright = -120.55, ytop = 48.2, col = 'white', border = 'black')
 
 par(mar = c(0, 0, 0, 0), fig = c(.97, 0.99, 0.3, .45), new = T)  
-color_bar(lut = gg$greys, Cex = .3, nticks = 6 , min = 0, max = 1, tick_labs = c("0", "50", 
-  "100", "150", "200", '250'))
+color_bar(lut = gg$greys, Cex = .3, nticks = 5, min = 0, max = 1, tick_labs = c("0", "50", 
+  "100", "150", ">200"))
 mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = 2, cex = .9)
 mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.5, cex = .9)
 
