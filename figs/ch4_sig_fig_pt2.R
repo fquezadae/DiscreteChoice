@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 8.95, height = 8.43)
-# 
+
 png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
 # pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
@@ -73,7 +73,7 @@ for(pp in 6:1){
     ptz$pch <- NA
     ptz[which(ptz[, 3] == 'yes'), 4] <- 19
     
-    points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6, col = 'white')
+    # points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6, col = 'white')
 
     #-----Add Axes
     if(yy == 1 & pp != 6){
@@ -99,8 +99,6 @@ for(pp in 6:1){
     if(pp == 6 & yy >= 3){
       mtext(side = 3, yrz[yy], adj = 0, outer = F)
     }
-
-    
     
 xlabels <- c(expression("126"~degree ~ W),
              expression("125"~degree ~ W),
@@ -131,19 +129,19 @@ add_legend <- function(...) {
 }
 
 #Add first legend
-add_legend(x = .72, y = .97, legend = c('   positive', '   negative', 
-  ''), pch = c(15, 19, 15), 
+add_legend(x = .72, y = .97, legend = c('positive', 'negative', 
+  ''), pch = c(15, 19, NA), 
   xpd = TRUE, pt.cex = c(1.5, 1.5), bty = 'n')  
-add_legend(x = .72, y = .97, legend = c('', '', 
-  ''), pch = c(NA, NA, 19), col = 'white',
-  xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
+# add_legend(x = .72, y = .97, legend = c('', '', 
+#   ''), pch = c(NA, NA, 19), col = 'white',
+#   xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
 
 #Add second point
-add_legend(x = .74, y = .97, legend = c("", "", "highly significant"),
-  pch = c(NA, NA, 19), pt.cex = 1.5, bty = 'n')
-add_legend(x = .74, y = .97, legend = c('', '', 
-  ''), pch = c(NA, NA, 19), col = 'white',
-  xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
+# add_legend(x = .74, y = .97, legend = c("", "", "highly significant"),
+#   pch = c(NA, NA, 19), pt.cex = 1.5, bty = 'n')
+# add_legend(x = .74, y = .97, legend = c('', '', 
+#   ''), pch = c(NA, NA, 19), col = 'white',
+#   xpd = TRUE, pt.cex = c(NA, NA, .5), bty = 'n')  
 
 # add_legend(x = .72, y = .97, legend = c('', '', 
 #   ''), pch = c(NA, NA, 19), col = 'white',
