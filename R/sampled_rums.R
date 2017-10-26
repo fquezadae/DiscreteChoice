@@ -19,7 +19,8 @@
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
-  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale){
+  ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
+  model_type = 'no_bycatch', habit_distance){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
@@ -152,7 +153,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
-      process_dummys2(xx = ii, td2 = td1, dat1 = dat)
+      process_dummys2(xx = ii, td2 = td1, dat1 = dat, dist = habit_distance)
   stopCluster(cl)
 
   print("Done calculating dummys and revenues")    
@@ -212,30 +213,43 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   the_tows <- mlogit.data(rdo, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
     chid.var = 'fished_haul')
   
-  mf <- mFormula(fished ~ miss_rev_adj * dummy_first + 
-    distance * dummy_first + miss_rev_adj * dummy_not_first +
-    distance * dummy_not_first - distance - miss_rev_adj - 1 - 
-    dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days + dummy_miss)
+  if(model_type == "no_bycatch"){
+    mf <- mFormula(fished ~ miss_rev_adj * dummy_first + 
+      distance * dummy_first + miss_rev_adj * dummy_not_first +
+      distance * dummy_not_first - distance - miss_rev_adj - 1 - 
+      dummy_first - dummy_not_first + dummy_prev_days + dummy_prev_year_days + dummy_miss)  
+  }
+  
+  if(model_type == 'dummy_bycatch'){
+    browser()
+  }
+  
   res <- mlogit(mf, the_tows)
 
   #List coefficients and rename to align with jeem paper
   coefs <- coef(res)
   
-  coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
+  if(model_type == 'no_bycatch'){
+    coefs <- plyr::rename(coefs, c('dummy_prev_days' = 'dum30', 
     "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
     "dummy_first:distance" = 'dist1', "miss_rev_adj:dummy_not_first" = "rev",
     "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
-  coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dmiss', 'dum30', 'dum30y')],
-    digits = 5))
+    coefs <- data.frame(coefs = round(coefs[c('dist', 'dist1', 'rev', 'rev1', 'dmiss', 'dum30', 'dum30y')],
+      digits = 5))
 
-  ps <- summary(res)$CoefTable[, 4]
+    ps <- summary(res)$CoefTable[, 4]
 
-  ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
-    "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
-    "dummy_first:distance" = 'dist1', "miss_rev_adj:dummy_not_first" = "rev",
-    "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
+    ps <- plyr::rename(ps, c('dummy_prev_days' = 'dum30', 
+      "dummy_prev_year_days" = "dum30y", "miss_rev_adj:dummy_first" = "rev1",
+      "dummy_first:distance" = 'dist1', "miss_rev_adj:dummy_not_first" = "rev",
+      "distance:dummy_not_first" = 'dist', "dummy_miss" = "dmiss"))
     
-  ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dmiss','dum30', 'dum30y')]
+    ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dmiss','dum30', 'dum30y')]
+  }  
+
+  if(model_type == 'dummy_bycatch'){
+
+  }
   
   #Add significance values
   coefs$p_values <- round(ps, digits = 5)
