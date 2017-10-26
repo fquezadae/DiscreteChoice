@@ -9,12 +9,14 @@
 #' @param ncores Defaults to 6
 #' @param r_c Risk Coefficient, defaults to 1
 #' @param r_s Revenue scaling value, defaults to 10
+#' @param dyz Days
+#' @param h_d habit distance
 
 #' @export
 
 port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
-  seed, ncores, r_c = 1, r_s = 10, ports){
+  seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d){
   
   nports <- length(ports)
   if(nports == 1) nports <- tolower(substr(paste0(ports[[1]], collapse = ""), 1, 3))
@@ -24,9 +26,10 @@ port_rums <- function(m_y,
     st_time <- Sys.time()
     rum <- tryCatch(sampled_rums(data_in = tows_clust, the_port = ports[[yy]],
                             min_year = m_y, max_year = f_y,
-                            risk_coefficient = r_c, ndays = 30, focus_year = f_y, 
+                            risk_coefficient = r_c, ndays = dyz, focus_year = f_y, 
                             nhauls_sampled = nhauls_sampled,
-                            seed = seed, ncores = ncores, rev_scale = r_s),
+                            seed = seed, ncores = ncores, rev_scale = r_s, model_type = dum_type,
+                            habit_distance = h_d),
       error = function(e) NULL)
     
     r_time <- Sys.time() - st_time
@@ -36,7 +39,7 @@ port_rums <- function(m_y,
     port_sv <- substr(the_port, 1, 3)
 
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
-      "_seed", seed)
+      "_seed", seed, "_nday", nday, '_hdist', h_d)
 
     mod <- rum[[2]]    
     if(Sys.info()[['sysname']] == "Darwin"){
@@ -50,7 +53,7 @@ port_rums <- function(m_y,
     print(rum[[1]])
     return(rum)
   })
-  
+
   ports_names <- lapply(ports, FUN = function(yy) paste(yy, collapse = "_"))
   ports_names <- ldply(ports_names)
   ports_names <- as.vector(ports_names$V1)
