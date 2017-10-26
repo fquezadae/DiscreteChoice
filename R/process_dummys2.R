@@ -3,14 +3,15 @@
 
 #' @param xx Index value
 #' @param td2 The tow dates
+#' @param dat1 The Data
+#' @param hab_dist Distance used to filter for habits and revenues
 #' @export
 
-process_dummys2 <- function(xx, td2 = td1, dat1 = dat){
+process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5){
 # browser()
   temp_dat <- td2[xx, ]
 
-habit_distance <- 5
-rev_distance <- 5  
+cat('filter distance=', hab_dist, '\n')
   
   # fleets <- 
   fltz <- strsplit(temp_dat$fleet_name, "_")[[1]]
@@ -25,7 +26,7 @@ rev_distance <- 5
   #calculate distances
   dum30$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
     long2 = deg2rad(dum30$set_long), deg2rad(dum30$set_lat))
-  dum30 <- dum30 %>% filter(dist <= habit_distance)
+  dum30 <- dum30 %>% filter(dist <= hab_dist)
   
   #Add dummy coefficient
   dum30_val <- nrow(dum30)
@@ -40,7 +41,7 @@ rev_distance <- 5
   #calculate distances
   dum30y$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
     long2 = deg2rad(dum30y$set_long), deg2rad(dum30y$set_lat))
-  dum30y <- dum30y %>% filter(dist <= habit_distance)
+  dum30y <- dum30y %>% filter(dist <= hab_dist)
   
   #Add dummy coefficient
   dum30y_val <- nrow(dum30y)
@@ -55,7 +56,7 @@ rev_distance <- 5
   #Calculate distance
   dum_rev$dist <- gcd_slc(long1 = temp_dat$set_long, lat1 = temp_dat$set_lat,
     long2 = deg2rad(dum_rev$set_long), lat2 = deg2rad(dum_rev$set_lat))
-  dum_rev <- dum_rev %>% filter(dist <= rev_distance)
+  dum_rev <- dum_rev %>% filter(dist <= hab_dist)
 
   #Calculate revenue in a faster way with fewer if statements
   dum_rev_val <- nrow(dum_rev)
