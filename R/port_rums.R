@@ -39,7 +39,7 @@ port_rums <- function(m_y,
     port_sv <- substr(the_port, 1, 3)
 
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
-      "_seed", seed, "_nday", nday, '_hdist', h_d)
+      "_seed", seed, "_nday", dyz, '_hdist', h_d)
 
     mod <- rum[[2]]    
     if(Sys.info()[['sysname']] == "Darwin"){
