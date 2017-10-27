@@ -9,7 +9,6 @@ spp_when <- spp_when %>% group_by(species) %>% mutate(bef_aft = length(unique(wh
 spp_when <- spp_when %>% filter(bef_aft == 2)
 spp_when <- spp_when %>% as.data.frame
 
-
 tows_clust %>% filter(type == 'other') %>% group_by(species) %>% summarize(pounds = sum(apounds, na.rm = T)) %>%
   arrange(desc(pounds))
 
@@ -33,7 +32,7 @@ tows_clust %>% filter(type == 'other') %>% group_by(species) %>% summarize(pound
 
 #------------------------------------------------------------------------------------------------------------
 load(file = 'output/delts_befaft.Rdata')
-
+load(file = 'output/delta_sigs.Rdata')
 #------------------------------------------------------------------------------------------------------------
 #Figure with before and after only for all species
 
@@ -58,8 +57,7 @@ dba <- delts_befaft %>% distinct(when, plot_type) %>% arrange(plot_type)
 dba$when <- rep(c('before', 'after'), 4)
 dba$plot_type <- c("other", 'other', 'targets', 'targets', 'weaks', 'weaks', 'groundfish',
   'groundfish')
-dba$plot_val <- c('Other', "", "Targets", "", "Weaks", "", "Groundfish", "")
-
+dba$plot_val <- c('Other', "", "Targets", "", "Constraining", "", "Groundfish", "")
 
 #------------------------------------------------------------------------------------------------------------
 #Plot only the targets and rebuilding species
@@ -81,9 +79,19 @@ delts_befaft[which(delts_befaft$species == "Longnose Skate"), 'spp_abb'] <- "Lsk
 #------------------------------------------------------------------------------------------------------------
 delts_befaft <- delts_befaft %>% left_join(delta_sigs, by = 'species')
 
-png(width = 5.4, height = 7, file = 'figs/ch4_delt_all.png', units = 'in', res = 200)
 
-par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, .5), mar = c(0, 0, .5, 0))
+props <- delts_befaft %>% dcast(species ~ when, value.var = "prop_zero")
+props$diffs <- props$after - props$before
+
+skews <- delts_befaft %>% dcast(species ~ when, value.var = "skew")
+skews$diffs <- skews$after - skews$before
+
+#------------------------------------------------------------------------------------------------------------
+
+
+png(width = 7, height = 7, file = 'figs/ch4_delt_all.png', units = 'in', res = 200)
+
+par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, 11), mar = c(0, 0, .5, 0))
 for(ii in 1:6){
   
   temp <- subset(delts_befaft, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
@@ -104,8 +112,7 @@ for(ii in 1:6){
   }
   
   if(ii == 2){
-    # legend('topright', legend = c("sig", 'ns'), bty = 'n', cex = c(19, 21))
-    
+    #Add legend
     legend('topright', bty = 'n', pt.cex = 2, c("Significant", "Non-significant"),
       pch = c(19, 21), col = c(adjustcolor( "black", alpha.f = 0.2), "black"))
   }
@@ -117,6 +124,14 @@ for(ii in 1:6){
     text(boca$prop_zero, boca$skew, boca$spp_abb, adj = c(.5, -1.1))
   }
 
+  if(ii %in% c(2, 4, 6)){
+    #Add axis on side 4 explaining
+    yvals <- seq(1.5, -2, by = -.35)
+    caps <- paste(temp$spp_abb, tolower(temp$species), sep = " - ")
+    yvals <- yvals[1:length(caps)]
+    axis(side = 4, at = yvals, labels = caps, las = 2, lwd.tick = 0, adj = 1,
+      mgp = c(0, .3, 0))
+  }
   if(ii == 5){
     par(xpd = T)
     rights <- temp[which(temp$species %in% c("Black Rockfish", "Widow Rockfish", 
@@ -129,6 +144,9 @@ for(ii in 1:6){
   }
   if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.4)
   
+  if(ii == 1)mtext(side = 3, "Before", outer = T, line = .1, cex = 1.1, adj = .25)
+  if(ii == 2)mtext(side = 3, "After", outer = T, line = .1, cex = 1.1, adj = .75)
+
   # points(temp_targs$prop_zero, temp_targs$skew, pch = 0, col = 'black', cex = 1.2)
   abline(h = 0, lty = 2)
   box()
@@ -142,9 +160,9 @@ for(ii in 1:6){
   # mtext(side = 3, line = -1.2, dba[ii, 2], adj = .15, cex = .7)
 }
 
-mtext(side = 3, "Before", outer = T, line = .1, cex = 1.1, adj = 0)
-mtext(side = 3, "After", outer = T, line = .1, cex = 1.1, adj = .55)
-mtext(side = 1, "Proportion Zero", outer = T, line = 1.8, cex = 1.2)
+# mtext(side = 3, "Before", outer = T, line = .1, cex = 1.1, adj = .25)
+
+mtext(side = 1, "Proportion zero", outer = T, line = 1.8, cex = 1.2)
 mtext(side = 2, "Skew", outer = T, line = 1.7, cex = 1.2)
 
 dev.off()
