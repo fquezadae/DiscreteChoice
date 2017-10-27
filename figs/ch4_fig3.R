@@ -46,15 +46,11 @@ spos <- slopies1 %>% filter(slope >= 0)
 sneg <- slopies1 %>% filter(slope < 0)
 #Assign colors to slopies1
 
-
-#-------------------------------------------------------------------------------------
-
-# spos <- spos %>% arrange(x, y)
-
 #-------------------------------------------------------------------------------------
 ###Table Values
 #Number
 14 * 29
+
 #Total number of locations
 nlocs <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>% select(unq) %>% nrow
 length(unique(tows_clust_bin_depth$x))
@@ -84,15 +80,15 @@ perc_decrease <- round(slopies %>% filter(slope < 0) %>% distinct(unq) %>% nrow 
 perc_decrease_sig <- round(slopies %>% 
   filter(sig == 'yes', slope < 0) %>% distinct(unq) %>% nrow / nlocs, digits = 2)
 
-perc_increase
-perc_decrease 
- + not_enough / nlocs
-
-ss <- slopies %>% distinct(abs_slope) 
-quantile(ss$abs_slope, .95)
-length(which(ss >= 20)) / nrow(ss)
+# perc_increase
+# perc_decrease 
+# quantile(ss$abs_slope, .95)
+# length(which(ss >= 20)) / nrow(ss)
   
-quantile(ss$abs_slope, 20)
+# quantile(ss$abs_slope, 20)
+ 
+ss <- slopies %>% distinct(abs_slope) 
+
 
 #-------------------------------------------------------------------------------------
 mv <- 50
@@ -106,31 +102,6 @@ dev.off()
 length(seq(0, 700, by = 50)) #The x limits
 length(seq(34, 49, .5)) #the y limits for first two panels
 pretty(c(34, 49))
-
-#-------------------------------------------------------------------------------------
-# # ch4_fig3(mv = 10, lev = 20)
-# format_fc_plot(spos, max_value = 50, the_levels = 10, xlims = c(1, 15),
-#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
-# box()
-
-# format_fc_plot(sneg, max_value = 50, the_levels = 10, xlims = c(1, 15),
-#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
-# box()
-# x1 <- data.frame(depth = seq(0, 700, 50), xbin = 1:length(seq(0, 700, 50)) )
-# x1$xbin1 <- x1$xbin - 1
-# x1$xbin_rev <- rev(x1$xbin)
-
-# y1 <- data.frame(lat = seq(34, 49, .5), ybin = 1:length(seq(34, 49, .5)))
-# y1$ybin1 <- y1$ybin - 1
-
-# length(seq(0, 700, 50))
-# length(seq(34, 49, by = .5))
-# xx <- 1:15
-# yy <- 1:31
-
-# expand.grid(xx, yy)
-# zz <- matrix(1:50, nrow = length(xx), ncol = length(yy))
-# image(xx, yy, zz)
 
 #-------------------------------------------------------------------------------------
 format_fc_plot <- function(input, max_value = 10, the_levels = 10, 
@@ -225,19 +196,72 @@ ptz <- ptz %>% filter(miss == 'yes')
 points(ptz$x + .5, ptz$y, pch = '.')
 
   box()
-  # mtext(paste0(letters[1], ") ", perc_increase * 100, "% positive"), side = 3, line = -1.5, adj = .03, cex = .8)
+
+  axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
+  
+  axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0))
+  mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1.3)
+  mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
+
+  #-------------------------------------------------------------------------------------
+  #Map
+  map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
+      mar = c(0, 0, 0, 0))
+  box()
+  # mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
+  # mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
+
+  par(mar = c(0, .5, 0, 0), fig = c(.66, 0.71, 0.02, .32), new = T)  
+# browser()  
+  blues <- rev(sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('blue', xx)))
+  reds <- sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('red', xx))
+
+  color_bar(lut = c(blues, reds), 
+    Cex = .3, nticks = 11, min = 0, max = 1, 
+    # tick_labs = c(0, 10, 20,
+    #   30, 40, 50, 60, 70, 80, 90, 100), 
+    tick_labs = c(-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50),
+    title = "")
+}
+
+#-------------------------------------------------------------------------------------
+#Scraps
+
+#-------------------------------------------------------------------------------------
+# # ch4_fig3(mv = 10, lev = 20)
+# format_fc_plot(spos, max_value = 50, the_levels = 10, xlims = c(1, 15),
+#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
+# box()
+
+# format_fc_plot(sneg, max_value = 50, the_levels = 10, xlims = c(1, 15),
+#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
+# box()
+# x1 <- data.frame(depth = seq(0, 700, 50), xbin = 1:length(seq(0, 700, 50)) )
+# x1$xbin1 <- x1$xbin - 1
+# x1$xbin_rev <- rev(x1$xbin)
+
+# y1 <- data.frame(lat = seq(34, 49, .5), ybin = 1:length(seq(34, 49, .5)))
+# y1$ybin1 <- y1$ybin - 1
+
+# length(seq(0, 700, 50))
+# length(seq(34, 49, by = .5))
+# xx <- 1:15
+# yy <- 1:31
+
+# expand.grid(xx, yy)
+# zz <- matrix(1:50, nrow = length(xx), ncol = length(yy))
+# image(xx, yy, zz)
+
+   # mtext(paste0(letters[1], ") ", perc_increase * 100, "% positive"), side = 3, line = -1.5, adj = .03, cex = .8)
   # mtext(paste0("      ", 100 * perc_increase_sig, "% significant"), side = 3, line = -2.75, adj = .03, cex = .8)
   # mtext(paste0("      n = ", nlocs), side = 3, line = -4, adj = .03, cex = .8)
 
 # axis1 <- cbind(seq(0, 700, 50), 0:14, 14:0)  
 # axis2 <- cbind(seq(34, 49, .5), 0:(length(seq(34, 49, .5)) - 1))  
-  axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
+
   # axis(side = 1, at = c(2, 6, 10, 15), labels = c(600, 400, 200, 0), cex.axis = 1.2)
   # axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
   # axis(side = 2, las = 2, cex.axis = 1.2)
-  axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0))
-  mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1.3)
-  mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
   #-------------------------------------------------------------------------------------
   #Negative slopes
   # format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(0, 700), ylims = c(34, 49))
@@ -252,23 +276,6 @@ points(ptz$x + .5, ptz$y, pch = '.')
   # mtext(paste0(letters[2], ")", " Negative Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
   # mtext(paste0("n = ", nrow(sneg) ), side = 3, line = -2.75, adj = .03, cex = .8)
   
-  #-------------------------------------------------------------------------------------
-  #Map
-  map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
-      mar = c(0, 0, 0, 0))
-  box()
-  # mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
-  # mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
-
-  par(mar = c(0, .5, 0, 0), fig = c(.66, 0.69, 0.02, .17), new = T)  
-  
-  color_bar(lut = grey.colors(n = lev, start = .9, end = 0), 
-    Cex = .3, nticks = 6, min = 0, max = 1, tick_labs = c(0, 10, 20,
-      30, 40, 50), title = "Magnitude")
-
   # color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
   #   Cex = .3, nticks = 6, min = 0, max = 1, tick_labs = c(0, 2, 4,
   #     6, 8,">=10"), title = "Magnitude")
-  
-}
-
