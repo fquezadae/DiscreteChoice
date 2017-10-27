@@ -62,7 +62,7 @@ port_rums <- function(m_y,
   names(coefs) <- ports_names
 
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
-    "_seed", seed)
+    "_seed", seed, '_nday', dyz, "_hdist", h_d)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
   #   "_seed", seed)
