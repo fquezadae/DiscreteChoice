@@ -30,8 +30,9 @@ get_aic <- function(the_port, the_seed = 300){
     outs <- data_frame(aic_val = AIC(mod), LL = logLik(mod), perc_right = perc_right)
     return(outs)
   }, mc.cores = min(length(to_load), 6))
-  
-  names(fits) <- to_load
+
+  names(fits) <- file_vector
+
   fits <- ldply(fits)
   names(fits)[1] <- 'filename'
   
