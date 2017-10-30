@@ -198,9 +198,18 @@ points(ptz$x + .5, ptz$y, pch = '.')
   box()
 
   axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
+ylabels <- c(expression("34"~degree ~ N),
+             expression("36"~degree ~ N),
+             expression("38"~degree ~ N),
+             expression("40"~degree ~ N),
+             expression("42"~degree ~ N),
+             expression("44"~degree ~ N),
+             expression("46"~degree ~ N),
+             expression("48"~degree ~ N))
   
-  axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0))
-  mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1.3)
+  axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0), 
+    labels = ylabels)
+  # mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1.3)
   mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
 
   #-------------------------------------------------------------------------------------
