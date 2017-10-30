@@ -1,7 +1,8 @@
 #---------------------------------------------------------------------------------
 #Specify Computer
-setwd('/Users/peterkuriyama/Dropbox/ch4')
+# setwd('/Users/peterkuriyama/Dropbox/ch4')
 # setwd('c://Users//Peter//ch4')
+setwd("/Users/peterkuriyama/Dropbox/phd/research/ch4")
 
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 
@@ -21,6 +22,7 @@ library(GGally)
 library(nnet)
 library(tidyr)
 library(mlogit)
+library(RColorBrewer)
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
@@ -46,6 +48,14 @@ perc_used <- perc_used %>% group_by(used) %>% summarize(hpounds = sum(hpounds)) 
 
 perc_used
 #---------------------------------------------------------------------------------
+#Test new features in port_rums
+rums_14 <- port_rums(m_y = 2007, f_y = 2014, nhauls_sampled = 50,
+             ncores = 10, seed = 10, r_c = 1, r_s = 100, ports = list("MORRO BAY", "MORRO BAY"), 
+             nday = 15)
+
+
+#---------------------------------------------------------------------------------
+
 # rums_09 <- port_rums(m_y = 2007, f_y = 2009, nhauls_sampled = 50,
 #                      ncores = 10, seed = 7, r_c = 1, r_s = 100, ports = the_ports)
 
@@ -1027,7 +1037,7 @@ obs_data %>% distinct(haul_id, .keep_all = T) %>% filter(set_year >= 2007) %>% g
 
 
 
-
+  
 #---------------------------------------------------------------------------------
 #look at individual vessel changes in position
 ind_changes <- obs_data %>% distinct(haul_id, .keep_all = T) %>% group_by(drvid, set_year, r_state) %>% 
