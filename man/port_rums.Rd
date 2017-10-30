@@ -6,7 +6,7 @@
 Function to run and save RUM data for 8 top ports}
 \usage{
 port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10,
-  ports)
+  ports, dum_type = "no_bycatch", dyz, h_d)
 }
 \arguments{
 \item{m_y}{Minimum year}
@@ -22,6 +22,10 @@ port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10,
 \item{r_c}{Risk Coefficient, defaults to 1}
 
 \item{r_s}{Revenue scaling value, defaults to 10}
+
+\item{dyz}{Days}
+
+\item{h_d}{habit distance}
 }
 \description{
 port_rums function

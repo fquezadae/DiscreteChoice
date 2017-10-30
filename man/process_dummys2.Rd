@@ -5,12 +5,16 @@
 \title{Process dummy variables
 Function to calculate revenues and distances}
 \usage{
-process_dummys2(xx, td2 = td1, dat1 = dat)
+process_dummys2(xx, td2 = td1, dat1 = dat, hab_dist = 5)
 }
 \arguments{
 \item{xx}{Index value}
 
 \item{td2}{The tow dates}
+
+\item{dat1}{The Data}
+
+\item{hab_dist}{Distance used to filter for habits and revenues}
 }
 \description{
 Process dummy variables
