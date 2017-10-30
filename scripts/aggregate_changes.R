@@ -116,8 +116,6 @@ ll_binned <- bin_data(data = obs_data %>% distinct(haul_id, .keep_all = T),
 ll_binned <- ll_binned %>% filter(year >= 2007)
 
 
-ll_binned %>% group_by(year) %>% summarize(ntows = sum(count))
-
 #Binning works as it should
 obs_data %>% filter(set_year >= 2007) %>% group_by(set_year) %>% summarize(ntows = length(unique(haul_id)))
 
