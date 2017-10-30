@@ -70,11 +70,26 @@ tows_clust_bin <- tows_clust_bin %>% filter(nvess >= 3)
 #------------------------------------------------------------------------
 #Figure
 # dev.new(width = 4.68, height = 7)
-png(width = 3.8, height = 6.6, res = 200, units = 'in',
-  file = 'figs/ch4_fig2.png')
+
 # pdf(width = 3.8, height = 6.6, file = 'figs/ch4_fig2.pdf')
 
-par(mar = c(0, 0, 0, 0), oma = c(3, 3, 0, 0.25), mfrow = c(2, 4))
+xlabels <- c(expression("125"~degree ~ W),
+             expression("123"~degree ~ W),
+             expression("121"~degree ~ W))
+
+ylabels <- c(expression("34"~degree ~ N),
+             expression("36"~degree ~ N),
+             expression("38"~degree ~ N),
+             expression("40"~degree ~ N),
+             expression("42"~degree ~ N),
+             expression("44"~degree ~ N),
+             expression("46"~degree ~ N),
+             expression("48"~degree ~ N))
+                    
+png(width = 3.866, height = 6.6, res = 200, units = 'in',
+  file = 'figs/ch4_fig2.png')
+
+par(mar = c(0, 0, 0, 0), oma = c(3.5, 3, 0, 1.5), mfrow = c(2, 4))
 yrz <- 2007:2014
 
 for(ii in 1:8){
@@ -93,8 +108,13 @@ for(ii in 1:8){
   #   line = -1.2, bg = 'white')
 
   #Add axes
-  if(ii %in% c(1, 5)) axis(side = 2, las = 2, mgp = c(0, .5, 0))
-  if(ii >= 5) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -123, -121), labels = c('125', '123', '121'))
+  if(ii %in% c(1, 5)) axis(side = 2, las = 2, mgp = c(0, .5, 0), at = c(34, 36, 38, 40,
+    42, 44, 46, 48), labels = ylabels)
+  if(ii >= 5) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -123, -121), labels = xlabels,
+    las = 2)
+  if(ii == 4) mtext(side = 4, "Before", line = .5)
+  if(ii == 8) mtext(side = 4, "After", line = .5)
+
 }
 
 #Add Color Bar
@@ -103,8 +123,6 @@ rect(xleft = -123.3, ybottom = 42.75, xright = -120.55, ytop = 48.2, col = 'whit
 par(mar = c(0, 0, 0, 0), fig = c(.97, 0.99, 0.3, .45), new = T)  
 color_bar(lut = gg$greys, Cex = .3, nticks = 5, min = 0, max = 1, tick_labs = c("0", "50", 
   "100", "150", ">200"))
-mtext(side = 1,  expression("Longitude" ~degree ~ W), outer = T, line = 2, cex = .9)
-mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.5, cex = .9)
 
 dev.off()
 
