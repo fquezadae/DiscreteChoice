@@ -54,13 +54,74 @@ load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 
 the_ports <- list("FORT BRAGG", "EUREKA", c("CRESCENT CITY", 'BROOKINGS'),
                   "CHARLESTON (COOS BAY)", "NEWPORT", "ASTORIA / WARRENTON")
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
 #Specify the seed,
 the_seed <- 10
 the_days <- 30
 the_hd <- 8.05 #habit distance
 
+#--------------------------------------------------------------------------------------------------------
+#Model fitting 
+
+the_seed <- 10
+#30 days, 5 mile radius
+the_days <- 30
+the_hd <- 8.05 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
+#30 days, 10 mile radius
+the_days <- 30
+the_hd <- 16.1 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
+#14 days, 3 mile radius
+the_days <- 14
+the_hd <- 5.1 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
+#14 days, 5 mile radius
+the_days <- 14
+the_hd <- 8.05 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
+#30 days, 5 mile radius
+the_days <- 14
+the_hd <- 16.1 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
+
+#30 days, 3 mile radius
+the_days <- 14
+the_hd <- 5.1 #habit distance
+
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days)
 
 #--------------------------------------------------------------------------------------------------------
+#Full Run
+
+the_seed <- 10
+the_days <- 30
+the_hd <- 8.05 #habit distance
 
 
 #2009
