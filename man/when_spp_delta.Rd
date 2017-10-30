@@ -5,9 +5,11 @@
 \title{Function to calculate values for delta plots
 Skew and proportion of zeroes specifically}
 \usage{
-when_spp_delta(period, spp)
+when_spp_delta(data_type = tows_clust, period, spp)
 }
 \arguments{
+\item{data_type}{Type of data; either tows_clust, or logbook}
+
 \item{when}{Time period to focus on}
 
 \item{skew}{Skew of non-zero, logged pound values}

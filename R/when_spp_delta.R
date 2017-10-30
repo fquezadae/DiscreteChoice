@@ -1,14 +1,15 @@
 #' Function to calculate values for delta plots
 #' Skew and proportion of zeroes specifically
 
+#' @param data_type Type of data; either tows_clust, or logbook
 #' @param when Time period to focus on
 #' @param skew Skew of non-zero, logged pound values
 
 #' @export
 
-when_spp_delta <- function(period, spp){
+when_spp_delta <- function(data_type = tows_clust, period, spp){
 # browser()  
-  tt <- tows_clust %>% ungroup %>% filter(when == period) 
+  tt <- data_type %>% ungroup %>% filter(when == period) 
   all_tows <- tt %>% distinct(haul_id)
   
   spp_catch <- tt %>% filter(species == spp) %>% select(haul_id, apounds)
