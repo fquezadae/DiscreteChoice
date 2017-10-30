@@ -132,8 +132,46 @@ coef_desc$coef_type_desc <- c("First Tow Distance", "Later Tow Distance",
 
 the_coefs <- the_coefs %>% left_join(coef_desc, by = 'coef_type')
 
-
 write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+
+#-------------------------------------------------------------------------------------
+#Figure out how to format the coefs table...
+  portz <- unique(coefs$port)
+
+for(pp in 1:length(unique(portz))){
+  temp <- coefs %>% filter(port == portz[pp])
+  temp1 <- temp %>% dcast(port + coef_type_desc ~ variable, value.var = 'value')
+  # flname <- portz[pp]
+  flname <- gsub(" ", "_",  tolower(portz[pp]))
+  if(pp == 6) flname <- "astoria"
+  flname <- paste0(flname, "_coefs.csv")
+  flname <- paste0('figs/', flname)
+  print(flname)
+  write.csv(temp1, file = flname, row.names = FALSE)
+}
+
+
+#-------------------------------------------------------------------------------------
+#look at some of the important coefficient results
+coefs %>% dcast(port + coef_type + coef_type_desc ~ variable, value.var = 'sig')
+
+coefs %>% filter(coef_type == 'dist') %>% filter(sig %in% c("", "."))
+
+coefs %>% distinct(coef_type)
+
+coefs[grep("-", coefs$value2, invert = T), 'value2'] <- paste0(" ", 
+  coefs[grep("-", coefs$value2, invert = T), 'value2'])
+coefs[which(coefs$sig == ""), 'value2'] <- paste(coefs[which(coefs$sig == ""), 'value2'], "   ")
+coefs[which(coefs$sig == "."), 'value2'] <- paste(coefs[which(coefs$sig == "."), 'value2'], "  ")
+coefs[which(coefs$sig == "*"), 'value2'] <- paste(coefs[which(coefs$sig == "*"), 'value2'], "  ")
+coefs[which(coefs$sig == "**"), 'value2'] <- paste(coefs[which(coefs$sig == "**"), 'value2'], " ")
+
+coefs$nchars <- nchar(coefs$value2)
+
+coefs[grep("-", coefs$value2), ]
+
+coefs %>% filter(sig %in% c("", ".")) %>% 
+  filter(coef_type == "dmiss") %>% arrange(port)
 
 #-------------------------------------------------------------------------------------
 #process the coefficients in a different way
@@ -236,7 +274,7 @@ print(xtable(c1_table), file = 'figs/coefs1.tex')
 #-----------------------------------------------------------------
 
 coefs50 <- lapply(coefs50, FUN = function(xx){
-  xx$value = paste(formatC(xx$coefs, digits = 5, format = 'f'), xx$significance)
+  xx$value = paste(formatC(xx$coefs, digits = 4, format = 'f'), xx$significance)
   return(xx)
 } )
 
