@@ -15,7 +15,7 @@
 simple_permute <- function(input, perm_column, nperms = 1000, seed = 12345,
                            crit = "<=", column = 'set_year', index = c(2007,2010)){
 
-    
+
   #Define "before" and "after" indices
   # inds <- which(input[, column] %in% index)
   
