@@ -113,7 +113,7 @@ get_choice_set <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTO
   
   print("Done sampling hauls")  
   sampled_hauls <- plyr::ldply(sampled_hauls)
-
+  stopCluster(cl)
   #-----------------------------------------------------------------------------
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
