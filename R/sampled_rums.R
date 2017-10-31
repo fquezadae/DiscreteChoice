@@ -38,13 +38,13 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Calculate net revenues for each haul
   
   #add placeholder for haul_net_revenue
-  # dat$net_revenue <- 999
-browser()
+  dat$net_revenue <- 999
+# browser()
   
   # #net revenues based on constraining species netted out
   # if(net_cost == 'cons'){
-  #   dat <- dat %>% group_by(haul_id) %>% 
-  #     mutate(haul_net_revenue = sum(net_revenue, na.rm = T))  
+    dat <- dat %>% group_by(haul_id) %>% 
+      mutate(haul_net_revenue = sum(net_revenue, na.rm = T))  
   # }
   
   # #Use quota costs for all species
@@ -170,7 +170,7 @@ browser()
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
-      process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance)
+      process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
   stopCluster(cl)
 
   print("Done calculating dummys and revenues")    
