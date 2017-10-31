@@ -82,5 +82,46 @@ delts_befaft <- ldply(delts_befaft)
 
 save(delts_befaft, file = 'output/lbk_delts_befaft.Rdata')
 
+#--------------------------------------------------------------------
+#Resample for some number of iterations
+managed <- lbk_dat %>% filter(type %in% c('targets', 'groundfish', 'weaks')) 
+tt <- managed %>% 
+  select(set_year, hpounds, species, type, haul_id) %>% distinct(haul_id, .keep_all = T) %>%
+  select(haul_id, set_year) %>% as.data.frame
 
+start_time <- Sys.time()
+samp_delts <- mclapply(1:6,  FUN = function(xx){
+  set.seed(xx)
+  rowz <- sample(1:nrow(tt), replace = F)
+  
+  #Format the resampled data
+  tt1 <- tt
+  tt1$samp_year <- tt1[rowz, 'set_year']
+  managed1 <- managed %>% left_join(tt1 %>% select(haul_id, samp_year), by = 'haul_id')
+  managed1$when <- "before"
+  managed1[which(managed1$samp_year >= 2011), 'when'] <- 'after'
+  
+  #Calculate the proportion zeroes and skew for all species in the data frame
+  outs <- lapply(unique(managed1$species), FUN = function(ss){
+    spp_delts(ss, managed2 = managed1)
+  })
+  outs <- ldply(outs)
 
+  return(outs)
+}, mc.cores = 6)
+run_time <- Sys.time() - start_time; run_time
+
+#Process the list and save
+names(samp_delts) <- 1:length(samp_delts)
+samp_delts1 <- ldply(samp_delts)
+
+#Pull skew values and cast
+skews <- samp_delts1 %>% dcast(species + .id + type ~ when, 
+  value.var = c("skew"))
+skews$diffs <- skews$after - skews$before
+
+#Pull proportions and cast
+props <- samp_delts1 %>% dcast(species + .id + type ~ when, value.var = "prop_zero")
+props$diffs <- props$after - props$before
+
+#--------------------------------------------------------------------
