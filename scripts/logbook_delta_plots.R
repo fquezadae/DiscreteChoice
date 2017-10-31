@@ -90,7 +90,7 @@ tt <- managed %>%
   select(haul_id, set_year) %>% as.data.frame
 
 start_time <- Sys.time()
-samp_delts <- mclapply(1:6,  FUN = function(xx){
+samp_delts <- mclapply(1:1000,  FUN = function(xx){
   set.seed(xx)
   rowz <- sample(1:nrow(tt), replace = F)
   
@@ -125,3 +125,66 @@ props <- samp_delts1 %>% dcast(species + .id + type ~ when, value.var = "prop_ze
 props$diffs <- props$after - props$before
 
 #--------------------------------------------------------------------
+#Save the permuted results
+
+save(skews, file = 'output/logbook_perm_skews.Rdata')
+save(props, file = 'output/logbook_perm_props.Rdata')
+
+
+#--------------------------------------------------------------------
+#Look at significant changes in prop zero and skew
+load("output/lbk_delts_befaft.Rdata")
+delts_befaft$plot_type <- delts_befaft$type
+
+load('output/logbook_perm_skews.Rdata')
+skews$species <- as.character(skews$species)
+
+#Process the skews
+emp_skew <- delts_befaft %>% filter(type != 'other') %>% 
+ dcast(species + type + plot_type ~ when, value.var = 'skew') %>% 
+ mutate(diffs = after - before)
+emp_skew$species <- as.character(emp_skew$species)
+
+#Look at the p values
+sppz <- unique(emp_skew$species)
+emp_skew$pval <- 999
+
+for(ss in 1:length(sppz)){
+  emp <- subset(emp_skew, species == sppz[ss] )
+  samp <- subset(skews, species == sppz[ss])
+  
+  p_val <- sum(emp$diffs >= samp$diffs)
+  emp_skew[ss, 'pval'] <- p_val / 1000
+  
+}
+
+#Process the proportion of zeroes
+load('output/perm_props.Rdata')
+emp_props <- delts_befaft %>% filter(type != 'other') %>% 
+ dcast(species + type + plot_type ~ when, value.var = 'prop_zero') %>% 
+ mutate(diffs = after - before)
+emp_props$species <- as.character(emp_props$species)
+
+#Look at the p values
+sppz <- unique(emp_props$species)
+emp_props$pval <- 999
+
+for(ss in 1:length(sppz)){
+  emp <- subset(emp_props, species == sppz[ss] )
+  samp <- subset(props, species == sppz[ss])
+  
+  p_val <- sum(emp$diffs >= samp$diffs)
+  emp_props[ss, 'pval'] <- p_val / 1000
+}
+
+#Add significance columns to the two data frames
+emp_props$prop_sig <- "yes" #all significant decreases in proportion zeroes
+emp_skew$skew_sig <- "yes"
+emp_skew[which(emp_skew$pval != 1 & emp_skew$pval != 0), 'skew_sig'] <- 'no'
+
+
+sigs <- emp_skew %>% select(species, skew_sig) %>% 
+  left_join(emp_props %>% select(species, prop_sig), by = 'species')
+delta_sigs <- sigs
+save(delta_sigs, file =  'output/logbook_delta_sigs.Rdata')
+
