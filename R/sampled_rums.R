@@ -168,7 +168,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #-----------------------------------------------------------------------------  
   #Process dummy variables
 # pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
-  
+# browser()  
+  # yy <- process_dummys2(xx = 1, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
+
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
       process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
