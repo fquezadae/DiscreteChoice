@@ -15,13 +15,14 @@
 #' @param ncores Number of cores to use
 #' @param rev_scale Scale the revenue by this factor
 #' @param net_cost Type of netting of costs;
-
+#' @param habit_distance Distance of spatiotemporal filter
+#' 
 #' @export
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
-  model_type = 'no_bycatch', net_cost){
+  model_type = 'no_bycatch', net_cost, habit_distance){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
@@ -173,7 +174,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
       process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
   stopCluster(cl)
 
-  print("Done calculating dummys and revenues")    
+  1print("Done calculating dummys and revenues")    
 # browser()
   td1 <- ldply(dummys2)
 
