@@ -174,7 +174,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
       process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
   stopCluster(cl)
 
-  1print("Done calculating dummys and revenues")    
+  print("Done calculating dummys and revenues")    
 # browser()
   td1 <- ldply(dummys2)
 
