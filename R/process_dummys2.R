@@ -69,10 +69,25 @@ cat('filter distance=', hab_dist, '\n')
   mean_rev <- replace(mean_rev, is.na(mean_rev), 0)
   mean_weak <- mean(dum_rev$weak_quota_value, na.rm = T)
   mean_weak <- replace(mean_weak, is.na(mean_weak), 0)
-
-browser()
   
-  dum_rev_dollars <- mean_rev - mean_weak
+  dum_rev$quota_cost <- dum_rev$avg_quota_price * dum_rev$apounds
+  mean_qc <- mean(dum_rev$quota_cost, na.rm = T)
+
+  #Calculate different values based on arguments
+  if(n_cost == "trev"){
+    dum_rev_dollars <- mean_rev
+  }
+
+  if(n_cost == 'cons'){
+    dum_rev_dollars <- mean_rev - mean_weak
+  }
+
+  #quota costs for all species included
+  if(n_cost == "qcos"){
+    dum_rev_dollars <- mean_rev - mean_qc
+  }
+  
+  # dum_rev_dollars <- mean_rev - mean_weak
   
   temp_dat$dummy_prev_days <- dum30_val
   temp_dat$dummy_prev_year_days <- dum30y_val
