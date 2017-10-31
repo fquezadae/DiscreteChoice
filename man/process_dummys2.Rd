@@ -5,7 +5,7 @@
 \title{Process dummy variables
 Function to calculate revenues and distances}
 \usage{
-process_dummys2(xx, td2 = td1, dat1 = dat, hab_dist = 5)
+process_dummys2(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost)
 }
 \arguments{
 \item{xx}{Index value}
@@ -15,6 +15,8 @@ process_dummys2(xx, td2 = td1, dat1 = dat, hab_dist = 5)
 \item{dat1}{The Data}
 
 \item{hab_dist}{Distance used to filter for habits and revenues}
+
+\item{net_cost}{Way of netting out costs for revenue calclations}
 }
 \description{
 Process dummy variables
