@@ -5,9 +5,10 @@
 #' @param td2 The tow dates
 #' @param dat1 The Data
 #' @param hab_dist Distance used to filter for habits and revenues
+#' @param net_cost Way of netting out costs for revenue calclations
 #' @export
 
-process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5){
+process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
 # browser()
   temp_dat <- td2[xx, ]
 
@@ -68,6 +69,8 @@ cat('filter distance=', hab_dist, '\n')
   mean_rev <- replace(mean_rev, is.na(mean_rev), 0)
   mean_weak <- mean(dum_rev$weak_quota_value, na.rm = T)
   mean_weak <- replace(mean_weak, is.na(mean_weak), 0)
+
+browser()
   
   dum_rev_dollars <- mean_rev - mean_weak
   
