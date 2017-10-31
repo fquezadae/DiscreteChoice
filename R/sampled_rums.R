@@ -14,13 +14,14 @@
 #' @param seed Seed for sampling tows
 #' @param ncores Number of cores to use
 #' @param rev_scale Scale the revenue by this factor
+#' @param net_cost Type of netting of costs;
 
 #' @export
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
-  model_type = 'no_bycatch', habit_distance){
+  model_type = 'no_bycatch', net_cost){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
@@ -37,12 +38,28 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Calculate net revenues for each haul
   
   #add placeholder for haul_net_revenue
-  dat$net_revenue <- 999
-
-  #Sum the haul revenues
-  dat <- dat %>% group_by(haul_id) %>% 
-    mutate(haul_net_revenue = sum(net_revenue, na.rm = T))
+  # dat$net_revenue <- 999
+browser()
   
+  # #net revenues based on constraining species netted out
+  # if(net_cost == 'cons'){
+  #   dat <- dat %>% group_by(haul_id) %>% 
+  #     mutate(haul_net_revenue = sum(net_revenue, na.rm = T))  
+  # }
+  
+  # #Use quota costs for all species
+  # if(net_cost == "qcos"){
+  #   dat %>% group_by(haul_id) %>%
+  #     mutate(haul_net_revenue = sum())
+  #   #Recalculate 
+  # }
+  
+  # #Total Revenues, no subtraction for constraining species
+  # if(net_cost == "trev"){
+  #   #add in 1
+  # }
+  
+  #---------------------------------------------------------------
   #Create data set, for each tow
   dist_hauls <- dat %>% distinct(haul_id, .keep_all = T) %>% select(haul_id, unq_clust, set_month, 
     drvid, trip_id, set_day, set_year, haul_net_revenue, set_long, set_lat, 

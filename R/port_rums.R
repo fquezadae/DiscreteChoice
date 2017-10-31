@@ -11,12 +11,13 @@
 #' @param r_s Revenue scaling value, defaults to 10
 #' @param dyz Days
 #' @param h_d habit distance
+#' @param n_c Net Cost Type; trev (total revenue), qcos (quota costs), cons (constraining species only)
 
 #' @export
 
 port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
-  seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d){
+  seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d, n_c){
   
   nports <- length(ports)
   if(nports == 1) nports <- tolower(substr(paste0(ports[[1]], collapse = ""), 1, 3))
@@ -29,7 +30,7 @@ port_rums <- function(m_y,
                             risk_coefficient = r_c, ndays = dyz, focus_year = f_y, 
                             nhauls_sampled = nhauls_sampled,
                             seed = seed, ncores = ncores, rev_scale = r_s, model_type = dum_type,
-                            habit_distance = h_d),
+                            habit_distance = h_d, net_cost = n_c ),
       error = function(e) NULL)
     
     r_time <- Sys.time() - st_time
@@ -39,7 +40,7 @@ port_rums <- function(m_y,
     port_sv <- substr(the_port, 1, 3)
 
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
-      "_seed", seed, "_nday", dyz, '_hdist', h_d)
+      "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c)
 
     mod <- rum[[2]]    
     if(Sys.info()[['sysname']] == "Darwin"){
@@ -62,7 +63,7 @@ port_rums <- function(m_y,
   names(coefs) <- ports_names
 
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
-    "_seed", seed, '_nday', dyz, "_hdist", h_d)
+    "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
   #   "_seed", seed)
