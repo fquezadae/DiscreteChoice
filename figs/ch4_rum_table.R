@@ -2,21 +2,28 @@
 #Make table of RUM coefficients
 library(xtable)
 
+the_files <- list.files("/Volumes/udrive")
+cfiles <- the_files[grep('coefs1', the_files)]
+cfiles[grep('netcost', cfiles)]
+
 #-----------------------------------------------------------------
 #Paste significance values to 
 #-------------------------------------------------------------------------------------
 #2009 coefficient
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2009_nports6_seed7.Rdata")
-coefs9 <- coefs
+# load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2009_nports6_seed7.Rdata")
+# load("/Volumes/udrive/AST_coefs1_rev100_minyr2007_focyr_2009_seed7.Rdata")
+# ast_coefs9 <- coefs
+# coefs9[[6]] <- ast_coefs9
+# names(coefs9)[6] <- "ASTORIA / WARRENTON"
 
-load("/Volumes/udrive/AST_coefs1_rev100_minyr2007_focyr_2009_seed7.Rdata")
-ast_coefs9 <- coefs
-coefs9[[6]] <- ast_coefs9
-names(coefs9)[6] <- "ASTORIA / WARRENTON"
+
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2009_nports6_seed10_nday30_hdist8.05_netcosttrev.Rdata")
+coefs9 <- coefs
 rm(coefs)
 
 #2010 coefficients
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2010_nports6_seed7.Rdata")
+# load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2010_nports6_seed7.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2010_nports6_seed10_nday30_hdist8.05_netcosttrev.Rdata")
 coefs10 <- coefs
 rm(coefs)
 # coefs10[[6]] <- NULL
@@ -27,20 +34,23 @@ names(coefs10)[6] <- "ASTORIA / WARRENTON"
 rm(coefs)
 
 #2011 coefficients
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2011_nports6_seed7.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2011_nports6_seed10_nday30_hdist8.05_netcostqcos.Rdata")
 coefs1 <- coefs
 
 #2012 coefficients
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2012_nports6_seed7.Rdata")
+# load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2012_nports6_seed7.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2012_nports6_seed10_nday30_hdist8.05_netcostqcos.Rdata")
 coefs2 <- coefs
 
 #2013 coefficients
 # load("/Volumes/udrive/coefs1_rev10_minyr2011_focyr2013_nports7_seed305.Rdata")
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2013_nports6_seed7.Rdata")
+# load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2013_nports6_seed7.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2013_nports6_seed10_nday30_hdist8.05_netcostqcos.Rdata")
 coefs3 <- coefs
 
 #2014 coefficients
-load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2014_nports6_seed7.Rdata")
+load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2014_nports6_seed10_nday30_hdist8.05_netcostqcos.Rdata")
+# load("/Volumes/udrive/coefs1_rev100_minyr2007_focyr2014_nports6_seed7.Rdata")
 coefs4 <- coefs
 
 #-------------------------------------------------------------------------------------
@@ -132,11 +142,42 @@ coef_desc$coef_type_desc <- c("First Tow Distance", "Later Tow Distance",
 
 the_coefs <- the_coefs %>% left_join(coef_desc, by = 'coef_type')
 
-write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+# write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist8.05_for_plot.csv', row.names = F)
+
+#-------------------------------------------------------------------------------------
+#For Table
+all_coefs <- rbind(coefs9, coefs10, coefs1, coefs2, coefs3, coefs4)
+
+all_coefs$value_sig <- paste0(all_coefs$value, all_coefs$significance)
+cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
+
+portz <- unique(all_coefs$port)
+
+#Format all the coefficients
+
+the_coefs <- lapply(portz, FUN = function(xx){
+  out <- all_coefs %>% filter(port == xx) %>% 
+    dcast(port + coef_type ~ year, value.var = 'value_sig') %>%
+    slice(match(cc, coef_type)) %>% as.data.frame
+})
+
+the_coefs <- ldply(the_coefs)
+
+#add more descriptive names
+coef_desc <- the_coefs %>% distinct(coef_type)
+coef_desc$coef_type_desc <- c("First Tow Distance", "Later Tow Distance", 
+  "First Tow Revenue", "Later Tow Revenue", "Fleet Habit", "Individual Habit",
+  "Individual Habit Last Year")
+
+the_coefs <- the_coefs %>% left_join(coef_desc, by = 'coef_type')
+
+# write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist8.05_for_table.csv', row.names = F)
 
 #-------------------------------------------------------------------------------------
 #Figure out how to format the coefs table...
-  portz <- unique(coefs$port)
+ portz <- unique(coefs$port)
 
 for(pp in 1:length(unique(portz))){
   temp <- coefs %>% filter(port == portz[pp])
