@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 8.95, height = 8.43)
 
-png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig.png', res = 250)
+png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig_ndays30_dist5.1.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
 # pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
 # dev.new(width = 8.75, height = 8.34)
@@ -129,7 +129,7 @@ add_legend <- function(...) {
 }
 
 #Add first legend
-add_legend(x = .72, y = .97, legend = c('positive', 'negative', 
+add_legend(x = .72, y = .97, legend = c('negative', 'positive', 
   ''), pch = c(15, 19, NA), 
   xpd = TRUE, pt.cex = c(1.5, 1.5), bty = 'n')  
 # add_legend(x = .72, y = .97, legend = c('', '', 

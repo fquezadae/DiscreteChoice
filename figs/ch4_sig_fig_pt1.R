@@ -100,7 +100,7 @@ br_port <- c(-124.2697, 42.0470)
 port_plot <- port_plot[-4]
 #------------------------------------------------------------------------------------------------------
 #add significance values also
-coefs <- read.csv('output/the_coefs_09_14.csv', stringsAsFactors = F)
+coefs <- read.csv('output/the_coefs_09_14_nday30_hdist5.1_for_plot.csv', stringsAsFactors = F)
 # coefs <- read.csv('output/the_coefs_09_14_nday30_hdist8.05_for_plot.csv', stringsAsFactors = F)
 
 coefs <- melt(coefs, id.vars = c('port', 'coef_type', 'coef_type_desc'))
