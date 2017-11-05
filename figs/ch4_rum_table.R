@@ -185,13 +185,13 @@ pp <- c("Astoria", "Newport", "Charleston", "Brookings & Crescent City",
   "Eureka", "Fort Bragg")
 cc <- rev(c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y'))
 
-the_coefs %>% slice(match(pp, lower_ports)) %>% group_by(lower_ports) %>% slice(match(cc, coef_type))
+the_coefs <- rbind(the_coefs %>% filter(lower_ports == "Astoria"),
+  the_coefs %>% filter(lower_ports == "Newport"),
+  the_coefs %>% filter(lower_ports == "Charleston"),
+  the_coefs %>% filter(lower_ports == "Brookings & Crescent City"),
+  the_coefs %>% filter(lower_ports == "Eureka"),
+  the_coefs %>% filter(lower_ports == "Fort Bragg"))
 
-
-
-the_coefs %>% group_by(port) %>% slice(match)
-
-coefs_point <- coefs_point %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
 
 write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist8.05_for_table.csv', row.names = F)
 
