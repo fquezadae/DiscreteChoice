@@ -173,6 +173,26 @@ coef_desc$coef_type_desc <- c("First Tow Distance", "Later Tow Distance",
 the_coefs <- the_coefs %>% left_join(coef_desc, by = 'coef_type')
 
 # write.csv(the_coefs, file = 'output/the_coefs_09_14.csv', row.names = F)
+
+#Add in better port descriptions and arrange the things
+
+port_names <- data_frame(port = unique(the_coefs$port), lower_ports = c("Fort Bragg", "Eureka", "Brookings & Crescent City",
+  "Charleston", "Newport", "Astoria")) %>% as.data.frame
+the_coefs <- the_coefs %>% left_join(port_names, by = 'port')
+
+#arrange by port
+pp <- c("Astoria", "Newport", "Charleston", "Brookings & Crescent City", 
+  "Eureka", "Fort Bragg")
+cc <- rev(c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y'))
+
+the_coefs %>% slice(match(pp, lower_ports)) %>% group_by(lower_ports) %>% slice(match(cc, coef_type))
+
+
+
+the_coefs %>% group_by(port) %>% slice(match)
+
+coefs_point <- coefs_point %>% group_by(port) %>% slice(match(cc, coef_type)) %>% as.data.frame
+
 write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist8.05_for_table.csv', row.names = F)
 
 #-------------------------------------------------------------------------------------
