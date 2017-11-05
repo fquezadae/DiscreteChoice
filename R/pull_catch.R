@@ -13,6 +13,7 @@
 #' compare_two_spp(data = wc_data, species1 = "Dover Sole", species2 = "Sablefish", focus = 'hperc')
 
 pull_catch <- function(data, spp, focus = 'apound'){
+
   data$species <- tolower(data$species) #just make sure that everything is lowercase
 
   unq_hauls <- data %>% select(haul_id) %>% distinct

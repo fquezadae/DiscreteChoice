@@ -13,8 +13,9 @@
 #' calc_delta_plot(data = wc_data, spp = 'Dover Sole', focus = 'apound')
 
 calc_delta_plot <- function(data, spp, focus = 'apound'){
-browser()
+
   catch_data <- ch4::pull_catch(data = data, spp = spp, focus = focus)
+# browser()
 
   #Find the number of zeroes and remove them
   zeroes <- catch_data[catch_data[, 2] == 0, ]
