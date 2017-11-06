@@ -179,12 +179,21 @@ for(ss in 1:length(sppz)){
 
 #Add significance columns to the two data frames
 emp_props$prop_sig <- "yes" #all significant decreases in proportion zeroes
+emp_props[which(emp_props$pval != 1 & emp_props$pval != 0), 'prop_sig'] <- 'no'
+
 emp_skew$skew_sig <- "yes"
 emp_skew[which(emp_skew$pval != 1 & emp_skew$pval != 0), 'skew_sig'] <- 'no'
 
+emp_skews_for_merge <- emp_skew %>% select(species, diffs, skew_sig)
 
-sigs <- emp_skew %>% select(species, skew_sig) %>% 
-  left_join(emp_props %>% select(species, prop_sig), by = 'species')
+#Rename to keep the difference values
+names(emp_skews_for_merge)[2] <- 'skew_diffs'
+
+sigs <- emp_skews_for_merge %>% 
+  left_join(emp_props %>% select(species, type, diffs, prop_sig), by = 'species')
+sigs <- plyr::rename(sigs, c('diffs' = 'prop_diffs'))
+
+
 delta_sigs <- sigs
 save(delta_sigs, file =  'output/logbook_delta_sigs.Rdata')
 
