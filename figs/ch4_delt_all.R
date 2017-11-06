@@ -87,6 +87,36 @@ skews <- delts_befaft %>% dcast(species ~ when, value.var = "skew")
 skews$diffs <- skews$after - skews$before
 
 #------------------------------------------------------------------------------------------------------------
+#Which species had increases in targeting; decrease in prop_zero and decrease in skew that was significant
+
+delts_befaft %>% distinct(species, skew_sig, prop_sig)
+
+skews %>% filter(diffs > 0)
+length(which(skews$diffs > 0))
+
+delts_befaft %>% filter(plot_type == 'targets')
+delts_befaft %>% filter(plot_type == 'weaks') %>% distinct(species) 
+
+
+length(skews[which(skews$diffs > 0), 'species'])
+
+
+props_dec_spp <- props[which(props$diffs < 0), 'species']
+inc_targ_spp <- props_dec_spp[props_dec_spp %in% skews[which(skews$diffs < 0), 'species'] ]
+
+delts_befaft %>% filter(species %in% inc_targ_spp) %>% distinct(species)
+
+delts_befaft$species[delts_befaft$species %in% inc_targ_spp]
+unique(delts_befaft$species[delts_befaft$species %in% inc_targ_spp] )
+
+skews %>% filter(diffs)
+
+
+
+delts_befaft %>% group_by(species)
+
+
+#------------------------------------------------------------------------------------------------------------
 
 
 png(width = 7, height = 7, file = 'figs/ch4_delt_all.png', units = 'in', res = 200)
