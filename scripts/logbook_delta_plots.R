@@ -37,17 +37,9 @@ lbk_dat$set_day <- day(lbk_dat$set_date)
 lbk_dat <- lbk_dat %>% filter(set_year >= 2007, set_year <= 2014)
 lbk_dat$avg_depth <- lbk_dat$depth1
 
-#Add in missing columns for avg_depth, set_day and set_month
-#Make sure all the names are there
-
-# which(c("haul_id", "drvid", "set_lat", "set_long", "up_lat", "up_long", 
-#   "avg_depth", "hpounds", "apounds", "set_day", "set_month", "set_year") %in% names(lbk_dat) == FALSE)
-# c("haul_id", "drvid", "set_lat", "set_long", "up_lat", "up_long", 
-#   "avg_depth", "hpounds", "apounds", "set_day", "set_month", "set_year")[c(7, 10, 11)]
-
+#Add in missing columns
 lbk_dat$when <- 'before'
 lbk_dat[which(lbk_dat$set_year >= 2011), 'when'] <- 'after'
-
 
 #add before after indicators
 spp_when <- lbk_dat %>% distinct(species, when, type)
@@ -130,12 +122,16 @@ props$diffs <- props$after - props$before
 save(skews, file = 'output/logbook_perm_skews.Rdata')
 save(props, file = 'output/logbook_perm_props.Rdata')
 
+#--------------------------------------------------------------------
+#Format logbook data
+#--------------------------------------------------------------------
 
 #--------------------------------------------------------------------
 #Look at significant changes in prop zero and skew
 load("output/lbk_delts_befaft.Rdata")
 delts_befaft$plot_type <- delts_befaft$type
 
+###Add in p-values for skew values
 load('output/logbook_perm_skews.Rdata')
 skews$species <- as.character(skews$species)
 
@@ -154,11 +150,14 @@ for(ss in 1:length(sppz)){
   samp <- subset(skews, species == sppz[ss])
   
   p_val <- sum(emp$diffs >= samp$diffs)
-  emp_skew[ss, 'pval'] <- p_val / 1000
-  
+  emp_skew[ss, 'pval'] <- p_val / 1000  
 }
 
-#Process the proportion of zeroes
+emp_skew$skew_sig <- "yes"
+emp_skew[which(emp_skew$pval != 1 & emp_skew$pval != 0), 'skew_sig'] <- 'no'
+
+#--------------------------------------------------------------------
+###Add in p-values for proportion zero values
 load('output/perm_props.Rdata')
 emp_props <- delts_befaft %>% filter(type != 'other') %>% 
  dcast(species + type + plot_type ~ when, value.var = 'prop_zero') %>% 
@@ -177,23 +176,24 @@ for(ss in 1:length(sppz)){
   emp_props[ss, 'pval'] <- p_val / 1000
 }
 
-#Add significance columns to the two data frames
 emp_props$prop_sig <- "yes" #all significant decreases in proportion zeroes
 emp_props[which(emp_props$pval != 1 & emp_props$pval != 0), 'prop_sig'] <- 'no'
 
-emp_skew$skew_sig <- "yes"
-emp_skew[which(emp_skew$pval != 1 & emp_skew$pval != 0), 'skew_sig'] <- 'no'
-
-emp_skews_for_merge <- emp_skew %>% select(species, diffs, skew_sig)
+#--------------------------------------------------------------------
+#Add significance columns to the two data frames
+emp_skew <- plyr::rename(emp_skew, c("after" = 'skew_after', 'before' = 'skew_before'))
+emp_skews_for_merge <- emp_skew %>% select(species, diffs, skew_sig, skew_after, skew_before)
 
 #Rename to keep the difference values
 names(emp_skews_for_merge)[2] <- 'skew_diffs'
 
+emp_props <- plyr::rename(emp_props, c("after" = 'prop_after', 'before' = 'prop_before'))
+
 sigs <- emp_skews_for_merge %>% 
-  left_join(emp_props %>% select(species, type, diffs, prop_sig), by = 'species')
+  left_join(emp_props %>% select(species, type, diffs, prop_sig, prop_after, prop_before), 
+    by = 'species')
 sigs <- plyr::rename(sigs, c('diffs' = 'prop_diffs'))
 
-
 delta_sigs <- sigs
-save(delta_sigs, file =  'output/logbook_delta_sigs.Rdata')
+save(delta_sigs, file = 'output/logbook_delta_sigs.Rdata')
 
