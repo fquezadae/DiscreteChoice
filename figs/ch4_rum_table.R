@@ -148,8 +148,17 @@ write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist5.1_for_plot.csv
 #-------------------------------------------------------------------------------------
 #For Table
 all_coefs <- rbind(coefs9, coefs10, coefs1, coefs2, coefs3, coefs4)
+# all_coefs$value <- round(all_coefs$value, digits = 4)
 
-all_coefs$value_sig <- paste0(all_coefs$value, all_coefs$significance)
+format(round(x, 2), nsmall = 2)
+all_coefs$value
+
+format(round(all_coefs$value, digits = 4)
+
+# all_coefs$value_sig <- paste0(round(all_coefs$value, digits = 4), all_coefs$significance)
+all_coefs$value_sig <- paste0(format(round(all_coefs$value, digits = 4)), 
+  all_coefs$significance)
+
 cc <- c('dist1', 'dist', 'rev1', 'rev', 'dmiss', 'dum30', 'dum30y')
 
 portz <- unique(all_coefs$port)
@@ -191,7 +200,6 @@ the_coefs <- rbind(the_coefs %>% filter(lower_ports == "Astoria"),
   the_coefs %>% filter(lower_ports == "Brookings & Crescent City"),
   the_coefs %>% filter(lower_ports == "Eureka"),
   the_coefs %>% filter(lower_ports == "Fort Bragg"))
-
 
 write.csv(the_coefs, file = 'output/the_coefs_09_14_nday30_hdist8.05_for_table.csv', row.names = F)
 
