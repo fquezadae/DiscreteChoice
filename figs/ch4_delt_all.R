@@ -80,11 +80,36 @@ delts_befaft[which(delts_befaft$species == "Longnose Skate"), 'spp_abb'] <- "Lsk
 delts_befaft <- delts_befaft %>% left_join(delta_sigs, by = 'species')
 
 
-props <- delts_befaft %>% dcast(species ~ when, value.var = "prop_zero")
+props <- delts_befaft %>% dcast(species + prop_sig ~ when, value.var = "prop_zero")
 props$diffs <- props$after - props$before
 
-skews <- delts_befaft %>% dcast(species ~ when, value.var = "skew")
+skews <- delts_befaft %>% dcast(species + skew_sig ~ when, value.var = "skew")
 skews$diffs <- skews$after - skews$before
+
+#Add in logbook significance
+load('output/logbook_delta_sigs.Rdata')
+
+# delta_sigs <- plyr::rename(delta_sigs, c("skew_diffs" = 'lbk_skew_diffs',
+#   'skew_sig' = 'lbk_skew_sig', "prop_diffs" = 'lbk_prop_diffs', 'prop_sig' = 'lbk_prop_sig'))
+
+
+props <- props %>% left_join(delta_sigs %>% select(species, lbk_prop_diffs, lbk_prop_sig, type), by = "species")
+
+skews <- skews %>% left_join(delta_sigs %>% select(species, lbk_skew_diffs, lbk_skew_sig, type), by = "species")
+
+#Filter based on common significance
+#Increases in targeting
+skews %>% filter(skew_sig == 'yes', lbk_skew_sig == 'yes', diffs < 0, lbk_skew_diffs < 0) %>% arrange(type) %>%
+  select(species)
+props %>% filter(prop_sig == 'yes', lbk_prop_sig == 'yes', diffs < 0, lbk_prop_diffs < 0) %>% arrange(type)
+
+#Decreases in targeting
+skews %>% filter(skew_sig == 'yes', lbk_skew_sig == 'yes', diffs > 0, lbk_skew_diffs > 0) %>% arrange(type) 
+props %>% filter(prop_sig == 'yes', lbk_prop_sig == 'yes', diffs > 0, lbk_prop_diffs > 0) %>% arrange(type)
+
+
+
+props %>% filter(prop_sig == 'yes', lbk_prop_sig == 'yes', diffs < 0, lbk_prop_diffs < 0) %>% arrange(type)
 
 #------------------------------------------------------------------------------------------------------------
 #Which species had increases in targeting; decrease in prop_zero and decrease in skew that was significant
@@ -97,7 +122,6 @@ length(which(skews$diffs > 0))
 delts_befaft %>% filter(plot_type == 'targets')
 delts_befaft %>% filter(plot_type == 'weaks') %>% distinct(species) 
 
-
 length(skews[which(skews$diffs > 0), 'species'])
 
 
@@ -109,22 +133,71 @@ delts_befaft %>% filter(species %in% inc_targ_spp) %>% distinct(species)
 delts_befaft$species[delts_befaft$species %in% inc_targ_spp]
 unique(delts_befaft$species[delts_befaft$species %in% inc_targ_spp] )
 
-skews %>% filter(diffs)
+#Load logbook significance
+load('output/logbook_delta_sigs.Rdata')
+head(delta_sigs)
 
+#Compare observer to logbook
+inc_targ <- delta_sigs %>% filter(skew_diffs < 0, prop_diffs <0, skew_sig == 'yes',
+  prop_sig == 'yes')
 
-
-delts_befaft %>% group_by(species)
-
+delta_sigs %>% filter(type == 'targets')
+nonsigs <- delta_sigs %>% filter(skew_sig == 'no', prop_sig == 'no')
+delta_sigs %>% filter(skew_sig == 'yes', prop_sig == 'no')
+delta_sigs %>% filter(skew_sig == 'no', prop_sig == 'yes')
+delta_sigs %>% filter(skew_sig == 'yes', prop_sig == 'yes')
 
 #------------------------------------------------------------------------------------------------------------
+#Run this with delta_sigs
+load('output/logbook_delta_sigs.Rdata')
 
+#Format these for the code with rows for when and skew and diffs
+sskew <- delta_sigs %>% select(species, type, skew_after, skew_before) %>% melt
+sskew$when <- 'after'
+sskew[grep('before', sskew$variable), 'when'] <- 'before'
+sskew <- plyr::rename(sskew, c('value' = 'skew'))
+sskew$variable <- NULL
 
-png(width = 7, height = 7, file = 'figs/ch4_delt_all.png', units = 'in', res = 200)
+pprop <- delta_sigs %>% select(species, type, prop_after, prop_before) %>% melt
+pprop$when <- 'after'
+pprop[grep('before', pprop$variable), 'when'] <- 'before'
+pprop <- plyr::rename(pprop, c('value' = 'prop_zero'))
+pprop$variable <- NULL
+
+#Combine the sskew and pprop
+sp <- sskew %>% left_join(pprop, by = c('species', 'type', 'when'))
+
+delta_sigs_plot <- delta_sigs %>% select(species, skew_diffs, skew_sig, type, prop_diffs, prop_sig) %>%
+  left_join(sp, by = c('species', 'type'))
+
+spp_abbs <- delta_sigs_plot %>% select(species)
+
+#Add species abbreviations
+delta_sigs_plot$spp_abb <- substr(delta_sigs_plot$species, 1, 3)
+
+#Manually adjust
+delta_sigs_plot[which(delta_sigs_plot$species == "Greenstriped Rockfish"), 'spp_abb'] <- "Gst"
+delta_sigs_plot[which(delta_sigs_plot$species == "Greenspotted Rockfish"), 'spp_abb'] <- "Gsp"
+delta_sigs_plot[which(delta_sigs_plot$species == "Longnose Skate"), 'spp_abb'] <- "Lsk"
+delta_sigs_plot[which(delta_sigs_plot$species == "Yellowtail Rockfish"), 'spp_abb'] <- "Ylt"
+
+#Manually adjust Yelloweye before skew values
+delta_sigs_plot[which(delta_sigs_plot$skew > 1.4), 'skew'] <- 1.4
+
+# delta_sigs_plot[which(delta_sigs_plot$spp_abb == "Yel" & delta_sigs_plot$when == "before"), 
+#   "skew"] <- 1.1
+
+#------------------------------------------------------------------------------------------------------------
+#Plot the logbook instead of the combined data set
+
+png(width = 7, height = 7, file = 'figs/ch4_delt_all_lbk.png', units = 'in', res = 200)
 
 par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, 11), mar = c(0, 0, .5, 0))
 for(ii in 1:6){
   
-  temp <- subset(delts_befaft, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
+  # temp <- subset(delta_sigs, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
+  temp <- subset(delta_sigs_plot, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
+
   both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes')
   one_sig <- temp %>% filter(skew_sig != 'yes' | prop_sig != 'yes')
 
@@ -134,14 +207,15 @@ for(ii in 1:6){
   points(one_sig$prop_zero, one_sig$skew, pch = 21, cex = 2.5)
   # if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.2)
   if(ii == 1){
-    one <- temp[5, ]
-    two <- temp[-5, ]
-    text(two$prop_zero, two$skew, two$spp_abb, adj = 1.2)
-    text(one$prop_zero, one$skew, one$spp_abb, adj = -.3)
+    one <- temp[c(5, 6), ]
+    two <- temp[c(-5, -6), ]
+    text(two$prop_zero, two$skew, two$spp_abb, adj = 1.4)
+    text(one$prop_zero, one$skew, one$spp_abb, adj = -.4)
     #Split out dover and sablefish
   }
   
   if(ii == 2){
+    text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.5)
     #Add legend
     legend('topright', bty = 'n', pt.cex = 2, c("Significant", "Non-significant"),
       pch = c(19, 21), col = c(adjustcolor( "black", alpha.f = 0.2), "black"))
@@ -162,17 +236,31 @@ for(ii in 1:6){
     axis(side = 4, at = yvals, labels = caps, las = 2, lwd.tick = 0, adj = 1,
       mgp = c(0, .3, 0))
   }
+
+  if(ii == 4){
+    low <- temp[1, ]
+    high <- temp[-1, ]
+    text(low$prop_zero, low$skew, low$spp_abb, pos = 1, adj = .3)
+    text(high$prop_zero, high$skew, high$spp_abb, pos = 3, adj = .3)
+  }
+
   if(ii == 5){
     par(xpd = T)
-    rights <- temp[which(temp$species %in% c("Black Rockfish", "Widow Rockfish", 
-          "Greenspotted Rockfish")), ]
-    lefts <- temp[which(temp$species %in% c("Black Rockfish", "Widow Rockfish", 
+    lefts <- temp[which(temp$species %in% c("Vermilion Rockfish", "Black Rockfish", 
           "Greenspotted Rockfish") == FALSE), ]
+    rights <- temp[which(temp$species %in% c("Vermilion Rockfish", "Black Rockfish",
+      "Greenspotted Rockfish")), ]
     
     text(lefts$prop_zero, lefts$skew, lefts$spp_abb, adj = 1.5)
-    text(rights$prop_zero, rights$skew, rights$spp_abb, adj = -.2)
+    text(rights$prop_zero, rights$skew, rights$spp_abb, adj = -.3)
   }
-  if(ii %in% c(2, 4, 6)) text(temp$prop_zero, temp$skew, temp$spp_abb, adj = 1.4)
+  
+  if(ii == 6){
+    rights <- subset(temp, species == 'Vermilion Rockfish')
+    lefts <- subset(temp, species != 'Vermilion Rockfish')
+    text(lefts$prop_zero, lefts$skew, lefts$spp_abb, adj = 1.5)
+    text(rights$prop_zero, rights$skew, rights$spp_abb, adj = -.3)
+  }
   
   if(ii == 1)mtext(side = 3, "Before", outer = T, line = .1, cex = 1.1, adj = .25)
   if(ii == 2)mtext(side = 3, "After", outer = T, line = .1, cex = 1.1, adj = .75)
