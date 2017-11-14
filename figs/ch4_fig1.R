@@ -87,7 +87,7 @@ max_vess <- fleet_vess %>% group_by(plot_fleet) %>% summarize(max_nvess = max(nv
 	arrange(desc(max_nvess))
 names(max_vess)[1] <- "fltz"
 ff <- ff %>%  left_join(max_vess, by = 'fltz') %>% arrange(desc(max_nvess)) %>% as.data.frame
-ff$plot_val <- c('other', 'Astoria', "Charleston", "Newport", 'Eureka', "Brookings & Crescent City",
+ff$plot_val <- c('Other', 'Astoria', "Charleston", "Newport", 'Eureka', "Brookings & Crescent City",
 	"Fort Bragg")
 
 #Actual plot
