@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------------
-#Figure 3, look at changes by depth and latitude
+#Figure 2, look at changes by depth and latitude
 tc_unq_hauls <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
 tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', group = 'set_year', 
@@ -102,10 +102,7 @@ perc_decrease_sig <- round(slopies %>%
  
 ss <- slopies %>% distinct(abs_slope) 
 
-
 #-------------------------------------------------------------------------------------
-mv <- 50
-lev <- 10
 #The actual plot
 png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig2.png')
 ch4_fig2(mv = 50, lev = 20)
@@ -176,67 +173,58 @@ color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nti
 #Need to add color bar
 #-------------------------------------------------------------------------------------
 # Functions Used
-# mv <- 50
-# lev <- 20
 
 ch4_fig2 <- function(mv, lev){
   par(mfcol = c(1, 2), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
 
   #-------------------------------------------------------------------------------------
   #Positive Slopes
-  # format_fc_plot(spos, max_value = mv, the_levels = lev, xlims = c(0, 700),
-  #   ylims = c(34, 49), xint = 25)
-# browser()
   ppos <- format_fc_plot(spos, max_value = mv, the_levels = lev, xlims = c(1, 15),
     ylims = c(1, 31), xint = 1, yint = 1)
-  nneg <- format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(1, 15),
-    ylims = c(1, 31), xint = 1, yint = 1)
-
-# browser()
   image(ppos$xx + .5, ppos$yy, ppos$zz, col = ppos$colz, ann = F, axes = F, 
     xlim = c(1, 15), ylim = c(1, 31) )
   
+  #Negative Slopes
+  nneg <- format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(1, 15),
+    ylims = c(1, 31), xint = 1, yint = 1)
   image(nneg$xx + .5, nneg$yy, nneg$zz, col = nneg$colz, ann = F, axes = F, 
     xlim = c(1, 15), ylim = c(1, 31), add = T)
 
-#Add points
-names(ppos$pos1)[4] <- 'pos_slope'
-names(nneg$pos1)[4] <- 'neg_slope'
-ptz <- ppos$pos1 %>% left_join(nneg$pos1, by = c('x', 'y')) 
-# ptz <- ppos$pos1 
-ptz$miss <- 'no'
-ptz[which(ptz$pos_slope == -5 & ptz$neg_slope == -5), 'miss'] <- 'yes'
-# ptz[which(ptz$pos_slope == -5), 'miss'] <- 'yes'
-ptz <- ptz %>% filter(miss == 'yes')
-points(ptz$x + .5, ptz$y, pch = '.')
+  #Add points
+  names(ppos$pos1)[4] <- 'pos_slope'
+  names(nneg$pos1)[4] <- 'neg_slope'
+  ptz <- ppos$pos1 %>% left_join(nneg$pos1, by = c('x', 'y')) 
+  # ptz <- ppos$pos1 
+  ptz$miss <- 'no'
+  ptz[which(ptz$pos_slope == -5 & ptz$neg_slope == -5), 'miss'] <- 'yes'
+  # ptz[which(ptz$pos_slope == -5), 'miss'] <- 'yes'
+  ptz <- ptz %>% filter(miss == 'yes')
+  points(ptz$x + .5, ptz$y, pch = '.')
 
   box()
 
   axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
-ylabels <- c(expression("34"*degree*N),
-             expression("36"*degree*N),
-             expression("38"*degree*N),
-             expression("40"*degree*N),
-             expression("42"*degree*N),
-             expression("44"*degree*N),
-             expression("46"*degree*N),
-             expression("48"*degree*N))
+  
+  ylabels <- c(expression("34"*degree*N),
+               expression("36"*degree*N),
+               expression("38"*degree*N),
+               expression("40"*degree*N),
+               expression("42"*degree*N),
+               expression("44"*degree*N),
+               expression("46"*degree*N),
+               expression("48"*degree*N))
   
   axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0), 
     labels = ylabels)
-  # mtext(side = 2,  expression("Latitude" ~degree ~ N), outer = T, line = 1.7, cex = 1.3)
   mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
 
   #-------------------------------------------------------------------------------------
-  #Map
+  #Add Map
   map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
       mar = c(0, 0, 0, 0))
   box()
-  # mtext(paste0(letters[3], ")"), side = 3, line = -1.5, adj = .03, cex = .8)
-  # mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2)
 
   par(mar = c(0, .5, 0, 0), fig = c(.66, 0.71, 0.02, .32), new = T)  
-# browser()  
   blues <- rev(sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('blue', xx)))
   reds <- sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('red', xx))
 
