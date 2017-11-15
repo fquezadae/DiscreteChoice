@@ -15,17 +15,22 @@ tows_clust_bin_depth <- tows_clust_bin_depth %>% group_by(unq) %>%
 
 tows_clust_bin_depth <- tows_clust_bin_depth %>% arrange(year)
 
+slopies1 %>% filter(slope == max(slopies1$slope))
+
+#Convert year to index
+year_index <- data_frame(year = 2007:2014, xx = 1:8)
+tows_clust_bin_depth <- tows_clust_bin_depth %>% left_join(year_index, by = 'year')
+
 #Only use clusters that had values before and after catch shares
 slopies <- tows_clust_bin_depth %>% filter(nyears > 2, bef_aft == TRUE) %>%
   # arrange(year) %>%
   group_by(unq) %>%
   do({
-    mod <- lm(count ~ year, data = .)
+    mod <- lm(count ~ xx , data = .)
     slope <- mod$coefficients[2]
     p_val <- summary(mod)[[4]][, 4][2]
     names(slope) <- NULL
     names(p_val) <- NULL
-# data.frame(., slope, p_val)    
     data.frame(., slope, p_val)
   }) %>% as.data.frame
 
@@ -44,7 +49,14 @@ slopies1$y <- slopies1$ymax
 
 spos <- slopies1 %>% filter(slope >= 0)
 sneg <- slopies1 %>% filter(slope < 0)
+
 #Assign colors to slopies1
+length(unique(slopies1$x)[order(unique(slopies1$x))])
+length(unique(slopies1$y)[order(unique(slopies1$y))])
+
+#-------------------------------------------------------------------------------------
+#compare the slopies
+round(slopies1$slope, digits = 4) == round(slopies_year$slope, digits = 4)
 
 #-------------------------------------------------------------------------------------
 ###Table Values
@@ -61,6 +73,7 @@ nlocs <- 406
 not_enough <- tows_clust_bin_depth %>% distinct(unq, .keep_all = T) %>%
   filter(bef_aft == FALSE, nyears < 3) %>% select(unq) %>% nrow
 not_enough / nlocs; nlocs
+
 
 #------Increases
 #Percentage of increases
@@ -94,8 +107,8 @@ ss <- slopies %>% distinct(abs_slope)
 mv <- 50
 lev <- 10
 #The actual plot
-png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig3.png')
-ch4_fig3(mv = 50, lev = 20)
+png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig2.png')
+ch4_fig2(mv = 50, lev = 20)
 dev.off()
 
 #Scratch stuff
@@ -160,13 +173,13 @@ color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nti
     }
 }
 
-# ch4_fig3(mv = 20, lev = 20)
 #Need to add color bar
-
 #-------------------------------------------------------------------------------------
 # Functions Used
+# mv <- 50
+# lev <- 20
 
-ch4_fig3 <- function(mv, lev){
+ch4_fig2 <- function(mv, lev){
   par(mfcol = c(1, 2), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
 
   #-------------------------------------------------------------------------------------
@@ -190,22 +203,24 @@ ch4_fig3 <- function(mv, lev){
 names(ppos$pos1)[4] <- 'pos_slope'
 names(nneg$pos1)[4] <- 'neg_slope'
 ptz <- ppos$pos1 %>% left_join(nneg$pos1, by = c('x', 'y')) 
+# ptz <- ppos$pos1 
 ptz$miss <- 'no'
 ptz[which(ptz$pos_slope == -5 & ptz$neg_slope == -5), 'miss'] <- 'yes'
+# ptz[which(ptz$pos_slope == -5), 'miss'] <- 'yes'
 ptz <- ptz %>% filter(miss == 'yes')
 points(ptz$x + .5, ptz$y, pch = '.')
 
   box()
 
   axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
-ylabels <- c(expression("34"~degree ~ N),
-             expression("36"~degree ~ N),
-             expression("38"~degree ~ N),
-             expression("40"~degree ~ N),
-             expression("42"~degree ~ N),
-             expression("44"~degree ~ N),
-             expression("46"~degree ~ N),
-             expression("48"~degree ~ N))
+ylabels <- c(expression("34"*degree*N),
+             expression("36"*degree*N),
+             expression("38"*degree*N),
+             expression("40"*degree*N),
+             expression("42"*degree*N),
+             expression("44"*degree*N),
+             expression("46"*degree*N),
+             expression("48"*degree*N))
   
   axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0), 
     labels = ylabels)
@@ -232,59 +247,3 @@ ylabels <- c(expression("34"~degree ~ N),
     tick_labs = c(-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50),
     title = "")
 }
-
-#-------------------------------------------------------------------------------------
-#Scraps
-
-#-------------------------------------------------------------------------------------
-# # ch4_fig3(mv = 10, lev = 20)
-# format_fc_plot(spos, max_value = 50, the_levels = 10, xlims = c(1, 15),
-#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
-# box()
-
-# format_fc_plot(sneg, max_value = 50, the_levels = 10, xlims = c(1, 15),
-#     ylims = c(1, 31), xint = 1, yint = 1, flip_x_axis = TRUE)
-# box()
-# x1 <- data.frame(depth = seq(0, 700, 50), xbin = 1:length(seq(0, 700, 50)) )
-# x1$xbin1 <- x1$xbin - 1
-# x1$xbin_rev <- rev(x1$xbin)
-
-# y1 <- data.frame(lat = seq(34, 49, .5), ybin = 1:length(seq(34, 49, .5)))
-# y1$ybin1 <- y1$ybin - 1
-
-# length(seq(0, 700, 50))
-# length(seq(34, 49, by = .5))
-# xx <- 1:15
-# yy <- 1:31
-
-# expand.grid(xx, yy)
-# zz <- matrix(1:50, nrow = length(xx), ncol = length(yy))
-# image(xx, yy, zz)
-
-   # mtext(paste0(letters[1], ") ", perc_increase * 100, "% positive"), side = 3, line = -1.5, adj = .03, cex = .8)
-  # mtext(paste0("      ", 100 * perc_increase_sig, "% significant"), side = 3, line = -2.75, adj = .03, cex = .8)
-  # mtext(paste0("      n = ", nlocs), side = 3, line = -4, adj = .03, cex = .8)
-
-# axis1 <- cbind(seq(0, 700, 50), 0:14, 14:0)  
-# axis2 <- cbind(seq(34, 49, .5), 0:(length(seq(34, 49, .5)) - 1))  
-
-  # axis(side = 1, at = c(2, 6, 10, 15), labels = c(600, 400, 200, 0), cex.axis = 1.2)
-  # axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
-  # axis(side = 2, las = 2, cex.axis = 1.2)
-  #-------------------------------------------------------------------------------------
-  #Negative slopes
-  # format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(0, 700), ylims = c(34, 49))
-  # format_fc_plot(sneg, max_value = mv, the_levels = lev, xlims = c(1, 15),
-  #   ylims = c(1, 31), xint = 1, yint = 1)
-  # box()
-  # axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1.2)
-  # # axis(side = 1, at = c(100, 300, 500, 700), labels = c(600, 400, 200, 0), cex.axis = 1.2)
-  # mtext(paste0(letters[2], ") ", perc_decrease * 100, "% negative"), side = 3, line = -1.5, adj = .03, cex = .8)
-  # mtext(paste0("    ", 100 * perc_decrease_sig, "% significant"), side = 3, line = -2.75, adj = .03, cex = .8)
-  # mtext(paste0("      n = ", nlocs), side = 3, line = -4, adj = .03, cex = .8)
-  # mtext(paste0(letters[2], ")", " Negative Slopes"), side = 3, line = -1.5, adj = .03, cex = .8)
-  # mtext(paste0("n = ", nrow(sneg) ), side = 3, line = -2.75, adj = .03, cex = .8)
-  
-  # color_bar(lut = grey.colors(n = lev, start = 1, end = 0), 
-  #   Cex = .3, nticks = 6, min = 0, max = 1, tick_labs = c(0, 2, 4,
-  #     6, 8,">=10"), title = "Magnitude")
