@@ -203,8 +203,12 @@ ch4_fig2 <- function(mv, lev){
 
   box()
 
-  axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
+  #In fathoms
+  # axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 200, 400, 600)), cex.axis = 1)
   
+  #In meters
+  axis(side = 1, at = c(15, 11, 7, 3), labels = (c(0, 366, 732, 1098)), cex.axis = 1)
+
   ylabels <- c(expression("34"*degree*N),
                expression("36"*degree*N),
                expression("38"*degree*N),
@@ -216,7 +220,8 @@ ch4_fig2 <- function(mv, lev){
   
   axis(side = 2, at = c(1, 5, 9, 13, 17, 21, 25, 29), seq(34, 48, by = 2), las = 2, cex.axis = 1, mgp = c(0, .5, 0), 
     labels = ylabels)
-  mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
+  # mtext(side = 1, outer = T, "Depth (fathoms)", adj = .3, line = 2, cex = 1.3)
+  mtext(side = 1, outer = T, "Depth (meters)", adj = .3, line = 2, cex = 1.3)
 
   #-------------------------------------------------------------------------------------
   #Add Map
