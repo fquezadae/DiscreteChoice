@@ -184,13 +184,20 @@ delta_sigs_plot[which(delta_sigs_plot$species == "Yellowtail Rockfish"), 'spp_ab
 #Manually adjust Yelloweye before skew values
 delta_sigs_plot[which(delta_sigs_plot$skew > 1.4), 'skew'] <- 1.4
 
-# delta_sigs_plot[which(delta_sigs_plot$spp_abb == "Yel" & delta_sigs_plot$when == "before"), 
-#   "skew"] <- 1.1
+#Enumerate increases in targeting
+#Target Species
+delta_sigs %>% filter(skew_diffs < 0, prop_diffs < 0, skew_sig == 'yes', prop_sig == 'yes') %>%
+  arrange(type)
+
+delta_sigs %>% filter(skew_sig == 'yes')
+
+delta_sigs %>% filter(skew_sig == 'yes', skew_diffs < 0) %>% arrange(type)
+delta_sigs %>% filter(prop_sig == 'yes', prop_diffs < 0) %>% arrange(type)
 
 #------------------------------------------------------------------------------------------------------------
 #Plot the logbook instead of the combined data set
 
-png(width = 7, height = 7, file = 'figs/ch4_delt_all_lbk.png', units = 'in', res = 200)
+png(width = 7, height = 7, file = 'figs/ch4_fig4.png', units = 'in', res = 200)
 
 par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, 11), mar = c(0, 0, .5, 0))
 for(ii in 1:6){
@@ -198,8 +205,10 @@ for(ii in 1:6){
   # temp <- subset(delta_sigs, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
   temp <- subset(delta_sigs_plot, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
 
-  both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes')
-  one_sig <- temp %>% filter(skew_sig != 'yes' | prop_sig != 'yes')
+  both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes', skew_diffs < 0,
+    prop_diffs < 0)
+  # one_sig <- temp %>% filter(skew_sig != 'yes' | prop_sig != 'yes')
+  one_sig <- temp %>% filter(species %in% both_sig$species == F)
 
   plot(both_sig$prop_zero, both_sig$skew, xlim = c(0, 1.1), ylim = c(-2, 1.5), pch = 19, 
     col = adjustcolor( "black", alpha.f = 0.2), ann = F, axes = F, xaxs = 'i',
