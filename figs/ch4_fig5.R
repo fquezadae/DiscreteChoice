@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 8.95, height = 8.43)
 
-png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_sig_fig_ndays30_dist5.1.png', res = 250)
+png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
 # pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
 # dev.new(width = 8.75, height = 8.34)
@@ -28,7 +28,7 @@ for(pp in 6:1){
   temp_bin <- port_bins %>% filter(fleet_name_comb %in% plot_dat$port_name)
   port_locz <- some_port_locs[[pp]]
   yrects <- seq(plot_dat$ylims[1], plot_dat$ylims[1] + 2, length.out = 8)
-  ylabels <- parse(text = paste(plot_dat$ylabs, "~degree~N", sep = " "))
+  ylabels <- parse(text = paste(plot_dat$ylabs, "*degree*N", sep = " "))
 
 # axis(side = 2, at = plot_dat$ylabs, labels = ylabels, las = 2)
 
@@ -41,7 +41,7 @@ for(pp in 6:1){
     points(yr_temp$x, yr_temp$y, pch = 15, cex = .6, col = yr_temp$greys)
     map('state', fill = TRUE, col = 'gray95', xlim = plot_dat$xlims,
       ylim = plot_dat$ylims, mar = c(0, 0, 1, 0), add = T, asp = 1.3 )
-    points(port_locz$d_port_long, port_locz$d_port_lat, pch = 19, col = 'red')
+    points(port_locz$d_port_long, port_locz$d_port_lat, pch = 21, col = 'black', bg = 'red')
     box()
     mtext(side = 3, text = paste0(plot_dat$letts[yy], ")"), adj = 0.02, line = -1,
       cex = .8)
@@ -100,9 +100,9 @@ for(pp in 6:1){
       mtext(side = 3, yrz[yy], adj = 0, outer = F)
     }
     
-xlabels <- c(expression("126"~degree ~ W),
-             expression("125"~degree ~ W),
-             expression("124"~degree ~ W))
+xlabels <- c(expression("126"*degree*W),
+             expression("125"*degree*W),
+             expression("124"*degree*W))
   
     if(pp == 1){
       axis(side = 1, mgp = c(0, .5, 0), at = c(-126, -125, -124), 
