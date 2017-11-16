@@ -64,8 +64,15 @@ port_bins[which(port_bins$plot_value >= scaled_value), 'plot_value'] <- scaled_v
 port_bins$plot_value <- round(port_bins$plot_value / max(port_bins$plot_value) * 100,
   digits = 0)
 
-port_bins$greys <- paste0('grey', 100 - port_bins$plot_value)
-port_bins$greys <- rgb(t(col2rgb(port_bins$greys)), maxColorValue = 255)
+port_bins$greys <- sapply(port_bins$plot_value, FUN = function(x){
+  tc <- adjustcolor('red', alpha.f = x / 100)
+  return(tc)
+})
+
+# plot(1:nrow(port_bins), col = port_bins$greys)
+
+# port_bins$greys <- paste0('grey', 100 - port_bins$plot_value)
+# port_bins$greys <- rgb(t(col2rgb(port_bins$greys)), maxColorValue = 255)
 
 gg <- port_bins %>% 
   distinct(plot_value, .keep_all = T) %>% 
