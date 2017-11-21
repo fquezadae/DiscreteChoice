@@ -79,7 +79,7 @@ port_rums <- function(m_y,
     port_sv <- substr(the_port, 1, 3)
 
     #Species abbreviations
-# browser()
+browser()
     spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
       "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c, 
