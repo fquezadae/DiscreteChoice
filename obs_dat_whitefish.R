@@ -49,6 +49,48 @@ load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 
 
 #------------------------------------------------------------------------------
+#Sensitivity Runs with different quota species
+#Canary only
+the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)", 
+  "NEWPORT", "ASTORIA / WARRENTON")
+
+the_seed <- 10
+the_days <- 30
+the_hd <- 8.05 #habit distance
+
+quota_species = c("Canary Rockfish")
+
+#2009
+rums_09 <- port_rums(m_y = 2007, f_y = 2009, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#2010
+rums_10 <- port_rums(m_y = 2007, f_y = 2010, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#2011
+rums_11 <- port_rums(m_y = 2007, f_y = 2011, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#2012
+rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#2013
+rums_13 <- port_rums(m_y = 2007, f_y = 2013, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#2014
+rums_14 <- port_rums(m_y = 2007, f_y = 2014, nhauls_sampled = 50,
+                     ncores = 10, seed = the_seed, r_c = 2, r_s = 100, ports = the_ports, h_d = the_hd,
+                     dyz = the_days, quota_species = c("Canary Rockfish"))
+
+#------------------------------------------------------------------------------
 #Run for years in succession
 #--------------------------Runs with risk coefficient of 1
 
@@ -57,7 +99,7 @@ the_ports <- list("FORT BRAGG", "EUREKA", c("CRESCENT CITY", 'BROOKINGS'),
 
 rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
                      ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports, h_d = the_hd,
-                     dyz = the_days)
+                     dyz = the_days, quota_species = c("Canary Rockfish", "Pacific Ocean Perch"))
 
 #Specify the seed,
 the_seed <- 10
