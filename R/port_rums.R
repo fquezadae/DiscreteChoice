@@ -12,15 +12,54 @@
 #' @param dyz Days
 #' @param h_d habit distance
 #' @param n_c Net Cost Type; trev (total revenue), qcos (quota costs), cons (constraining species only)
+#' @param quota_species Species to subtract from revenues; Options are "all" or a subset
+#' of c("Canary Rockfish", "Bocaccio Rockfish", "Pacific Ocean Perch", "Yelloweye Rockfish", "Darkblotched Rockfish")
 
 #' @export
 
 port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
-  seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d, n_c){
+  seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d, n_c,
+  quota_species){
   
   nports <- length(ports)
   if(nports == 1) nports <- tolower(substr(paste0(ports[[1]], collapse = ""), 1, 3))
+
+  #------------------------
+  #Add feature to modify haul revenue values
+  #Net out different species and with different risk coefficients 
+  
+  #Modify tgow_rev column for each haul
+  # tc <- tows_clust %>% filter(haul_id == 85045) %>% 
+  #   select(species, exval_pound, apounds, gross_rev, avg_quota_price)
+  
+  tows_clust$temp_qp <- 0
+  
+  #Update temp_qp for species in the quota_species vector
+  #Get indices of rows with species in quota species
+  qp_inds <- which(tows_clust$species %in% quota_species)
+  tows_clust[qp_inds, 'temp_qp'] <- tows_clust[qp_inds, 'avg_quota_price']
+  
+  #Multiply the temp quota price by the risk coefficient
+  tows_clust$temp_qp <- tows_clust$temp_qp * r_c
+  
+  #Expand to multiply 
+  tows_clust$quota_cost <- tows_clust$temp_qp * tows_clust$apounds
+  
+  #Now update tgow, which is used in process_dummys 2 for average revenues
+  #tgow stands for target, groundfish, other, and weak revenues
+  tows_clust <- tows_clust %>% group_by(haul_id) %>%  
+    mutate(tgow_rev2 = sum(gross_rev, na.rm = T) - sum(quota_cost)) %>%
+    as.data.frame
+  
+  if("all" %in% quota_species == FALSE){
+    print("use newly calculated revenues")
+    tows_clust$tgow_rev <- tows_clust$tgow_rev2
+  }
+      
+  #With a vector of species, zero out quota costs that are not in the vector
+  #Give vector of species to subtract 
+  #------------------------
 
   #Run the models
   runs <- lapply(1:length(ports), FUN = function(yy){
@@ -39,8 +78,11 @@ port_rums <- function(m_y,
     the_port <- paste(the_port, collapse = "_")
     port_sv <- substr(the_port, 1, 3)
 
+    #Species abbreviations
+    spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
-      "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c)
+      "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c, 
+      "_qspecies", spp_abv)
 
     mod <- rum[[2]]    
     if(Sys.info()[['sysname']] == "Darwin"){
@@ -63,7 +105,8 @@ port_rums <- function(m_y,
   names(coefs) <- ports_names
 
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
-    "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c)
+    "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c,
+    "_qspecies", spp_abv)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
   #   "_seed", seed)

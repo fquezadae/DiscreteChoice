@@ -6,7 +6,7 @@
 Function to run and save RUM data for 8 top ports}
 \usage{
 port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10,
-  ports, dum_type = "no_bycatch", dyz, h_d, n_c)
+  ports, dum_type = "no_bycatch", dyz, h_d, n_c, quota_species)
 }
 \arguments{
 \item{m_y}{Minimum year}
@@ -28,6 +28,9 @@ port_rums(m_y, f_y, nhauls_sampled = 75, seed, ncores, r_c = 1, r_s = 10,
 \item{h_d}{habit distance}
 
 \item{n_c}{Net Cost Type; trev (total revenue), qcos (quota costs), cons (constraining species only)}
+
+\item{quota_species}{Species to subtract from revenues; Options are "all" or a subset
+of c("Canary Rockfish", "Bocaccio Rockfish", "Pacific Ocean Perch", "Yelloweye Rockfish", "Darkblotched Rockfish")}
 }
 \description{
 port_rums function
