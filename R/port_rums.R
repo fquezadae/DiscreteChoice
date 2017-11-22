@@ -103,7 +103,8 @@ port_rums <- function(m_y,
   
   coefs <- lapply(runs, FUN = function(xx) xx[[1]])
   names(coefs) <- ports_names
-
+  
+  spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
     "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c,
     "_qspecies", spp_abv)
