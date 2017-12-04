@@ -2,6 +2,7 @@
 
 export(add_probs)
 export(adjust_probs)
+export(arg_list)
 export(arrange_tows)
 export(calc_bycatch)
 export(calc_comb_deltas)
