@@ -40,6 +40,23 @@ states_map <- map_data("state")
 # load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
 load(file = "/Volumes/udrive/tows_clust_1010.Rdata")
 
+#tg_rev is targets, groundfish revenue 
+#tgo_rev is targets, groundfish, and other species revenues
+#tgow_rev is targets, groundfish, other, and weak species revenues
+#---------------------------------------------------------------------------------
+#Test new features in port_rums and sampled_rums functions
+choices <- get_choice_set(data_in = tows_clust, the_port = "ASTORIA / WARRENTON",
+  min_year = 2007, max_year = 2012, risk_coefficient = 1,
+  ndays = 30, focus_year = 2012, nhauls_sampled = 50, seed = 10, ncores = 6, rev_scale = 100,
+  model_type = 'no_bycatch', net_cost = "qcos", habit_distance = 5)
+
+samps <- sampled_rums(data_in = tows_clust, the_port = "ASTORIA / WARRENTON",
+  min_year = 2007, max_year = 2012, risk_coefficient = 1,
+  ndays = 30, focus_year = 2012, nhauls_sampled = 50, seed = 10, ncores = 6, rev_scale = 100,
+  model_type = 'no_bycatch', net_cost = "qcos", habit_distance = 5)
+
+#---------------------------------------------------------------------------------
+
 perc_used <- tows_clust %>% group_by(fleet_name_comb) %>% 
   summarize(hpounds = sum(hpounds, na.rm = T)) %>% arrange(desc(hpounds))
 perc_used$used <- c(1, 0, 1, 1, 1, 1, 1, 0, 0)
@@ -1035,9 +1052,6 @@ obs_data %>% distinct(haul_id, .keep_all = T) %>% filter(set_year >= 2007) %>% g
             duration_per_tow = duration / ntows ) %>% ggplot(aes(x = set_year, y = duration)) + geom_line() +
   geom_point() + facet_wrap(~ r_state) + geom_vline(xintercept = 2010.5, lty = 2)
 
-
-
-  
 #---------------------------------------------------------------------------------
 #look at individual vessel changes in position
 ind_changes <- obs_data %>% distinct(haul_id, .keep_all = T) %>% group_by(drvid, set_year, r_state) %>% 

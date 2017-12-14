@@ -15,8 +15,6 @@ tows_clust_bin_depth <- tows_clust_bin_depth %>% group_by(unq) %>%
 
 tows_clust_bin_depth <- tows_clust_bin_depth %>% arrange(year)
 
-slopies1 %>% filter(slope == max(slopies1$slope))
-
 #Convert year to index
 year_index <- data_frame(year = 2007:2014, xx = 1:8)
 tows_clust_bin_depth <- tows_clust_bin_depth %>% left_join(year_index, by = 'year')
@@ -56,7 +54,7 @@ length(unique(slopies1$y)[order(unique(slopies1$y))])
 
 #-------------------------------------------------------------------------------------
 #compare the slopies
-round(slopies1$slope, digits = 4) == round(slopies_year$slope, digits = 4)
+# round(slopies1$slope, digits = 4) == round(slopies_year$slope, digits = 4)
 
 #-------------------------------------------------------------------------------------
 ###Table Values

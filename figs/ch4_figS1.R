@@ -68,26 +68,46 @@ tows_clust_bin <- tows_clust_bin %>% left_join(keepers, by = c('unq', "year"))
 tows_clust_bin <- tows_clust_bin %>% filter(nvess >= 3)
 
 #------------------------------------------------------------------------
+#MRAG Metrics
+tows_clust_bin$when <- 'before'
+tows_clust_bin[which(tows_clust_bin$year >= 2011), 'when'] <- 'after'
+
+avg_tows_bin <- tows_clust_bin %>% group_by(when, unq) %>% summarize(avg_ct = mean(count)) 
+
+avg_tows_bin %>% group_by(when) %>% summarize(min_ct = min(avg_ct), nlocs = length(unique(unq)))
+
+#Aggregate effort number of vessels
+mean(agg_effort$nvess[1:4])
+mean(agg_effort$ntows[1:4])
+
+mean(agg_effort$nvess[5:8])
+mean(agg_effort$ntows[5:8])
+tows_clust_bin %>% group_by(year, when) %>% summarize(nvess = length(unique(drvid)))
+
+%>% 
+  group_by(when)
+
+#------------------------------------------------------------------------
 #Figure
 # dev.new(width = 4.68, height = 7)
 
 # pdf(width = 3.8, height = 6.6, file = 'figs/ch4_fig2.pdf')
 
-xlabels <- c(expression("125"~degree ~ W),
-             expression("123"~degree ~ W),
-             expression("121"~degree ~ W))
+xlabels <- c(expression("125"*degree*W),
+             expression("123"*degree*W),
+             expression("121"*degree*W))
 
-ylabels <- c(expression("34"~degree ~ N),
-             expression("36"~degree ~ N),
-             expression("38"~degree ~ N),
-             expression("40"~degree ~ N),
-             expression("42"~degree ~ N),
-             expression("44"~degree ~ N),
-             expression("46"~degree ~ N),
-             expression("48"~degree ~ N))
+ylabels <- c(expression("34"*degree*N),
+             expression("36"*degree*N),
+             expression("38"*degree*N),
+             expression("40"*degree*N),
+             expression("42"*degree*N),
+             expression("44"*degree*N),
+             expression("46"*degree*N),
+             expression("48"*degree*N))
                     
 png(width = 3.866, height = 6.6, res = 200, units = 'in',
-  file = 'figs/ch4_fig2.png')
+  file = 'figs/ch4_figS1.png')
 
 par(mar = c(0, 0, 0, 0), oma = c(3.5, 3, 0, 1.5), mfrow = c(2, 4))
 yrz <- 2007:2014

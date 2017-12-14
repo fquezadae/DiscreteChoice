@@ -52,6 +52,27 @@ deltas[which(deltas$sig_depth == T), "sig_depth_color"] <- adjustcolor('red', al
 deltas$sig_lat_color <- adjustcolor('black', alpha.f = 0)
 deltas[which(deltas$sig_lat == T), "sig_lat_color"] <- adjustcolor('blue', alpha.f = .5)
 
+dd <- deltas %>% filter(sig_depth == TRUE) %>% select(delta_depth) 
+
+#------------------------------------------------------------------------
+#Add ports to each vessel
+deltas <- tows_clust %>% distinct(drvid, .keep_all = T) %>% select(drvid, fleet_name) %>% 
+  right_join(deltas, by = 'drvid') 
+
+deltas %>% filter(sig_depth == TRUE, sig_lat == TRUE)
+deltas %>% filter(sig_depth == FALSE, sig_lat == TRUE) %>% nrow / nrow(deltas)
+deltas %>% filter(sig_depth == TRUE, sig_lat == FALSE) %>% nrow / nrow(deltas)
+deltas %>% filter(sig_depth == FALSE, sig_lat == FALSE) %>% nrow / nrow(deltas)
+
+depths <- deltas %>% group_by(fleet_name) %>% filter(sig_depth == TRUE) %>% summarize(avg_depth = mean(delta_depth) * 1.8)
+lats <- deltas %>% group_by(fleet_name) %>% filter(sig_lat == TRUE) %>% summarize(avg_lat = mean(delta_lat))
+
+depths %>% left_join(lats, by = 'fleet_name')
+
+deltas$drvid
+
+hist(dd$delta_depth)
+
 #------------------------------------------------------------------------
 #Figure
 

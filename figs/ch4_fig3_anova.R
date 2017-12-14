@@ -25,8 +25,11 @@ deltas <- d_lat %>% left_join(d_depth, by = 'drvid')
 deltas <- deltas[which(is.na(deltas$delta_lat) == FALSE), ]
 
 diff_ports <- deltas %>% filter(delta_lat >= 1 | delta_lat <= -1)
-deltas <- deltas %>% filter(delta_lat < 1, delta_lat > -1) %>% as.data.frame
 
+save(diff_ports, file = 'output/diff_ports_deltas.Rdata')
+
+
+deltas <- deltas %>% filter(delta_lat < 1, delta_lat > -1) %>% as.data.frame
 
 tc_tows <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
