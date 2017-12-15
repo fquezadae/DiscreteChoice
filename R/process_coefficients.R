@@ -7,9 +7,16 @@
 #' @export
 
 process_coefficients <- function(filename, dir = "/Volumes/udrive/"){
-  #
-
+  #load coefficients
   load(paste0(dir, filename))
+
+  #Add coefficient variable column
+  coefs <- lapply(coefs, FUN = function(xx) {
+    xx$coef <- row.names(xx)
+    return(xx)
+  })
+
+  #melt the lists
   coefs1 <- melt(coefs, id.vars = c('coefs', 'p_values', 'significance'))
   coefs1 <- plyr::rename(coefs1, c("L1" = "port"))
   
