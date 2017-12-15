@@ -15,11 +15,13 @@ process_coefficients <- function(filename, dir = "/Volumes/udrive/"){
     xx$coef <- row.names(xx)
     return(xx)
   })
+# browser()
 
   #melt the lists
-  coefs1 <- melt(coefs, id.vars = c('coefs', 'p_values', 'significance'))
+  coefs1 <- melt(coefs, id.vars = c('coefs', 'p_values', 'significance', 'coef'))
   coefs1 <- plyr::rename(coefs1, c("L1" = "port"))
-  
+  coefs1 <- plyr::rename(coefs1, c('coefs' = 'value'))  
+
   #Parse filename and add details in to coefs1
   filename_args <- unlist(strsplit(filename, split = "_"))
   coefs1$price_multiplier <- gsub("coefs", "", filename_args[1])
@@ -29,3 +31,7 @@ process_coefficients <- function(filename, dir = "/Volumes/udrive/"){
   coefs1$spp <- gsub('.Rdata', "", coefs1$spp)	
   return(coefs1)
 }
+
+
+#Test function
+# process_coefficients(filename = udrive_files[grep('coefs5_', udrive_files)][1])
