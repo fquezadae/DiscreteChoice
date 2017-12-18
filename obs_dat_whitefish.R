@@ -56,44 +56,52 @@ the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)",
 
 the_seed <- 10
 the_days <- 30
-the_hd <- 8.05 #habit distance
+the_hd <- 5.1 #habit distance
 
 quota_species = c("Canary Rockfish")
+
+
+#-----------------------------------------
+a_l <- arg_list(ncores = 6, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev')
+run_six_years(the_args = a_l)
+
+
 
 #-----------------------------------------
 #Risk coefficient of 5
 
 #2009
 rums_09 <- port_rums(m_y = 2007, f_y = 2009, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
 #2010
 rums_10 <- port_rums(m_y = 2007, f_y = 2010, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
 #2011
 rums_11 <- port_rums(m_y = 2007, f_y = 2011, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
 #2012
 rums_12 <- port_rums(m_y = 2007, f_y = 2012, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
 #2013
 rums_13 <- port_rums(m_y = 2007, f_y = 2013, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
 #2014
 rums_14 <- port_rums(m_y = 2007, f_y = 2014, nhauls_sampled = 50,
-                     ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
+                     ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
 
-#-----------------------------------------
+ #-----------------------------------------
 #Risk coefficient of 10
 #2009
 rums_09 <- port_rums(m_y = 2007, f_y = 2009, nhauls_sampled = 50,
