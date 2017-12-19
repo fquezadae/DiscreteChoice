@@ -12,14 +12,14 @@ run_six_years <- function(the_args = a_l){
                      r_c = the_args$r_c, r_s = the_args$r_s, 
                      ports = the_args$ports, h_d = the_args$h_d,
                      dyz = the_args$dyz, quota_species = the_args$quota_species, 
-                     n_c = the_args$n_c)
+                     n_c = "trev")
   rums_10 <- port_rums(m_y = the_args$m_y, f_y = 2010, 
                      nhauls_sampled = the_args$nhauls_sampled,
                      ncores = the_args$ncores, seed = the_args$seed, 
                      r_c = the_args$r_c, r_s = the_args$r_s, 
                      ports = the_args$ports, h_d = the_args$h_d,
                      dyz = the_args$dyz, quota_species = the_args$quota_species, 
-                     n_c = the_args$n_c)
+                     n_c = "trev")
   rums_11 <- port_rums(m_y = the_args$m_y, f_y = 2011, 
                      nhauls_sampled = the_args$nhauls_sampled,
                      ncores = the_args$ncores, seed = the_args$seed, 
