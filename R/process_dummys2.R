@@ -9,12 +9,8 @@
 #' @export
 
 process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
-# browser()
   temp_dat <- td2[xx, ]
 
-cat('filter distance=', hab_dist, '\n')
-  
-  # fleets <- 
   fltz <- strsplit(temp_dat$fleet_name, "_")[[1]]
   #-----------------------------------------------------------------------------------------------
   #Did vessel fish in past 30 days?

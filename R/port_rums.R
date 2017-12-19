@@ -21,7 +21,7 @@ port_rums <- function(m_y,
   f_y, nhauls_sampled = 75,
   seed, ncores, r_c = 1, r_s = 10, ports, dum_type = "no_bycatch", dyz, h_d, n_c,
   quota_species){
-  
+
   nports <- length(ports)
   if(nports == 1) nports <- tolower(substr(paste0(ports[[1]], collapse = ""), 1, 3))
 
@@ -54,6 +54,7 @@ port_rums <- function(m_y,
   
   if("all" %in% quota_species == FALSE){
     print("use newly calculated revenues")
+
     tows_clust$tgow_rev <- tows_clust$tgow_rev2
   }
       
