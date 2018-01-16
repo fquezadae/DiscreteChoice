@@ -26,7 +26,7 @@
 
 fish_trip_simulation <- function(in_list){
   #---------------------------------
-
+browser()
   #Run simulation
   start_time <- Sys.time()
   the_runs <- mclapply(1:in_list$nreps, 
