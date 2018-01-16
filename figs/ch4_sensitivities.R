@@ -9,6 +9,62 @@ udrive_files <- list.files("/Volumes/udrive")
 udrive_files[which(udrive_files %in% local_files == FALSE)]
 # the_files <- local_files
 the_files <- udrive_files
+
+
+#-----------------------------------------------------------------------------------------------
+#Evaluate the consistency of estimates with different seed values and sample haul sizes
+#Seeds 30 and 50 were done by sampling 75 hauls from each dataset
+
+process_coefficients(filename = "")
+
+udrive_files <- list.files("/Volumes/udrive")
+
+udrive_files[grep('seed30', udrive_files)][5]
+
+#Compare results with 75 samples
+seed30 <- process_coefficients(filename = udrive_files[grep('seed30', udrive_files)][5])
+seed30$seed <- 30
+
+seed50 <- process_coefficients(filename = udrive_files[grep('seed50', udrive_files)][5])
+seed50$seed <- 50
+
+
+#How different are the estimates in terms of relative error
+s30 <- seed30 %>% select(value, coef, port)
+names(s30)[1] <- 'value30'
+s50 <- seed50 %>% select(value, coef, port)
+names(s50)[1] <- 'value50'
+
+comps <- left_join(s30, s50, by = c('coef', 'port'))
+comps <- comps %>% select(coef, port, value30, value50)
+
+comps$perc_diff <- round((comps$value50 - 
+    comps$value30)/ comps$value30, digits = 2) * 100
+
+
+
+
+comp_res <- rbind(seed30, seed50)
+ggplot(comp_res, aes(x = coef, y = value)) + geom_point(aes(colour = coef)) + 
+  facet_wrap(~ port)
+
+# seed30 <- seed30 %>% dcast(port + year + seed ~ coef, value.var = 'value')
+# seed50 <- seed50 %>% dcast(port + year + seed ~ coef, value.var = 'value')
+
+seed30 %>% group_by(port) %>% summarize(dist_rev = dist/rev, dist1_rev1 = dist1/rev1)
+seed50 %>% group_by(port) %>% summarize(dist_rev = dist/rev, dist1_rev1 = dist1/rev1)
+
+
+
+
+
+
+
+
+
+
+
+
 #-----------------------------------------------------------------------------------------------
 #For the ports
 
