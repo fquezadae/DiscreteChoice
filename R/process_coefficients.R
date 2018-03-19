@@ -7,15 +7,15 @@
 #' @export
 
 process_coefficients <- function(filename, dir = "/Volumes/udrive/"){
+  
   #load coefficients
   load(paste0(dir, filename))
-
+  
   #Add coefficient variable column
   coefs <- lapply(coefs, FUN = function(xx) {
     xx$coef <- row.names(xx)
     return(xx)
   })
-# browser()
 
   #melt the lists
   coefs1 <- melt(coefs, id.vars = c('coefs', 'p_values', 'significance', 'coef'))
@@ -31,7 +31,6 @@ process_coefficients <- function(filename, dir = "/Volumes/udrive/"){
   coefs1$spp <- gsub('.Rdata', "", coefs1$spp)	
   return(coefs1)
 }
-
 
 #Test function
 # process_coefficients(filename = udrive_files[grep('coefs5_', udrive_files)][1])
