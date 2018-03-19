@@ -83,7 +83,7 @@ port_rums <- function(m_y,
     spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
     filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
       "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c, 
-      "_qspecies", spp_abv)
+      "_qspecies", spp_abv, "_nhauls", nhauls_sampled)
 
     mod <- rum[[2]]    
     if(Sys.info()[['sysname']] == "Darwin"){
@@ -108,7 +108,7 @@ port_rums <- function(m_y,
   spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
     "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c,
-    "_qspecies", spp_abv)
+    "_qspecies", spp_abv, "_nhauls", nhauls_sampled)
   save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
   #   "_seed", seed)
