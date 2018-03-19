@@ -61,7 +61,7 @@ the_hd <- 5.1 #habit distance
 quota_species = c("Canary Rockfish")
 
 #-----------------------------------------
-a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
+a_l <- arg_list(ncores = 4, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev',
                 nhauls_sampled= 100)
 run_six_years(the_args = a_l)

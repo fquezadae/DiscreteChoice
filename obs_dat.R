@@ -3,6 +3,7 @@
 # setwd('/Users/peterkuriyama/Dropbox/ch4')
 # setwd('c://Users//Peter//ch4')
 setwd("/Users/peterkuriyama/Dropbox/phd/research/ch4")
+setwd("C://Users//Peter//Dropbox//phd//research//ch4")
 
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 

@@ -5,7 +5,7 @@
 setwd('/Users/peterkuriyama/School/Research/ch4')
 
 library(devtools)
-devtools::install_github('peterkuriyama/ch4')
+devtools::install_github('peterkuriyama/ch4', auth_token = '99e5af72394589ca13957dcc6c0e411fd8d047e6')
       
 #Make sure that packages are loaded
 library(ch4)
