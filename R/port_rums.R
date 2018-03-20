@@ -51,10 +51,12 @@ port_rums <- function(m_y,
   tows_clust <- tows_clust %>% group_by(haul_id) %>%  
     mutate(tgow_rev2 = sum(gross_rev, na.rm = T) - sum(quota_cost)) %>%
     as.data.frame
-  
-  if("all" %in% quota_species == FALSE){
-    print("use newly calculated revenues")
 
+  #Just use total revenues without subtracting quota pounds by default
+  
+  #if net_costs accounts for quota costs, specified by n_c = 'qcos'
+  if("all" %in% quota_species == FALSE & n_c == 'qcos'){
+    print("use revenues minus quota costs")
     tows_clust$tgow_rev <- tows_clust$tgow_rev2
   }
       
