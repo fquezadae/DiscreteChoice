@@ -69,7 +69,7 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
   dum_rev$quota_cost <- dum_rev$avg_quota_price * dum_rev$apounds
   mean_qc <- mean(dum_rev$quota_cost, na.rm = T)
   mean_qc <- replace(mean_qc, is.na(mean_qc), 0)
-# browser()
+
   #Calculate different values based on arguments
   if(n_cost == "trev"){
     dum_rev_dollars <- mean_rev
