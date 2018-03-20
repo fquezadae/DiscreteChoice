@@ -1,11 +1,11 @@
 #Whitefish Runs
 #---------------------------------------------------------------------------------
 #Specify Computer
-setwd('/Users/peterkuriyama/School/Research/ch4')
+setwd('/Users/peterkuriyama/Dropbox/phd/Research/ch4')
 # setwd('c://Users//Peter//ch4')
 
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
-setwd('c://Users//Peter//Desktop//ch4')
+setwd('C://Users//Peter//Desktop//')
 
 
 #---------------------------------------------------------------------------------
@@ -26,7 +26,6 @@ library(tidyr)
 library(mlogit)
 library(parallel)
 library(sendmailR)
-
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
@@ -49,6 +48,8 @@ states_map <- map_data("state")
 # load("//udrive.uw.edu//udrive//tows_clust_925_depth_bin.Rdata")
 load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 
+# load("/Volumes/udrive/tows_clust_1010.Rdata")
+# load_all()
 
 #------------------------------------------------------------------------------
 #Sensitivity Runs with different quota species
@@ -57,24 +58,57 @@ the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)",
   "NEWPORT", "ASTORIA / WARRENTON")
 
 # the_ports <- "EUREKA"
-the_seed <- 1001
+the_seed <- 1002
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
 quota_species = c("Canary Rockfish")
 
 #-----------------------------------------
-a_l <- arg_list(ncores = 4, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
-                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev',
-                nhauls_sampled = 75)
-run_six_years(the_args = a_l)
+the_ports <- "EUREKA"
 
+the_args <- arg_list(ncores = 1, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'trev',
+                nhauls_sampled = 50)
+
+test_qcos <- port_rums(m_y = the_args$m_y, f_y = 2011, 
+                       nhauls_sampled = the_args$nhauls_sampled,
+                       ncores = 8, seed = the_args$seed, 
+                       r_c = the_args$r_c, r_s = the_args$r_s, 
+                       ports = the_args$ports, h_d = the_args$h_d,
+                       dyz = the_args$dyz, quota_species = the_args$quota_species, 
+                       n_c = "qcos")  
+
+test_trev <- port_rums(m_y = the_args$m_y, f_y = 2011, 
+                       nhauls_sampled = the_args$nhauls_sampled,
+                       ncores = 8, seed = the_args$seed, 
+                       r_c = the_args$r_c, r_s = the_args$r_s, 
+                       ports = the_args$ports, h_d = the_args$h_d,
+                       dyz = the_args$dyz, quota_species = the_args$quota_species, 
+                       n_c = "trev")  
+#-----------------------------------------
+#Rerun these
+#Risk coefficient of 100 with quota cost subtraction
+#Run these ones also
+a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
+
+
+#Things to run
+#To Run runs
+a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
 
 
 #-----------------------------------------
-#Risk coefficient of 5
+#Risk coefficient of 2009
 
-#2009
+#5
 rums_09 <- port_rums(m_y = 2007, f_y = 2009, nhauls_sampled = 50,
                      ncores = 6, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports, h_d = the_hd,
                      dyz = the_days, quota_species = c("Canary Rockfish"), n_c = "trev")
