@@ -109,7 +109,10 @@ port_rums <- function(m_y,
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
     "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c,
     "_qspecies", spp_abv, "_nhauls", nhauls_sampled)
-  save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
+  if(Sys.info()[['sysname']] == "Darwin") save(coefs, file = paste0("/Volumes/udrive/", filename, ".Rdata"))
+  if(Sys.info()[['sysname']] != "Darwin") save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
+  
+  # save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
   #   "_seed", seed)
   # filename <- paste0("runs", r_c, "_rev", r_s, '_focyr', f_y, "_nports", nports)
