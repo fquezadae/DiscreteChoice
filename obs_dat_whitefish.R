@@ -25,6 +25,8 @@ library(nnet)
 library(tidyr)
 library(mlogit)
 library(parallel)
+library(sendmailR)
+
 
 #Install ch4 package
 devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
@@ -54,7 +56,8 @@ load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)", 
   "NEWPORT", "ASTORIA / WARRENTON")
 
-the_seed <- 1000
+# the_ports <- "EUREKA"
+the_seed <- 1001
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
@@ -63,7 +66,7 @@ quota_species = c("Canary Rockfish")
 #-----------------------------------------
 a_l <- arg_list(ncores = 4, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev',
-                nhauls_sampled= 100)
+                nhauls_sampled = 75)
 run_six_years(the_args = a_l)
 
 
