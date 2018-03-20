@@ -38,7 +38,7 @@ run_six_years <- function(the_args = a_l, years = 2009:2014){
                          n_c = "trev")  
     sendmail(from = from_email, to = to_email, subject = paste("2010", subject),
         msg = body, control = mailControl)
-    }
+  }
   
 
   if(2011 %in% years){
