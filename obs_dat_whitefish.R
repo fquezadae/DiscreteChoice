@@ -7,7 +7,7 @@ setwd('/Users/peterkuriyama/Dropbox/phd/Research/ch4')
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
 setwd('C://Users//Peter//Desktop//')
 
-
+setwd("//netid.washington.edu//csde//other//desktop//ptrkrym//Desktop//ch4")
 #---------------------------------------------------------------------------------
 #Start of obs_dat, work off this script
 #Load Packages
@@ -58,7 +58,7 @@ the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)",
   "NEWPORT", "ASTORIA / WARRENTON")
 
 # the_ports <- "EUREKA"
-the_seed <- 1002
+the_seed <- 1001
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
@@ -91,6 +91,7 @@ test_trev <- port_rums(m_y = the_args$m_y, f_y = 2011,
 #Rerun these
 #Risk coefficient of 100 with quota cost subtraction
 #Run these ones also
+#Run on CSDE Cluster
 a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'qcos',
                 nhauls_sampled = 50)
