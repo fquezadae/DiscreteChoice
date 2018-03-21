@@ -14,8 +14,8 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
   fltz <- strsplit(temp_dat$fleet_name, "_")[[1]]
   #-----------------------------------------------------------------------------------------------
   #Did vessel fish in past 30 days?
-  
-  dum30 <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
+  dum30 <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, 
+    set_date %within% temp_dat$days_inter,
     depth_bin == temp_dat$depth_bin, drvid == temp_dat$fished_drvid, 
     fleet_name %in% fltz)
   dum30 <- dum30 %>% distinct(haul_id, .keep_all = T)
@@ -27,7 +27,7 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
   
   #Add dummy coefficient
   dum30_val <- nrow(dum30)
-  
+
   #-----------------------------------------------------------------------------------------------
   # Vessel fish in the past 30 days of last year?
   dum30y <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$prev_year_days_inter,
@@ -46,6 +46,8 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
   
   #-----------------------------------------------------------------------------------------------
   #Calculate the revenues within a finer radius and from the whole fleet, rather than individual vessel
+# browser()  
+
   dum_rev <- dat1 %>% ungroup %>% filter(haul_id != temp_dat$haul_id, set_date %within% temp_dat$days_inter,
     depth_bin == temp_dat$depth_bin, fleet_name %in% fltz)
   dum_rev <- dum_rev %>% distinct(haul_id, .keep_all = T)
@@ -61,28 +63,33 @@ process_dummys2 <- function(xx, td2 = td1, dat1 = dat, hab_dist = 5, n_cost){
 #####Here control whether you use value of all species or just target and groundfish species
   #Right now including all species "tgow_rev"
   # dum_rev[is.na(dum_rev$weak_quota_value), 'weak_quota_value'] <- 0
+# browser()  
   mean_rev <- mean(dum_rev$tgow_rev)
   mean_rev <- replace(mean_rev, is.na(mean_rev), 0)
-  mean_weak <- mean(dum_rev$weak_quota_value, na.rm = T)
-  mean_weak <- replace(mean_weak, is.na(mean_weak), 0)
   
-  dum_rev$quota_cost <- dum_rev$avg_quota_price * dum_rev$apounds
-  mean_qc <- mean(dum_rev$quota_cost, na.rm = T)
-  mean_qc <- replace(mean_qc, is.na(mean_qc), 0)
+  dum_rev_dollars <- mean_rev
 
-  #Calculate different values based on arguments
-  if(n_cost == "trev"){
-    dum_rev_dollars <- mean_rev
-  }
+#Deprecated features
+  # mean_weak <- mean(dum_rev$weak_quota_value, na.rm = T)
+  # mean_weak <- replace(mean_weak, is.na(mean_weak), 0)
+  
+  # dum_rev$quota_cost <- dum_rev$avg_quota_price * dum_rev$apounds
+  # mean_qc <- mean(dum_rev$quota_cost, na.rm = T)
+  # mean_qc <- replace(mean_qc, is.na(mean_qc), 0)
 
-  if(n_cost == 'cons'){
-    dum_rev_dollars <- mean_rev - mean_weak
-  }
+  # #Calculate different values based on arguments
+  # if(n_cost == "trev"){
+  #   dum_rev_dollars <- mean_rev
+  # }
 
-  #quota costs for all species included
-  if(n_cost == "qcos"){
-    dum_rev_dollars <- mean_rev - mean_qc
-  }
+  # if(n_cost == 'cons'){
+  #   dum_rev_dollars <- mean_rev - mean_weak
+  # }
+
+  # #quota costs for all species included
+  # if(n_cost == "qcos"){
+  #   dum_rev_dollars <- mean_rev - mean_qc
+  # }
   
   # dum_rev_dollars <- mean_rev - mean_weak
   

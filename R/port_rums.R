@@ -59,7 +59,7 @@ port_rums <- function(m_y,
     print("use revenues minus quota costs")
     tows_clust$tgow_rev <- tows_clust$tgow_rev2
   }
-      
+
   #With a vector of species, zero out quota costs that are not in the vector
   #Give vector of species to subtract 
   #------------------------

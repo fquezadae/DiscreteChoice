@@ -135,6 +135,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls <- plyr::ldply(sampled_hauls)
 
   #-----------------------------------------------------------------------------
+# browser()  
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
   sampled_hauls$prev_year_set_date <- sampled_hauls$set_date - days(365)
@@ -150,7 +151,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #What were the average revenues in each location
   tow_dates <- sampled_hauls %>% 
     select(haul_id, drvid, unq_clust, set_date, prev_days_date, prev_year_set_date, prev_year_days_date,
-      avg_long, avg_lat, set_lat, set_long, up_lat, up_long, avg_depth, depth_bin, unq, fished_drvid)
+      avg_long, avg_lat, set_lat, set_long, up_lat, up_long, avg_depth, depth_bin, unq, fished_drvid,
+      tgow_rev)
   
   #Look at the unique dates and clusters only
   # td1 <- tow_dates %>% distinct(unq_clust, set_date)
@@ -164,11 +166,11 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   
   # td1 <- tow_dates %>% distinct(unq_clust, set_date, .keep_all = T)
   td1 <- tow_dates
-# browser()
+
   #-----------------------------------------------------------------------------  
   #Process dummy variables
 # pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
-  # yy <- process_dummys2(xx = 3, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
+# yy <- process_dummys2(xx = 2, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
   
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
