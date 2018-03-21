@@ -5,8 +5,9 @@ setwd('/Users/peterkuriyama/Dropbox/phd/Research/ch4')
 # setwd('c://Users//Peter//ch4')
 
 # list.files("//udrive.uw.edu//udrive//file_clusts_dist.Rdata")
-setwd('C://Users//Peter//Desktop//')
+setwd("C://Users//Peter//Dropbox//phd//research//ch4")
 
+#
 setwd("//netid.washington.edu//csde//other//desktop//ptrkrym//Desktop//ch4")
 #---------------------------------------------------------------------------------
 #Start of obs_dat, work off this script
@@ -58,52 +59,43 @@ the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)",
   "NEWPORT", "ASTORIA / WARRENTON")
 
 # the_ports <- "EUREKA"
-the_seed <- 1001
+the_seed <- 1002
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
-quota_species = c("Canary Rockfish")
+quota_species = c("Canary Rockfish", "Darkblotched Rockfish",
+  "Pacific Ocean Perch", "Yelloweye Rockfish", "Bocaccio Rockfish")
+
 
 #-----------------------------------------
-the_ports <- "EUREKA"
 
-the_args <- arg_list(ncores = 1, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
+##1: CSDE Cluster: Run with Coefficient of 1 and total revenues for all years 
+a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, 
                      n_c = 'trev',
                 nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2009:2014)
 
-test_qcos <- port_rums(m_y = the_args$m_y, f_y = 2011, 
-                       nhauls_sampled = the_args$nhauls_sampled,
-                       ncores = 8, seed = the_args$seed, 
-                       r_c = the_args$r_c, r_s = the_args$r_s, 
-                       ports = the_args$ports, h_d = the_args$h_d,
-                       dyz = the_args$dyz, quota_species = the_args$quota_species, 
-                       n_c = "qcos")  
-
-test_trev <- port_rums(m_y = the_args$m_y, f_y = 2011, 
-                       nhauls_sampled = the_args$nhauls_sampled,
-                       ncores = 8, seed = the_args$seed, 
-                       r_c = the_args$r_c, r_s = the_args$r_s, 
-                       ports = the_args$ports, h_d = the_args$h_d,
-                       dyz = the_args$dyz, quota_species = the_args$quota_species, 
-                       n_c = "trev")  
-#-----------------------------------------
-#Rerun these
-#Risk coefficient of 100 with quota cost subtraction
-#Run these ones also
-#Run on CSDE Cluster
+##2: Blackfish Run: with Coefficient of 100 and quota costs for 2011:2014 for all 
+#constraining species
 a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
-                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'qcos',
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
                 nhauls_sampled = 50)
 run_six_years(the_args = a_l, years = 2011:2014)
+#Because there's no difference in the model looking at Canary only
 
 
-#Things to run
-#To Run runs
-a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 100, r_s = 100, ports = the_ports,
-                     h_d = the_hd, dyz = the_days, quota_species = quota_species, n_c = 'trev',
+##3: Some computer: Run with a different seed to see if results change
+
+a_l <- arg_list(ncores = 8, seed = the_seed + 10, r_c = 1, r_s = 100, 
+      ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'trev',
                 nhauls_sampled = 50)
-run_six_years(the_args = a_l, years = 2011:2014)
+run_six_years(the_args = a_l, years = 2009:2014)
+
+
 
 
 #-----------------------------------------
