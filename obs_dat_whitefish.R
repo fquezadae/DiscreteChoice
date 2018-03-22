@@ -87,7 +87,6 @@ run_six_years(the_args = a_l, years = 2011:2014)
 
 
 ##3: Some computer: Run with a different seed to see if results change
-
 a_l <- arg_list(ncores = 10, seed = the_seed + 10, r_c = 1, r_s = 100, 
       ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, 
@@ -95,13 +94,28 @@ a_l <- arg_list(ncores = 10, seed = the_seed + 10, r_c = 1, r_s = 100,
                 nhauls_sampled = 50)
 run_six_years(the_args = a_l, years = 2009:2014)
 
-#4: Run with 75 hauls
+#4: Run with 75 hauls - CSDE
 a_l <- arg_list(ncores = 10, seed = the_seed + 10, r_c = 1, r_s = 100, 
                 ports = the_ports,
                 h_d = the_hd, dyz = the_days, quota_species = quota_species, 
                 n_c = 'trev',
                 nhauls_sampled = 75)
 run_six_years(the_args = a_l, years = 2009:2014)
+
+#5: Run with 75 hauls and different seed - Whitefish
+a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, 
+                ports = the_ports,
+                h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                n_c = 'trev',
+                nhauls_sampled = 75)
+run_six_years(the_args = a_l, years = 2009:2014)
+
+#6: Run with coefficient of 50 and quota costs for species - Blackfish
+a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 50, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
 
 
 #-----------------------------------------
