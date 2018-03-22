@@ -4,7 +4,7 @@
 #rev_type can be "qcos", "trev"
 
 compare_coefficients <- function(risk_coefficient, net_cost,
-  seed, nhauls){
+  seed, nhauls, years = 2009:2014, nports = 4){
 
   #----------------------------------------------------------
   #Determine directory based on system type
@@ -18,7 +18,7 @@ compare_coefficients <- function(risk_coefficient, net_cost,
     udrive_files <- list.files(the_directory)  
   }
   if(length(udrive_files) == 0) stop('check udrive connection')
-# browser()
+
   #----------------------------------------------------------
   #Now read in the coefficients
   #By risk coefficient
@@ -33,34 +33,83 @@ compare_coefficients <- function(risk_coefficient, net_cost,
 
   #Add in number of hauls
   coefs_names <- coefs_names[grep(as.character(nhauls), coefs_names)]  
-  ##Maybe add in seed later
+
+  #Filter by years
+  yrz <- paste(years, collapse = "|")
+  coefs_names <- coefs_names[which(grepl(yrz, coefs_names))  ]
+
+  #number of ports, defaults to 4
+  coefs_names <- coefs_names[grep(as.character(nports), coefs_names)]  
 
   #----------------------------------------------------------
+  process_coefficients(filename = coefs_names[2],
+    dir = the_directory)
+
   #Process the coefficients
   coefs <- lapply(coefs_names, FUN = function(xx)
     process_coefficients(filename = xx, dir = the_directory))
   coefs <- ldply(coefs)
   coefs$net_cost <- net_cost
+  print(coefs_names)
   return(coefs)
 }
 
 #----------------------------------------------------------------
+#Compare results with quotas species
+trev1 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
+  seed = 1002, nhauls = 50, years = 2011:2014)
+trev1$seed <- 1002
+
+qcos <- compare_coefficients(risk_coefficient = 100,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
+qcos$seed <- 1002
+
+coefs <- rbind(trev1, qcos)
+
+coefs <- coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') %>%
+           group_by(year, port, net_cost) %>%
+           summarize(dr = dist / rev, dr1 = dist1 / rev1)
+           
+
+#See how distance/revenue tradeoffs change over time
+coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') %>%
+  group_by9
+
+
+#Plot them against
+coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') %>%
+  group_by(year, port, net_cost) %>% 
+  summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% 
+  ggplot(aes(x = dr, y = dr1)) + geom_point(aes(colour = year,
+    shape = net_cost), size = 3) + 
+  facet_wrap(~ port, scales = 'free')
+
+#----------------------------------------------------------------
 #Compare results from different seeds
 trev1 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
-  seed = 1002)
+  seed = 1002, nhauls = 50)
 trev1$seed <- 1002
 
 trev2 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
-  seed = 1012)
+  seed = 1012, nhauls = 50)
 trev2$seed <- 1012
 
 coefs <- rbind(trev1, trev2)
 
+#Look at the raw change in coefficient values over time
+coefs %>% ggplot(aes(x = year, y = value,
+  group = net_cost)) + geom_point(aes(colour = port),
+  size = 2) + geom_line(aes(x = year, y = value, group = net_cost,
+    colour = net_cost)) + 
+  facet_wrap(~ coef, scales = "free") 
+
+
+
 coefs %>% dcast(year + port + seed ~ coef, value.var = 'value') %>%
-  filter(year <= 2012) %>% group_by(year, port, seed) %>% 
+  group_by(year, port, seed) %>% 
   summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% 
   ggplot(aes(x = dr, y = dr1)) + geom_point(aes(colour = year), size = 3) + 
-  facet_wrap(~ port)
+  facet_wrap(~ port, scales = 'free_x')
 
 
 #----------------------------------------------------------------
@@ -203,15 +252,14 @@ coefs <- rbind(coefs5, coefs10, coefs50)
 
 cc <- dcast(coefs, port + price_multiplier + year + hdist + spp ~ coef, value.var = 'value')
 cc <- cc %>% group_by(port, year, price_multiplier) %>% summarize(rd = rev/dist, rd1 = rev1 / dist1) %>%
-	as.data.frame
+  as.data.frame
 
 #rd
 cc$year <- as.numeric(cc$year)
 cc %>% ggplot() + geom_point(aes(x = year, y = rd, colour = price_multiplier)) + facet_grid(~ port) + 
-	geom_vline(xintercept = 2010.5, lty = 2)
+  geom_vline(xintercept = 2010.5, lty = 2)
 
 cc %>% ggplot() + geom_point(aes(x = year, y = rd1, colour = price_multiplier)) + facet_wrap(~ port)
-
 
 
 
