@@ -70,7 +70,7 @@ quota_species = c("Canary Rockfish", "Darkblotched Rockfish",
 #-----------------------------------------
 
 ##1: CSDE Cluster: Run with Coefficient of 1 and total revenues for all years 
-a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports,
+a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, 
                      n_c = 'trev',
                 nhauls_sampled = 50)
@@ -88,14 +88,20 @@ run_six_years(the_args = a_l, years = 2011:2014)
 
 ##3: Some computer: Run with a different seed to see if results change
 
-a_l <- arg_list(ncores = 8, seed = the_seed + 10, r_c = 1, r_s = 100, 
+a_l <- arg_list(ncores = 10, seed = the_seed + 10, r_c = 1, r_s = 100, 
       ports = the_ports,
                      h_d = the_hd, dyz = the_days, quota_species = quota_species, 
                      n_c = 'trev',
                 nhauls_sampled = 50)
 run_six_years(the_args = a_l, years = 2009:2014)
 
-
+#4: Run with 75 hauls
+a_l <- arg_list(ncores = 10, seed = the_seed + 10, r_c = 1, r_s = 100, 
+                ports = the_ports,
+                h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                n_c = 'trev',
+                nhauls_sampled = 75)
+run_six_years(the_args = a_l, years = 2009:2014)
 
 
 #-----------------------------------------
