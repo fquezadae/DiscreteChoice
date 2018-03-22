@@ -66,7 +66,6 @@ the_hd <- 5.1 #habit distance
 quota_species = c("Canary Rockfish", "Darkblotched Rockfish",
   "Pacific Ocean Perch", "Yelloweye Rockfish", "Bocaccio Rockfish")
 
-
 #-----------------------------------------
 
 ##1: CSDE Cluster: Run with Coefficient of 1 and total revenues for all years 
@@ -117,6 +116,11 @@ a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 50, r_s = 100, ports = the_po
                 nhauls_sampled = 50)
 run_six_years(the_args = a_l, years = 2011:2014)
 
+
+####To RUN Scenarios
+#7: Run with coefficient of 10 and quota costs for species 
+#8: Run with coefficient of 5 and quota costs for species
+#9: Run with coefficient of 5 and quota costs for Canary only?
 
 #-----------------------------------------
 #Risk coefficient of 2009
