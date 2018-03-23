@@ -116,11 +116,30 @@ a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 50, r_s = 100, ports = the_po
                 nhauls_sampled = 50)
 run_six_years(the_args = a_l, years = 2011:2014)
 
+#7: Run with coefficient of 10 and quota costs for species - CSDE
+a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 10, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
+
+#8: Run with coefficient of 5 and quota costs for species - Blackfish
+a_l <- arg_list(ncores = 8, seed = the_seed, r_c = 5, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
+
+#9: Run with coefficient of 1 and quota costs for species - Whitefish
+a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011:2014)
 
 ####To RUN Scenarios
-#7: Run with coefficient of 10 and quota costs for species 
-#8: Run with coefficient of 5 and quota costs for species
-#9: Run with coefficient of 1 and quota costs for species
+
+
 #9: Run with coefficient of 5 and quota costs for Canary only?
 
 #-----------------------------------------
