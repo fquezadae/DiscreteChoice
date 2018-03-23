@@ -120,6 +120,7 @@ run_six_years(the_args = a_l, years = 2011:2014)
 ####To RUN Scenarios
 #7: Run with coefficient of 10 and quota costs for species 
 #8: Run with coefficient of 5 and quota costs for species
+#9: Run with coefficient of 1 and quota costs for species
 #9: Run with coefficient of 5 and quota costs for Canary only?
 
 #-----------------------------------------

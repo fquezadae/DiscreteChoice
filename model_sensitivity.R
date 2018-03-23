@@ -59,21 +59,62 @@ compare_coefficients <- function(risk_coefficient, net_cost,
 trev1 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
   seed = 1002, nhauls = 50, years = 2011:2014)
 trev1$seed <- 1002
+trev1$net_cost <- "Revenues only"
+
 
 qcos <- compare_coefficients(risk_coefficient = 100,
   net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
 qcos$seed <- 1002
+qcos$net_cost <- "100x quota species"
 
 coefs <- rbind(trev1, qcos)
+coefs$net_cost <- factor(coefs$net_cost, 
+  levels = c("100x quota species", "Revenues only"))
 
-coefs <- coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') %>%
-           group_by(year, port, net_cost) %>%
-           summarize(dr = dist / rev, dr1 = dist1 / rev1)
+#Add column describing significance
+coefs$sig <- 1
+coefs[which(coefs$significance %in% c(" ", ".")), "sig"] <- 0
+
+#Look how coefficient estimates change over time
+
+#Eureka
+coefs %>% filter(port == 'EUREKA') %>% ggplot(aes(x = year, y = value)) + 
+  geom_line(aes(group = net_cost, linetype = net_cost), alpha = .5) +
+  geom_point(aes(shape = net_cost, colour = sig), size = 3, alpha = .7) + 
+  scale_colour_gradient(low = 'gray') +
+  facet_wrap(~ coef, scales = 'free') + ggtitle("Eureka Coefficients")
+
+#Newport
+coefs %>% filter(port == 'NEWPORT') %>% ggplot(aes(x = year, y = value)) + 
+  geom_line(aes(group = net_cost, linetype = net_cost), alpha = .5) +
+  geom_point(aes(shape = net_cost, colour = sig), size = 3, alpha = .7) + 
+  scale_colour_gradient(low = 'gray') +
+  facet_wrap(~ coef, scales = 'free') + ggtitle("Newport Coefficients")
+
+#Astoria
+coefs %>% filter(port == 'ASTORIA / WARRENTON') %>% ggplot(aes(x = year, y = value)) + 
+  geom_line(aes(group = net_cost, linetype = net_cost), alpha = .5) +
+  geom_point(aes(shape = net_cost, colour = sig), size = 3, alpha = .7) + 
+  scale_colour_gradient(low = 'gray') +
+  facet_wrap(~ coef, scales = 'free') + ggtitle("Astoria Coefficients")
+
+#Charleston
+coefs %>% filter(port == 'CHARLESTON (COOS BAY)') %>% ggplot(aes(x = year, y = value)) + 
+  geom_line(aes(group = net_cost, linetype = net_cost), alpha = .5) +
+  geom_point(aes(shape = net_cost, colour = sig), size = 3, alpha = .7) + 
+  scale_colour_gradient(low = 'gray') +
+  facet_wrap(~ coef, scales = 'free') + ggtitle("Charleston Coefficients")
+
+
+coefs <- coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') 
+#See how distance/revenue tradeoffs change over time
+coefs %>% group_by(year, port, net_cost) %>%
+           summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% as.data.frame
+ggplot(coefs, aes(x = year, y = dr))
            
 
-#See how distance/revenue tradeoffs change over time
 coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value') %>%
-  group_by9
+  group_by(year, port, net_)
 
 
 #Plot them against
