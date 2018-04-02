@@ -111,7 +111,32 @@ for(ii in 1:length(ports)){
       file = file_name)
 }
     
+#--------------------------
+#Process distance/revenue values
+coefs_c <- coefs %>% dcast(year + port + net_cost ~ coef, value.var = 'value')   
+coefs_dr <- coefs_c %>% group_by(year, port, net_cost) %>%
+              summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% as.data.frame
+coefs_dr <- melt(coefs_dr, id = c('year', 'port', 'net_cost'))
+coefs_dr$unq <- paste(coefs_dr$variable, coefs_dr$seed, sep = "_")
+
+
+#First Tow: distance to revenue ratio of later tows 
+coefs_dr %>% filter(variable == 'dr1') %>% 
+  ggplot(aes(x = year, y = value)) + geom_point(aes(colour = net_cost,
+    shape = net_cost), size = 2) + facet_wrap(~ port, scales = 'free') +
+  geom_line(aes(group = net_cost, colour = net_cost)) + 
+  ylab("First tows; distance to revenue ratio") + ggsave(width = 7.8, height = 7,
+    file = 'figs/coefs_by_port/dr1.png')
   
+#Later Tow: distance to revenue ratio of later tows 
+coefs_dr %>% filter(variable == 'dr') %>% 
+  ggplot(aes(x = year, y = value)) + geom_point(aes(colour = net_cost,
+    shape = net_cost), size = 2) + facet_wrap(~ port, scales = 'free') +
+  geom_line(aes(group = net_cost, colour = net_cost)) + 
+  ylab("Later tows; distance to revenue ratio") + 
+  ggsave(width = 7.8, height = 7,
+    file = 'figs/coefs_by_port/dr.png')
+
 #----------------------------------------------------------------
 #----------------------------------------------------------------
 ##Compare similarities with higher seeds
@@ -130,26 +155,79 @@ coefs$seed <- as.character(coefs$seed)
 coefs$sig <- 1
 coefs[which(coefs$significance %in% c(" ", ".")), "sig"] <- 0
 
-
-if(unique(coefs$net_cost) == 'trev'){
-  coefs_c <- coefs %>% dcast(year + port + seed ~ coef, value.var = 'value')   
-  coefs_dr <- coefs_c %>% group_by(year, port, seed) %>%
-              summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% as.data.frame
-  coefs_dr <- melt(coefs_dr, id = c('year', 'port', 'seed'))
-  coefs_dr$unq <- paste(coefs_dr$variable, coefs_dr$seed, sep = "_")
-
-  coefs_dr %>% ggplot(aes(x = year, y = value)) + geom_point(aes(colour = variable,
-    shape = seed)) + facet_wrap(~ port, scales = 'free') +
-  geom_line(aes(colour = variable, lty = seed, group = unq))
-
-}
-
-if(length(unique(coefs$net_cost)) == 2){
-  coefs_c <- coefs %>% dcast(year + port + net_cost + seed ~ coef, value.var = 'value') 
-  coefs_dr <- coefs_c %>% group_by(year, port, net_cost) %>%
+coefs_c <- coefs %>% dcast(year + port + seed ~ coef, value.var = 'value')   
+coefs_dr <- coefs_c %>% group_by(year, port, seed) %>%
             summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% as.data.frame
-}
+coefs_dr <- melt(coefs_dr, id = c('year', 'port', 'seed'))
+coefs_dr$unq <- paste(coefs_dr$variable, coefs_dr$seed, sep = "_")
 
+#Add column describing significance
+coefs$sig <- "significant"
+coefs[which(coefs$significance %in% c(" ", ".")), "sig"] <- "not significant"
+
+#specify fill colors
+coefs$unq <- paste(coefs$sig, coefs$seed, sep = "_")
+coefs$unq <- factor(coefs$unq, levels = c("not significant_1002",
+  "not significant_1012", 'significant_1002', "significant_1012"))
+
+# coefs_dr %>% ggplot(aes(x = year, y = value)) + geom_point(aes(colour = variable,
+#   shape = seed)) + facet_wrap(~ port, scales = 'free') +
+# geom_line(aes(colour = variable, lty = seed, group = unq))
+
+#--------------------------
+#Look how coefficient estimates change over time
+#Comparing different seeds with higher samples
+ports <- c("EUREKA", 'NEWPORT', 'ASTORIA / WARRENTON', "CHARLESTON (COOS BAY)")
+
+for(ii in 1:length(ports)){
+  the_port <- ports[ii]
+  port_label <- tolower(the_port)
+  port_label <- gsub(" \\/ ", " ", port_label)
+  file_name <- paste0("figs/coefs_by_port/", port_label, "_coefficients_75samples.png")
+  
+  port_label <- tools::toTitleCase(port_label)
+  
+  pp <- coefs %>% filter(port == the_port) %>% ggplot(aes(x = year, y = value)) + 
+    geom_point(aes(shape = seed, fill = unq, colour = seed), size = 2)
+  
+  coefs %>% filter(port == the_port) %>% ggplot(aes(x = year, y = value)) + 
+    geom_point(aes(shape = seed, fill = unq, colour = seed), size = 2) +
+    geom_line(aes(colour = seed, group = seed)) +
+    scale_shape_manual(values = c(21, 22)) + scale_fill_manual(values = c('white', 
+      'white', '#F8766D', '#00BFC4')) + 
+    scale_colour_manual(values = c('#F8766D', '#00BFC4')) +
+    facet_wrap(~ coef, scales = 'free') + guides(fill = 'none') +
+    ggtitle(paste0(port_label, " Coefficients")) + ggsave(width = 7.9, height = 7,
+      file = file_name)  
+}
+    
+
+
+#--------------------------
+#Process distance/revenue values
+coefs_c <- coefs %>% dcast(year + port + seed ~ coef, value.var = 'value')   
+coefs_dr <- coefs_c %>% group_by(year, port, seed) %>%
+              summarize(dr = dist / rev, dr1 = dist1 / rev1) %>% as.data.frame
+coefs_dr <- melt(coefs_dr, id = c('year', 'port', 'seed'))
+coefs_dr$unq <- paste(coefs_dr$variable, coefs_dr$seed, sep = "_")
+
+
+#First Tow: distance to revenue ratio of later tows 
+coefs_dr %>% filter(variable == 'dr1') %>% 
+  ggplot(aes(x = year, y = value)) + geom_point(aes(colour = seed,
+    shape = seed), size = 2) + facet_wrap(~ port, scales = 'free') +
+  geom_line(aes(group = seed, colour = seed)) + 
+  ylab("First tows; distance to revenue ratio") + ggsave(width = 7.8, height = 7,
+    file = 'figs/coefs_by_port/dr1_75hauls.png')
+  
+#Later Tow: distance to revenue ratio of later tows 
+coefs_dr %>% filter(variable == 'dr') %>% 
+  ggplot(aes(x = year, y = value)) + geom_point(aes(colour = seed,
+    shape = seed), size = 2) + facet_wrap(~ port, scales = 'free') +
+  geom_line(aes(group = seed, colour = seed)) + 
+  ylab("Later tows; distance to revenue ratio") + 
+  ggsave(width = 7.8, height = 7,
+    file = 'figs/coefs_by_port/dr_75hauls.png')
 #----------------------------------------------------------------
 #See how distance/revenue tradeoffs change over time
 
