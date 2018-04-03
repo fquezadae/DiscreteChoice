@@ -14,7 +14,7 @@
 
 
 compare_aic <- function(risk_coefficient, net_cost,
-  seed, nhauls, years = 2009:2014, nports = 4, dir = "/Volumes/udrive/",
+  seed, nhauls, years = 2009:2014, nports = 4,
   ncores = 6){
 
   #----------------------------------------------------------
@@ -29,7 +29,8 @@ compare_aic <- function(risk_coefficient, net_cost,
     udrive_files <- list.files(the_directory)  
   }
   if(length(udrive_files) == 0) stop('check udrive connection')
-  
+
+  dir <- the_directory
   #----------------------------------------------------------
   #Now read in the coefficients
   #By risk coefficient
@@ -50,7 +51,6 @@ compare_aic <- function(risk_coefficient, net_cost,
   coefs_names <- coefs_names[which(grepl(yrz, coefs_names))  ]
 
   #number of ports, defaults to 4
-# browser()
   coefs_names <- coefs_names[grep(as.character(nports), coefs_names)]  
   mod_names1 <- gsub("coefs", "EUR_runs", coefs_names)
   mod_names2 <- gsub("coefs", "AST_runs", coefs_names)
@@ -64,17 +64,33 @@ compare_aic <- function(risk_coefficient, net_cost,
 
   if(sum(mod_names %in% udrive_files) != length(mod_names)) stop('missing files')
   
+  #----------------------------------------------------------
   #Load the model files and extract LLs and AIC  
-  start_time <- Sys.time()
-  lls <- mclapply(mod_names, FUN = function(xx){
-    load(paste0(dir, xx))
+  library(doParallel)
+  cl <- makeCluster(ncores)
+  registerDoParallel(cl)
+
+  the_function <- function(input_file, dir){
+    load(paste0(dir, input_file))
     outs <- c(mod$logLik, AIC(mod$logLik))
     return(outs)
-  }, mc.cores = ncores)
-  run_time <- Sys.time() - start_time
-  print(run_time)
+  }
+
+  start_time <- Sys.time()
+  lls <- foreach::foreach(ii = 1:length(mod_names),
+    .packages = c('ch4')) %dopar%
+    the_function(input_file = mod_names[ii], dir = dir)
   
-  lls1 <- ldply(lls)
+  # start_time <- Sys.time()
+  # lls <- mclapply(mod_names, FUN = function(xx){
+  #   load(paste0(dir, xx))
+  #   outs <- c(mod$logLik, AIC(mod$logLik))
+  #   return(outs)
+  # }, mc.cores = ncores)
+  run_time <- Sys.time() - start_time
+  print(run_time)  
+
+  lls1 <- ldply(lls1)
   names(lls1) <- c('logLik', "AIC")
   lls1$models <- mod_names
   lls1$risk_coefficient <- risk_coefficient
