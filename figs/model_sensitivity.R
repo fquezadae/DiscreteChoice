@@ -58,24 +58,29 @@ compare_coefficients <- function(risk_coefficient, net_cost,
 
 #----------------------------------------------------------------
 ##Compare results with quotas species
-trev1 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
-  seed = 1002, nhauls = 50, years = 2011:2014)
-trev1$seed <- 1002
-trev1$net_cost <- "Revenues only"
+# trev1 <- compare_coefficients(risk_coefficient = 1, net_cost = 'trev',
+#   seed = 1002, nhauls = 50, years = 2011:2014)
+# trev1$seed <- 1002
+# trev1$net_cost <- "Revenues only"
 
 qcos <- compare_coefficients(risk_coefficient = 100,
   net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
 qcos$seed <- 1002
 qcos$net_cost <- "100x quota species"
 
+qcos1 <- compare_coefficients(risk_coefficient = 1,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
+qcos1$seed <- 1002
+qcos1$net_cost <- "1x quota species"
+
 qcos50 <- compare_coefficients(risk_coefficient = 50,
   net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
 qcos50$seed <- 1002
 qcos50$net_cost <- "50x quota species"
 
-coefs <- rbind(trev1, qcos, qcos50)
+coefs <- rbind(qcos, qcos50, qcos1)
 coefs$net_cost <- factor(coefs$net_cost, 
-  levels = c("100x quota species", "50x quota species", "Revenues only"))
+  levels = rev(c("100x quota species", "50x quota species", "1x quota species")))
 
 #Add column describing significance
 coefs$sig <- "significant"
@@ -83,12 +88,39 @@ coefs[which(coefs$significance %in% c(" ", ".")), "sig"] <- "not significant"
 
 #specify fill colors
 coefs$unq <- paste(coefs$sig, coefs$net_cost, sep = "_")
-coefs$unq <- factor(coefs$unq, levels = c("not significant_Revenues only",
+coefs$unq <- factor(coefs$unq, levels = c(
+  "not significant_1x quota species",
   "not significant_50x quota species", 'not significant_100x quota species',
-  "significant_Revenues only", "significant_50x quota species",
-  'significant_100x quota species'))
+  "significant_1x quota species",
+  "significant_50x quota species", 'significant_100x quota species'))
 
 #--------------------------
+#Load likelihood values
+qcosll <- compare_aic(risk_coefficient = 100,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014, ncores = 6)
+# qcos$seed <- 1002
+# qcos$net_cost <- "100x quota species"
+
+qcos1ll <- compare_aic(risk_coefficient = 1,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
+# qcos1$seed <- 1002
+# qcos1$net_cost <- "1x quota species"
+
+qcos50ll <- compare_aic(risk_coefficient = 50,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
+# qcos50$seed <- 1002
+# qcos50$net_cost <- "50x quota species"
+
+#--------------------------
+
+#Extract default ggplot colors
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+n = 3
+cols = gg_color_hue(n)
+
 #Look how coefficient estimates change over time
 ports <- c("EUREKA", 'NEWPORT', 'ASTORIA / WARRENTON', "CHARLESTON (COOS BAY)")
 
@@ -100,12 +132,14 @@ for(ii in 1:length(ports)){
   
   port_label <- tools::toTitleCase(port_label)
   
-  coefs %>% filter(port == the_port) %>% ggplot(aes(x = year, y = value)) + 
+  coefs %>% filter(port == the_port,
+    net_cost != "Revenues only") %>% ggplot(aes(x = year, y = value)) + 
     geom_line(aes(colour = net_cost, group = net_cost)) +
     geom_point(aes(shape = net_cost, fill = unq, colour = net_cost), 
       alpha = .7, size = 2) + scale_shape_manual(values = c(21, 22, 23)) +
-    scale_fill_manual(values = c('white', 'white', 'white',
-      'blue', 'green', 'red')) +
+    scale_fill_manual(values = c('white', 'white', 'white', 
+      cols)) +
+    scale_colour_manual(values = cols) +
     facet_wrap(~ coef, scales = 'free') + guides(fill = 'none') +
     ggtitle(paste0(port_label, " Coefficients")) + ggsave(width = 11.5, height = 9,
       file = file_name)
@@ -202,7 +236,6 @@ for(ii in 1:length(ports)){
 }
     
 
-
 #--------------------------
 #Process distance/revenue values
 coefs_c <- coefs %>% dcast(year + port + seed ~ coef, value.var = 'value')   
@@ -282,6 +315,7 @@ coefs %>% dcast(year + port + seed ~ coef, value.var = 'value') %>%
 
 
 #----------------------------------------------------------------
-
+qcos <- compare_aic(risk_coefficient = 100,
+  net_cost = 'qcos', seed = 1002, nhauls = 50, years = 2011:2014)
 
 

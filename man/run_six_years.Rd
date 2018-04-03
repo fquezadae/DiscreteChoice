@@ -5,10 +5,12 @@
 \title{Run Six Years Function
 Run six years of model with different conditions}
 \usage{
-run_six_years(the_args = a_l)
+run_six_years(the_args = a_l, years = 2009:2014)
 }
 \arguments{
 \item{the_args}{List of arguments created by arg_list}
+
+\item{years}{Years to run}
 }
 \description{
 Run Six Years Function

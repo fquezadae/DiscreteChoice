@@ -104,7 +104,7 @@ run_six_years(the_args = a_l, years = 2009:2014)
 #####
 ####Run with these years
 #####
-run_six_years(the_args = a_l, years = 2013:2014)
+# run_six_years(the_args = a_l, years = 2013:2014)
 
 #5: Run with 75 hauls and different seed - Whitefish
 a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, 
