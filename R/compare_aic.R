@@ -26,7 +26,7 @@ compare_aic <- function(risk_coefficient, net_cost,
   
   if(Sys.info()['sysname'] != 'Darwin'){  
     the_directory <- "//udrive.uw.edu//udrive//"
-    udrive_files <- list.files(the_directory)  
+    udrive_files <- list.files(the_directory)    
   }
   if(length(udrive_files) == 0) stop('check udrive connection')
 
@@ -100,6 +100,6 @@ compare_aic <- function(risk_coefficient, net_cost,
   file_name <- paste0("loglikes_riskc_", risk_coefficient, 
     "_seed_", seed, "_netcost_", net_cost, "_nhauls_", nhauls, ".Rdata")
   
-  save(lls1, file = paste0('output/', file_name))
+  save(lls1, file = paste0(the_directory, file_name))
   return(lls1)
 }
