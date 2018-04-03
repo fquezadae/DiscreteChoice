@@ -90,7 +90,7 @@ compare_aic <- function(risk_coefficient, net_cost,
   run_time <- Sys.time() - start_time
   print(run_time)  
 
-  lls1 <- ldply(lls1)
+  lls1 <- ldply(lls)
   names(lls1) <- c('logLik', "AIC")
   lls1$models <- mod_names
   lls1$risk_coefficient <- risk_coefficient
