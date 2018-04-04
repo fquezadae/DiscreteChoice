@@ -98,7 +98,7 @@ compare_aic <- function(risk_coefficient, net_cost,
   lls1$models <- mod_names
   lls1$risk_coefficient <- risk_coefficient
   lls1$nhauls <- nhauls
-  lls1$net_cost <- n  et_cost
+  lls1$net_cost <- net_cost
   lls1$seed <- seed
   file_name <- paste0("loglikes_riskc_", risk_coefficient, 
     "_seed_", seed, "_netcost_", net_cost, "_nhauls_", nhauls, ".Rdata")
