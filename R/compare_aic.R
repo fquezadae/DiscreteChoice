@@ -62,7 +62,10 @@ compare_aic <- function(risk_coefficient, net_cost,
   #Remove Ports
   mod_names <- gsub("nports4_", "", mod_names)
 
-  if(sum(mod_names %in% udrive_files) != length(mod_names)) stop('missing files')
+  if(sum(mod_names %in% udrive_files) != length(mod_names)) {
+    print('missing files')
+    browser()
+  }
   
   #----------------------------------------------------------
   #Load the model files and extract LLs and AIC  
