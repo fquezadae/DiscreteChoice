@@ -16,13 +16,14 @@
 #' @param rev_scale Scale the revenue by this factor
 #' @param net_cost Type of netting of costs;
 #' @param habit_distance Distance of spatiotemporal filter
+#' @param return_hauls Option to return the hauls before processing dummys, defaults to FALSE
 #' 
 #' @export
 
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
-  model_type = 'no_bycatch', net_cost, habit_distance){
+  model_type = 'no_bycatch', net_cost, habit_distance, return_hauls = FALSE){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
@@ -171,7 +172,10 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Process dummy variables
 # pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
 # yy <- process_dummys2(xx = 2, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
-  
+  if(return_hauls == TRUE) return(sampled_hauls)
+# browser()
+# stopCluster(cl)
+
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
       process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
