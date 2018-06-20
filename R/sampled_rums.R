@@ -172,9 +172,13 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Process dummy variables
 # pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
 # yy <- process_dummys2(xx = 2, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
-  if(return_hauls == TRUE) return(sampled_hauls)
+  if(return_hauls == TRUE) {
+    stopCluster(cl)
+    return(sampled_hauls)
+  }
+
 # browser()
-# stopCluster(cl)
+
 
   dummys2 <- foreach::foreach(ii = 1:nrow(td1), 
     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
@@ -271,10 +275,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
     
     ps <- ps[c('dist', 'dist1', 'rev', 'rev1', 'dmiss','dum30', 'dum30y')]
   }  
-
-  if(model_type == 'dummy_bycatch'){
-
-  }
   
   #Add significance values
   coefs$p_values <- round(ps, digits = 5)
