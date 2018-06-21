@@ -4,13 +4,13 @@
 #' @param years Vector of years; default to 2011:2014
 #' @export
 
-get_filenames <- function(the_args, years = 2011:2014){
+get_filenames <- function(the_args, years = 2011:2014, ports = NA){
   #Define things
   m_y = the_args$m_y; 
   nhauls_sampled = the_args$nhauls_sampled;
   ncores = the_args$ncores; seed = the_args$seed; 
   r_c = the_args$r_c; r_s = the_args$r_s; 
-  ports = the_args$ports; h_d = the_args$h_d;
+  h_d = the_args$h_d;
   dyz = the_args$dyz; quota_species = the_args$quota_species; 
   n_c = the_args$n_c  
 
@@ -19,8 +19,12 @@ get_filenames <- function(the_args, years = 2011:2014){
     collapse = "")
   
   #Loop through port and year combinations
-  expand.grid()
-  ports <- ldply(ports)$V1
+  if(is.na(ports)) {
+    ports <- the_args$ports
+    ports <- ldply(ports)$V1
+  }
+  
+  # if(is.na(ports) == FALSE)
   port_sv <- substr(ports, 1, 3)
 
   combs <- expand.grid(port_sv, years, KEEP.OUT.ATTRS = FALSE,
