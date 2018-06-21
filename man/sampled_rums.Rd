@@ -8,7 +8,7 @@ Function calls mlogit}
 sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1, ndays = 60,
   focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
-  model_type = "no_bycatch", net_cost, habit_distance)
+  model_type = "no_bycatch", net_cost, habit_distance, return_hauls = FALSE)
 }
 \arguments{
 \item{data_in}{Data going in to the function; default is filt_clusts}
@@ -36,6 +36,8 @@ sampled_rums(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
 \item{net_cost}{Type of netting of costs;}
 
 \item{habit_distance}{Distance of spatiotemporal filter}
+
+\item{return_hauls}{Option to return the hauls before processing dummys, defaults to FALSE}
 
 \item{trip_dists}{Distances covered by each trip}
 }

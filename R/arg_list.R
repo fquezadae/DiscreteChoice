@@ -1,5 +1,8 @@
 #---------------------------------------------------------------------------------
 #Function to generate list of arguments
+#' Argument list
+#' Function that creates arguments
+
 #' @param m_y minimum year
 #' @export
 

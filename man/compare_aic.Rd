@@ -5,7 +5,7 @@
 \title{Function to compare AIC and LL values}
 \usage{
 compare_aic(risk_coefficient, net_cost, seed, nhauls, years = 2009:2014,
-  nports = 4, dir = "/Volumes/udrive/", ncores = 6)
+  nports = 4, ncores = 6)
 }
 \arguments{
 \item{risk_coefficient}{Risk coefficient}
@@ -20,9 +20,9 @@ compare_aic(risk_coefficient, net_cost, seed, nhauls, years = 2009:2014,
 
 \item{nports}{Number of ports}
 
-\item{dir}{Path to directory}
-
 \item{ncores}{Number of cores to use}
+
+\item{dir}{Path to directory}
 }
 \description{
 Function to compare AIC and LL values
