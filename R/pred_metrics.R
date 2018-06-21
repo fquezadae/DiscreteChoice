@@ -3,11 +3,11 @@
 #' Function that calculates metrics based on the tow with the highest modeled probability
 
 #' @param choices Choice set
-#' @param model Model results
+#' @param mod Model results
 
 #' @export
 
-pred_metrics <- function(choices, model){
+pred_metrics <- function(choices, mod){
 
   rn <- row.names(mod$model)
   rn <- ldply(strsplit(rn, split = "\\."))
