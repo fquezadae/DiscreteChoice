@@ -8,7 +8,7 @@
 #' @export
 
 pred_metrics <- function(choices, mod){
-
+browser()
   rn <- row.names(mod$model)
   rn <- ldply(strsplit(rn, split = "\\."))
   rn <- unique(rn$V1)
