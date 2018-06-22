@@ -136,7 +136,6 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   sampled_hauls <- plyr::ldply(sampled_hauls)
 
   #-----------------------------------------------------------------------------
-# browser()  
   #Calculate revenues from each period
   sampled_hauls$prev_days_date <- sampled_hauls$set_date - days(ndays)
   sampled_hauls$prev_year_set_date <- sampled_hauls$set_date - days(365)

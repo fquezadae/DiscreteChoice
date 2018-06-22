@@ -39,11 +39,6 @@ states_map <- map_data("state")
 load('output//tows_clust_0621.Rdata')
 tows_clust %>% filter(set_year == 2011) %>% distinct(haul_id, .keep_all = T) %>%
     group_by(trip_id) %>% summarize(avg_tgow = mean(tgow_rev))
-tows_clust %>% filter(tgow_rev == max(tgow_rev)) %>% head
-
-
-
-# load_all()
 
 #------------------------------------------------------------------------------
 #Sensitivity Runs with different quota species
@@ -52,7 +47,7 @@ the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)",
   "NEWPORT", "ASTORIA / WARRENTON")
 
 # the_ports <- "EUREKA"
-the_seed <- 1002
+the_seed <- 1022
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
