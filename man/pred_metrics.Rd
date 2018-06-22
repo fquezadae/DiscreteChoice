@@ -5,12 +5,12 @@
 \title{Prediction Metrics
 Function that calculates metrics based on the tow with the highest modeled probability}
 \usage{
-pred_metrics(choices, model)
+pred_metrics(choices, mod)
 }
 \arguments{
 \item{choices}{Choice set}
 
-\item{model}{Model results}
+\item{mod}{Model results}
 }
 \description{
 Prediction Metrics
