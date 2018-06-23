@@ -58,8 +58,7 @@ load("//udrive.uw.edu//udrive//tows_clust_1010.Rdata")
 the_ports <- list("EUREKA", "CHARLESTON (COOS BAY)", 
   "NEWPORT", "ASTORIA / WARRENTON")
 
-# the_ports <- "EUREKA"
-the_seed <- 1002
+the_seed <- 1022
 the_days <- 30
 the_hd <- 5.1 #habit distance
 
