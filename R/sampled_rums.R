@@ -280,7 +280,21 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   coefs[which(coefs$p_values <= .01), 'significance'] <- "**"
   coefs[which(coefs$p_values <= .001), 'significance'] <- "***"
 
-  outs <- list(coefs = coefs, mod = res)
+  #Generate and format the predictions  
+  preds <- pred_metrics(choices = sampled_hauls, mod = res)
+  preds <- data.frame(score1 = preds[1], score2 = preds[2], score3 = preds[3],
+    score4 = preds[4])
+  preds$min_year <- min_year
+  preds$focus_year <- focus_year
+  preds$nhauls_sampled <- nhauls_sampled
+  preds$seed <- preds$seed
+  preds$risk_coefficient <- risk_coefficient
+  preds$rev_scale <- rev_scale
+  preds$habit_distance <- habit_distance
+  preds$ndays <- ndays
+  preds$net_cost <- net_cost
+
+  outs <- list(coefs = coefs, mod = res, preds = preds, choices = sampled_hauls)
   return(outs)
 
 }
