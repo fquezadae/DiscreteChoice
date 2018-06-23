@@ -83,17 +83,17 @@ port_rums <- function(m_y,
 
     #Species abbreviations
     spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
-    filename <- paste0(port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
+    filename <- paste0("choices_", port_sv, "_","runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y,  
       "_seed", seed, "_nday", dyz, '_hdist', h_d, "_netcost", n_c, 
       "_qspecies", spp_abv, "_nhauls", nhauls_sampled)
 
-    mod <- rum[[2]]    
+    choice_set <- rum[[4]]    
     if(Sys.info()[['sysname']] == "Darwin"){
-      save(mod, file = paste0("/Volumes/udrive/", filename, '.Rdata'))
+      save(choice_set, file = paste0("/Volumes/udrive/", filename, '.Rdata'))
     }
     
     if(Sys.info()[['sysname']] != "Darwin"){
-      save(mod, file = paste0("//udrive.uw.edu//udrive//", filename, '.Rdata'))
+      save(choice_set, file = paste0("//udrive.uw.edu//udrive//", filename, '.Rdata'))
     }
     print(r_time)
     print(rum[[1]])
@@ -105,14 +105,24 @@ port_rums <- function(m_y,
   ports_names <- as.vector(ports_names$V1)
   
   coefs <- lapply(runs, FUN = function(xx) xx[[1]])
+  preds <- lapply(runs, FUN = function(xx) xx[[3]])
+  preds <- ldply(preds)
+
   names(coefs) <- ports_names
-  
+
   spp_abv <- paste0(sapply(quota_species, FUN = function(xx) substr(xx, 1, 2)), collapse = "")
+
+  #Save Coefficients
   filename <- paste0("coefs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
     "_seed", seed, '_nday', dyz, "_hdist", h_d, "_netcost", n_c,
     "_qspecies", spp_abv, "_nhauls", nhauls_sampled)
   if(Sys.info()[['sysname']] == "Darwin") save(coefs, file = paste0("/Volumes/udrive/", filename, ".Rdata"))
   if(Sys.info()[['sysname']] != "Darwin") save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
+  
+  #Save the predictions
+  filename <- gsub("coefs", "preds", filename)
+  if(Sys.info()[['sysname']] == "Darwin") save(preds, file = paste0("/Volumes/udrive/", filename, ".Rdata"))
+  if(Sys.info()[['sysname']] != "Darwin") save(preds, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   
   # save(coefs, file = paste0("//udrive.uw.edu//udrive//", filename, ".Rdata"))
   # filename <- paste0("runs", r_c, "_rev", r_s, "_minyr", m_y, '_focyr', f_y, "_nports", nports,
