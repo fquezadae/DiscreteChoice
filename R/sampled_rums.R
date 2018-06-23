@@ -294,6 +294,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   preds$ndays <- ndays
   preds$net_cost <- net_cost
 
+  preds$port <- the_port
   outs <- list(coefs = coefs, mod = res, preds = preds, choices = sampled_hauls)
   return(outs)
 
