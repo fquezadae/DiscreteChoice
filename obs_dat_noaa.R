@@ -53,6 +53,15 @@ quota_species = c("Canary Rockfish", "Darkblotched Rockfish",
   "Pacific Ocean Perch", "Yelloweye Rockfish", "Bocaccio Rockfish")
 
 #-----------------------------------------
+pp <- "ASTORIA / WARRENTON"
+
+a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = pp,
+                     h_d = the_hd, dyz = the_days, quota_species = quota_species, 
+                     n_c = 'qcos',
+                nhauls_sampled = 50)
+run_six_years(the_args = a_l, years = 2011)
+
+#-----------------------------------------
 
 ##1: Run with Coefficient of 1 and total revenues for all years 
 a_l <- arg_list(ncores = 10, seed = the_seed, r_c = 1, r_s = 100, ports = the_ports,

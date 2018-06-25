@@ -99,9 +99,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   hauls <- hauls %>% left_join(prev_hauls, by = c('trip_id', 'prev_haul_num'))
 
   #Calculate depth bin proportions
+  # library(dplyr)
+  
   dbp <- dist_hauls_catch_shares %>% filter(depth_bin != 69) %>%
     group_by(depth_bin) %>% summarize(nvals = length(unique(haul_id))) %>%
     mutate(tot_nvals = sum(nvals), prop = nvals / tot_nvals)
+
   dbp <- as.data.frame(dbp)
   
   #Add number of values to sample
@@ -169,7 +172,12 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 
   #-----------------------------------------------------------------------------  
   #Process dummy variables
-# pd <- process_dummys2(xx = 1, td2 = td1, dat1 = dat)    
+# pd <- process_dummys2(xx = 2, td2 = td1, dat1 = dat)    
+# dummys2 <- foreach::foreach(ii = 1:10000, 
+#     .packages = c("dplyr", 'lubridate', 'ch4')) %dopar% 
+#       process_dummys2(xx = ii, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
+
+
 # yy <- process_dummys2(xx = 2, td2 = td1, dat1 = dat, hab_dist = habit_distance, n_cost = net_cost)
   if(return_hauls == TRUE) {
     stopCluster(cl)
