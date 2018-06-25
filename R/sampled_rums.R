@@ -233,6 +233,9 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   #Fit mlogit models returning the coefficients, the models, and the data going into the 
   #Filter out tows with missing values for distance
   rdo <- rdo %>% filter(is.na(distance) == FALSE)
+  remove_all_missing <- rdo %>% group_by(fished_haul) %>% 
+    summarize(keep = sum(fished)) %>% filter(keep != 1) %>% as.data.frame
+  rdo <- rdo %>% filter(fished_haul %in% remove_all_missing$fished_haul == F)
 
   #Fit the model for everything at once  
   the_tows <- mlogit.data(rdo, shape = 'long', choice = 'fished', alt.var = 'alt_tow',
