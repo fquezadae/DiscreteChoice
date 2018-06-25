@@ -99,7 +99,7 @@ port_rums <- function(m_y,
     print(rum[[1]])
     return(rum)
   })
-browser()
+
   ports_names <- lapply(ports, FUN = function(yy) paste(yy, collapse = "_"))
   ports_names <- ldply(ports_names)
   ports_names <- as.vector(ports_names$V1)
