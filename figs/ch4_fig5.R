@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------------------------------
-# dev.new(width = 8.95, height = 8.43)
+# dev.new(width = 8.95, height = 8.43, res = 250)
 
 png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
@@ -7,7 +7,7 @@ png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res =
 # dev.new(width = 8.75, height = 8.34)
 
 matlay <- matrix(c( 1,  2, 0,  3,  4,  5,  6, 
-                    7,  8, 0,   9, 10, 11, 12,
+                    7,  8, 0,  9, 10, 11, 12,
                    13, 14, 0, 15, 16, 17, 18,
                    19, 20, 0, 21, 22, 23, 24, 
                    25, 26, 0, 27, 28, 29, 30,
