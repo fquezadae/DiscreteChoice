@@ -15,6 +15,81 @@ dd <- runs[[1]]$mod$model %>% head
 
 fitted(runs[[1]]$mod, outcome = FALSE) %>% dim
 
+#-------------------------------------------------------------------------------------
+#Load the June 2018 run coefficients
+dir_name <- '/Volumes/udrive/'
+dir_name <- '//udrive.uw.edu//udrive//'
+
+udrive_files <- list.files(dir_name)
+
+udrive_files <- udrive_files[grep('coefs', udrive_files)]
+udrive_files <- udrive_files[grep('seed', udrive_files)]
+udrive_files <- udrive_files[grep('nports2|nports4', udrive_files)]
+
+the_coefs <- lapply(udrive_files, FUN = function(xx){
+# print(xx)
+  filename <- paste0(dir_name, xx)
+  load(filename)
+  coefs <- lapply(coefs, FUN = function(yy){
+    yy$coef_type <- row.names(yy)
+    return(yy)
+  })
+  coefs <- ldply(coefs)
+  if(dir_name == "//udrive.uw.edu//udrive//") to_parse <- 
+    strsplit(filename, "\\//")[[1]][4]
+  if(dir_name != "//udrive.uw.edu//udrive//") to_parse <- 
+    strsplit(filename, "\\/")[[1]][4]
+  
+  to_parse <- strsplit(to_parse, "_")[[1]]
+  
+  coefs$year <- substr(to_parse[4], 6, 10)
+  coefs$net_cost <- substr(to_parse[1], 6, 8)
+  coefs$rev_scaling <- substr(to_parse[2], 4, 6)
+  coefs$net_cost_type <- substr(to_parse[9], 8, 12)
+  coefs$seed <- substr(to_parse[6], 5, 9)
+  return(coefs)
+})
+
+the_coefs <- ldply(the_coefs)
+names(the_coefs)[1] <- 'port'
+the_coefs$value <- paste(formatC(the_coefs$coefs, digits = 5, format = 'f'), the_coefs$significance)
+the_coefs <- the_coefs[which(duplicated(the_coefs) == F), ]
+
+
+
+
+
+#Compare distance to revenue ratios
+coefs_cast <- dcast(the_coefs, port + year + net_cost + net_cost_type ~ coef_type, value.var = "coefs")
+
+the_coefs %>% filter(net_cost_type == "trev" & year == 2011)
+
+coefs_cast %>% filter(net_cost_type == 'trev') %>% ggplot(aes(x = year,
+  y = ))
+
+
+
+coefs_cast %>% group_by(port, year, net_cost, net_cost_type) %>%
+  summarize(dr = dist / rev, dr1 = dist1/rev1) %>% as.data.frame %>%
+  melt %>% filter(net_cost_type == "qcos", variable == "dr" & net_cost %in% c(1, 5)) %>% ggplot(aes(x = year, y = value, colour = net_cost, 
+    shape = net_cost_type)) + geom_point(size = 2) + 
+  facet_wrap(~ port, scales = 'free')
+
+#----------------------------------------------------
+#Format just the total revenue model runs
+trevs <- the_coefs %>% filter(net_cost_type == "trev") %>% 
+  dcast(port + coef_type ~ year, value.var = "value")
+
+coef_descs <- data.frame(coef_type = unique(trevs$coef_type), 
+  coef_type_desc = c("Later Tow Distance", "First Tow Distance",
+    "Fleet Habit", "Individual Habit", "Individual Habit Last Year", 
+    "Later Tow Revenue", "First Tow Revenue"), stringsAsFactors = F) 
+
+trevs <- trevs %>% left_join(coef_descs, by = 'coef_type')
+write.csv(trevs, file = 'output//the_coefs_06_21_nday30_hdist5.1_for_plot.csv',
+  row.names = F)
+
+
 
 #-------------------------------------------------------------------------------------
 
