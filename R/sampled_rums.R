@@ -28,6 +28,7 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
   ##Filter the data
+
   dat <- data_in %>% filter(set_year >= min_year, set_year <= max_year, 
     fleet_name %in% the_port)
 
@@ -304,7 +305,8 @@ sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON"
   preds$habit_distance <- habit_distance
   preds$ndays <- ndays
   preds$net_cost <- net_cost
-
+  
+  if(length(the_port) > 1) the_port <- paste(the_port, collapse = " and ")
   preds$port <- the_port
   outs <- list(coefs = coefs, mod = res, preds = preds, choices = sampled_hauls)
   return(outs)
