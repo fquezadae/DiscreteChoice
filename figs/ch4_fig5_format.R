@@ -108,7 +108,8 @@ port_plot <- port_plot[-4]
 #------------------------------------------------------------------------------------------------------
 #add significance values also
 
-coefs <- read.csv("output//the_coefs_06_21_nday30_hdist5.1_for_plot.csv", stringsAsFactors = F)
+# coefs <- read.csv("output//the_coefs_06_21_nday30_hdist5.1_for_plot.csv", stringsAsFactors = F)
+coefs <- read.csv("output//the_coefs_06_27_nday30_hdist5.1_for_plot.csv", stringsAsFactors = F)
 names(coefs)<- gsub("X", "", names(coefs))
 
 
