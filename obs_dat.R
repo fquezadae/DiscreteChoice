@@ -39,7 +39,9 @@ states_map <- map_data("state")
 #---------------------------------------------------------------------------------
 #Load the data
 # load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
-load(file = "/Volumes/udrive/tows_clust_1010.Rdata")
+# load(file = "/Volumes/udrive/tows_clust_1010.Rdata")
+
+load(file = "/Volumes/udrive/tows_clust_0621.Rdata")
 
 #tg_rev is targets, groundfish revenue 
 #tgo_rev is targets, groundfish, and other species revenues
