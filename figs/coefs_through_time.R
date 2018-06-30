@@ -101,6 +101,39 @@ write.csv(trevs, file = 'output//the_coefs_06_27_nday30_hdist5.1_for_plot.csv',
   row.names = F)
 
 
+#-------------------------------------------------------------------------------------
+#Format all the coefficient sensitivites
+qcos <- the_coefs %>% filter(net_cost_type == "qcos") %>% 
+  dcast(port + net_cost + coef_type ~ year, value.var = "value") 
+qcos <- qcos %>% left_join(coef_descs, by = 'coef_type')
+
+qcos$coef_type_desc <- factor(qcos$coef_type_desc, levels = c("First Tow Distance",
+  "Later Tow Distance", "First Tow Revenue", "Later Tow Revenue", "Fleet Habit",
+  "Individual Habit", "Individual Habit Last Year"))
+
+qcos$port <- factor(qcos$port, levels = c('ASTORIA / WARRENTON',
+  "NEWPORT", "CHARLESTON (COOS BAY)",
+  "CRESCENT CITY_BROOKINGS", 'EUREKA','FORT BRAGG'))
+
+qcos <- qcos %>% arrange(port, coef_type_desc)
+
+write.csv(qcos, file = 'output/sensitivity_qcos_coefficients.csv', 
+  row.names = FALSE)
+
+qcos$net_cost <- as.numeric(qcos$net_cost)
+
+qcos %>% filter(port == "ASTORIA / WARRENTON") %>% arrange(net_cost) %>%
+  write.csv(file = "output/astoria_coefficients.csv", row.names = FALSE)
+
+qcos %>% filter(port == "NEWPORT") %>% arrange(net_cost) %>%
+  write.csv(file = "output/newport_coefficients.csv", row.names = FALSE)
+
+qcos %>% filter(port == "CHARLESTON (COOS BAY)") %>% arrange(net_cost) %>%
+  write.csv(file = "output/charleston_coefficients.csv", row.names = FALSE)
+
+qcos %>% filter(port == "EUREKA") %>% arrange(net_cost) %>%
+  write.csv(file = "output/eureka_coefficients.csv", row.names = FALSE)
+
 
 #-------------------------------------------------------------------------------------
 
