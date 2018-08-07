@@ -2,9 +2,16 @@
 #Figure 2, look at changes by depth and latitude
 tc_unq_hauls <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
+
 tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', group = 'set_year', 
   grid_size = c(50, .5),
   group_vec = 2007:2014)
+
+save(tows_clust_bin_depth, file = 'output/tows_clust_bin_depth.Rdata')
+
+#-------------------------------------------------------------------------------------
+load("output/tows_clust_bin_depth.Rdata")
+
 tows_clust_bin_depth$when <- 'before'
 tows_clust_bin_depth[which(tows_clust_bin_depth$year >= 2011), 'when'] <- 'after'
 
@@ -103,6 +110,8 @@ ss <- slopies %>% distinct(abs_slope)
 #-------------------------------------------------------------------------------------
 #The actual plot
 png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig2.png')
+
+#Source ch4_fig2 function below
 ch4_fig2(mv = 50, lev = 20)
 dev.off()
 
