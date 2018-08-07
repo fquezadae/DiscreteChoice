@@ -7,8 +7,19 @@
 agg_effort <- tows_clust %>% group_by(set_year) %>% summarize(nvess = length(unique(drvid)), 
                                                             ntows = length(unique(haul_id)),
                                                             avg_depth = mean(avg_depth))
+save(agg_effort, file = 'output/agg_effort.Rdata')
+
+#----------------------------------------------------------------------------------------v
+devtools::install_github("peterkuriyama/ch4", auth_token = "83f947b716e40172803f0ff798c46f5ff9ca3cd1")
+library("ch4")
+library(RColorBrewer)
 
 #Number of vessels
+load(file = "output/agg_effort.Rdata")
+
+agg_effort$when <- 'before'
+agg_effort[which(agg_effort$set_year >= 2011), 'when'] <- 'after'
+
 (mean(agg_effort$nvess[5:8]) - mean(agg_effort$nvess[1:4]))
 (mean(agg_effort$nvess[5:8]) - mean(agg_effort$nvess[1:4])) / mean(agg_effort$nvess[1:4])
 
@@ -17,15 +28,19 @@ mean(agg_effort$ntows[5:8])
 (mean(agg_effort$ntows[5:8]) - mean(agg_effort$ntows[1:4]))
 (mean(agg_effort$ntows[5:8]) - mean(agg_effort$ntows[1:4])) / mean(agg_effort$ntows[1:4])
 
-mean(agg_effort[1:4, 'nvess'], na.rm = T)
-
 agg_effort$set_year <- as.numeric(agg_effort$set_year)
 
 agg_effort1 <- agg_effort
 
+#----------------
 #Number of vessels in each fleet
 fleet_vess <- tows_clust %>% group_by(fleet_name, set_year) %>% summarize(nvess = length(unique(drvid))) %>% 
 	as.data.frame
+save(fleet_vess, file = "output/fleet_vess.Rdata")
+#----------------
+
+load(file = 'output/fleet_vess.Rdata')
+
 fleet_vess$plot_fleet <- fleet_vess$fleet_name
 fleet_vess[which(fleet_vess$fleet_name %in% c("ASTORIA / WARRENTON", "CRESCENT CITY", 'EUREKA',
 	'CHARLESTON (COOS BAY)', 'BROOKINGS', 'FORT BRAGG', 'NEWPORT') == FALSE), 'plot_fleet'] <- 'other'
@@ -42,22 +57,20 @@ tows_sig <- simple_permute(input = agg_effort %>% as.data.frame, perm_column = '
 
 hist(vess_sig[[2]])
 
-#Look at distinct hauls
-unq_tows <- tows_clust %>% distinct(haul_id, .keep_all = T)
-seed <- 300
+# #Look at distinct hauls
+# unq_tows <- tows_clust %>% distinct(haul_id, .keep_all = T)
+# seed <- 300
+# 
+# unq_tows$samp_year <- sample(unq_tows$set_year, replace = F)
+# unq_tows$samp_when <- 'before'
+# unq_tows[which(unq_tows$samp_year >= 2011), 'samp_when'] <- 'after'
+# 
+# unq_tows %>% group_by(samp_year) %>% summarize(nvess = length(unique(drvid)), 
+#   ntows = length(unique(haul_id)))
+# 
+# sample(unq_tows$set_year, replace = F) %>% head
+# perms <- tows_clust %>% select(when, haul_id, drvid)
 
-unq_tows$samp_year <- sample(unq_tows$set_year, replace = F)
-unq_tows$samp_when <- 'before'
-unq_tows[which(unq_tows$samp_year >= 2011), 'samp_when'] <- 'after'
-
-unq_tows %>% group_by(samp_year) %>% summarize(nvess = length(unique(drvid)), 
-  ntows = length(unique(haul_id)))
-
-sample(unq_tows$set_year, replace = F) %>% head
-perms <- tows_clust %>% select(when, haul_id, drvid)
-
-agg_effort$when <- 'before'
-agg_effort[which(agg_effort$set_year >= 2011), 'when'] <- 'after'
 
 #----------------------------------------------------------------------------------------v
 #Figure 1
@@ -116,20 +129,19 @@ mtext(side = 2, "Number of Tows", line = 3, cex = 1.2)
 mtext(side = 3, "c)", outer = F, adj = .01, line = -1)
 mtext(side = 1, "Year", outer = T, line = 1.5, cex = 1.2)
 
-
 dev.off()
 
 
 #----------------------------------------------------------------------------------------
 # Look at number of vessels changes
 
-
-tows_clust %>% group_by(fleet_name, set_year) %>% summarize(nvess = length(unique(drvid))) %>% 
-  filter(fleet_name %in% c("ASTORIA / WARRENTON", 'BROOKINGS', 'CHARLESTON (COOS BAY)', 
-    'CRESCENT CITY', 'EUREKA', 'NEWPORT'))
-  ggplot() + geom_line(aes(x = set_year, y = nvess, group = fleet_name)) + facet_wrap(~ fleet_name)
-
-
+# 
+# tows_clust %>% group_by(fleet_name, set_year) %>% summarize(nvess = length(unique(drvid))) %>% 
+#   filter(fleet_name %in% c("ASTORIA / WARRENTON", 'BROOKINGS', 'CHARLESTON (COOS BAY)', 
+#     'CRESCENT CITY', 'EUREKA', 'NEWPORT'))
+#   ggplot() + geom_line(aes(x = set_year, y = nvess, group = fleet_name)) + facet_wrap(~ fleet_name)
+# 
+# 
 
 
 
