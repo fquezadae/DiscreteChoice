@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------------------------------
 # dev.new(width = 8.95, height = 8.43, res = 250)
-
-png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res = 250)
+tiff(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.tiff', res = 300)
+# png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res = 250)
 # tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
 # pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
 # dev.new(width = 8.75, height = 8.34)

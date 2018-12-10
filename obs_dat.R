@@ -10,11 +10,11 @@ setwd("C://Users//Peter//Dropbox//phd//research//ch4")
 #---------------------------------------------------------------------------------
 #Start of obs_dat, work off this script
 #Load Packages
-library(ggplot2)
 library(plyr)
-library(dplyr)
-library(lubridate)
 library(reshape2)
+library(tidyverse)
+library(lubridate)
+
 library(devtools)
 library(maps)
 library(doParallel)
@@ -40,9 +40,10 @@ states_map <- map_data("state")
 #Load the data
 # load(file = "/Volumes/udrive/tows_clust_925_depth_bin.Rdata")
 # load(file = "/Volumes/udrive/tows_clust_1010.Rdata")
-
 load(file = "/Volumes/udrive/tows_clust_0621.Rdata")
+load(file = 'X:/tows_clust_0621.Rdata')
 
+# load(file = "/Users/peterkuriyama/Desktop/tows_clust_0621.Rdata")
 #tg_rev is targets, groundfish revenue 
 #tgo_rev is targets, groundfish, and other species revenues
 #tgow_rev is targets, groundfish, other, and weak species revenues

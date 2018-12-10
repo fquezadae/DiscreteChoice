@@ -2,7 +2,8 @@
 #Figure 2, look at changes by depth and latitude
 tc_unq_hauls <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
-tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', group = 'set_year', 
+tows_clust_bin_depth <- bin_data(tc_unq_hauls, x_col = 'avg_depth', y_col = 'avg_lat', 
+  group = 'set_year', 
   grid_size = c(50, .5),
   group_vec = 2007:2014)
 tows_clust_bin_depth$when <- 'before'
@@ -102,8 +103,20 @@ ss <- slopies %>% distinct(abs_slope)
 
 #-------------------------------------------------------------------------------------
 #The actual plot
-png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig2.png')
+png(width = 7, height = 7, res = 200, units = 'in', file = 'figs/ch4_fig2_test.png')
 ch4_fig2(mv = 50, lev = 20)
+dev.off()
+
+tiff(width = 5.524390, height = 6.5600976, res = 300, units = 'in', 
+  file = 'figs/ch4_fig2_cut.tiff')
+ch4_fig2(mv = 50, lev = 20)
+dev.off()
+
+ch4_fig2(mv = 50, lev = 20)
+
+dev.new(width = 5.69, height = 6.69)
+ch4_fig2(mv = 50, lev = 20)
+
 dev.off()
 
 #Scratch stuff
@@ -172,8 +185,22 @@ color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nti
 #-------------------------------------------------------------------------------------
 # Functions Used
 
+  # matlay <- matrix(c(1,1,2,
+  #                    1,1,2,
+  #                    1,1,2), ncol=3, byrow=T)
+  # layout(matlay, heights=c(1,1,0.2,1,1))
+  # layout.show(2)
+
+  # par(mar=c(0,0,0,0), oma=c(4,4,6,3), mgp = c(.25, .6, 0))
+
 ch4_fig2 <- function(mv, lev){
-  par(mfcol = c(1, 2), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
+  matlay <- matrix(c(1,1,2,
+                     1,1,2,
+                     1,1,2), ncol=3, byrow=T)
+  layout(matlay, heights=c(1,1,0.2,1,1))
+
+  par(mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
+  # par(mfcol = c(1, 2), mar = c(0, 0, 0, 0), oma = c(3.5, 3.5, 1, 0), mgp = c(0, .5, 0))
 
   #-------------------------------------------------------------------------------------
   #Positive Slopes
@@ -227,7 +254,7 @@ ch4_fig2 <- function(mv, lev){
       mar = c(0, 0, 0, 0))
   box()
 
-  par(mar = c(0, .5, 0, 0), fig = c(.66, 0.71, 0.02, .32), new = T)  
+  par(mar = c(0, .5, 0, 0), fig = c(.71, 0.76, 0.02, .32), new = T)  
   blues <- rev(sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('blue', xx)))
   reds <- sapply(seq(0, 1, length.out = lev), FUN = function(xx) adjustcolor('red', xx))
 

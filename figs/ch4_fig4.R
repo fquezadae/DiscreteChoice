@@ -79,7 +79,6 @@ delts_befaft[which(delts_befaft$species == "Longnose Skate"), 'spp_abb'] <- "Lsk
 #------------------------------------------------------------------------------------------------------------
 delts_befaft <- delts_befaft %>% left_join(delta_sigs, by = 'species')
 
-
 props <- delts_befaft %>% dcast(species + prop_sig ~ when, value.var = "prop_zero")
 props$diffs <- props$after - props$before
 
@@ -91,7 +90,6 @@ load('output/logbook_delta_sigs.Rdata')
 
 # delta_sigs <- plyr::rename(delta_sigs, c("skew_diffs" = 'lbk_skew_diffs',
 #   'skew_sig' = 'lbk_skew_sig', "prop_diffs" = 'lbk_prop_diffs', 'prop_sig' = 'lbk_prop_sig'))
-
 
 props <- props %>% left_join(delta_sigs %>% select(species, lbk_prop_diffs, lbk_prop_sig, type), by = "species")
 
@@ -197,7 +195,9 @@ delta_sigs %>% filter(prop_sig == 'yes', prop_diffs < 0) %>% arrange(type)
 #------------------------------------------------------------------------------------------------------------
 #Plot the logbook instead of the combined data set
 
-png(width = 7, height = 7, file = 'figs/ch4_fig4.png', units = 'in', res = 200)
+# png(width = 7, height = 7, file = 'figs/ch4_fig4.png', units = 'in', res = 200)
+
+tiff(width = 170, height = 170, file = 'figs/ch4_fig4.tiff', units = 'mm', res = 300)
 
 par(mfrow = c(3, 2), oma = c(3.5, 3.5, 2, 11), mar = c(0, 0, .5, 0))
 for(ii in 1:6){
@@ -205,8 +205,10 @@ for(ii in 1:6){
   # temp <- subset(delta_sigs, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
   temp <- subset(delta_sigs_plot, when == dba2[ii, 'when'] & type == dba2[ii, 'plot_type']) 
 
-  both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes', skew_diffs < 0,
-    prop_diffs < 0)
+  both_sig <- temp %>% filter(skew_sig == 'yes', skew_diffs < 0)
+    # prop_diffs < 0)
+  # both_sig <- temp %>% filter(skew_sig == 'yes', prop_sig == 'yes', skew_diffs < 0,
+  #   prop_diffs < 0)
   # one_sig <- temp %>% filter(skew_sig != 'yes' | prop_sig != 'yes')
   one_sig <- temp %>% filter(species %in% both_sig$species == F)
 
