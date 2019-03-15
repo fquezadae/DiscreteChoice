@@ -7,8 +7,10 @@
 tows_clust_unq <- tows_clust %>% distinct(haul_id, .keep_all = T)
 
 tows_clust_bin <- bin_data(tows_clust_unq, x_col = 'avg_long', y_col = 'avg_lat', 
-  group = 'set_year', grid_size = c(.0909, .11),
-  group_vec = 2007:2014)
+                           group = 'set_year', grid_size = c(.0909, .11),
+                           group_vec = 2007:2014)
+
+#------------------------------------------------------------------------
 
 #Specify maximum value
 scaled_value <- 200
@@ -16,7 +18,7 @@ tows_clust_bin$plot_value <- tows_clust_bin$count
 tows_clust_bin[which(tows_clust_bin$plot_value >= scaled_value), 'plot_value'] <- scaled_value
 
 tows_clust_bin$plot_value <- round(tows_clust_bin$plot_value / max(tows_clust_bin$plot_value) * 100,
-  digits = 0)
+                                   digits = 0)
 
 # gray.colors(10, start = 0, end = 1)
 
@@ -51,7 +53,7 @@ tows_clust$bin_y <- "999"
 for(ii in 1:nrow(unq_bins)){
   tb <- unq_bins[ii, ]
   the_inds <- which(tows_clust$avg_long > tb$xmin & tows_clust$avg_long < tb$xmax &
-    tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
+                      tows_clust$avg_lat > tb$ymin & tows_clust$avg_lat < tb$ymax)
   tows_clust[the_inds, 'unq'] <- tb$unq
   tows_clust[the_inds, 'bin_x'] <- tb$x
   tows_clust[the_inds, 'bin_y'] <- tb$y
@@ -67,7 +69,14 @@ keepers <- plyr::rename(keepers, c('set_year' = "year"))
 tows_clust_bin <- tows_clust_bin %>% left_join(keepers, by = c('unq', "year")) 
 tows_clust_bin <- tows_clust_bin %>% filter(nvess >= 3)
 
+
+save(tows_clust_bin, file = "output/tows_clust_bin.Rdata")
+
 #------------------------------------------------------------------------
+
+# Stuff above here won't work'
+load(file = "output/tows_clust_bin.Rdata")
+
 #MRAG Metrics
 tows_clust_bin$when <- 'before'
 tows_clust_bin[which(tows_clust_bin$year >= 2011), 'when'] <- 'after'
@@ -77,15 +86,13 @@ avg_tows_bin <- tows_clust_bin %>% group_by(when, unq) %>% summarize(avg_ct = me
 avg_tows_bin %>% group_by(when) %>% summarize(min_ct = min(avg_ct), nlocs = length(unique(unq)))
 
 #Aggregate effort number of vessels
+load("output/agg_effort.Rdata")
 mean(agg_effort$nvess[1:4])
 mean(agg_effort$ntows[1:4])
 
 mean(agg_effort$nvess[5:8])
 mean(agg_effort$ntows[5:8])
 tows_clust_bin %>% group_by(year, when) %>% summarize(nvess = length(unique(drvid)))
-
-%>% 
-  group_by(when)
 
 #------------------------------------------------------------------------
 #Figure
@@ -105,9 +112,9 @@ ylabels <- c(expression("34"*degree*N),
              expression("44"*degree*N),
              expression("46"*degree*N),
              expression("48"*degree*N))
-                    
+
 png(width = 3.866, height = 6.6, res = 200, units = 'in',
-  file = 'figs/ch4_figS1.png')
+    file = 'figs/ch4_figS1.png')
 
 par(mar = c(0, 0, 0, 0), oma = c(3.5, 3, 0, 1.5), mfrow = c(2, 4))
 yrz <- 2007:2014
@@ -115,26 +122,26 @@ yrz <- 2007:2014
 for(ii in 1:8){
   tt <- tows_clust_bin %>% filter(year == yrz[ii])
   map('state', fill = FALSE, col = 'white', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
-    mar = c(0, 0, 0, 0))
+      mar = c(0, 0, 0, 0))
   points(tt$x, tt$y, pch = 15, cex = .3, xlim = c(-126, -120.5), ylim = c(34, 49), col = tt$greys)
   map('state', fill = TRUE, col = 'gray95', xlim = c(-126, -120.5), asp = 1.3, ylim = c(34, 49),
-    mar = c(0, 0, 0, 0), add = T)
+      mar = c(0, 0, 0, 0), add = T)
   box()
   
   mtext(yrz[ii], adj = .05, cex = .6, side = 1,
-    line = -1.2, bg = 'white')
+        line = -1.2, bg = 'white')
   #Add letters
   # mtext(paste0(letters[ii], ") ", yrz[ii]), adj = .05, cex = .6, side = 1,
   #   line = -1.2, bg = 'white')
-
+  
   #Add axes
   if(ii %in% c(1, 5)) axis(side = 2, las = 2, mgp = c(0, .5, 0), at = c(34, 36, 38, 40,
-    42, 44, 46, 48), labels = ylabels)
+                                                                        42, 44, 46, 48), labels = ylabels)
   if(ii >= 5) axis(side = 1, mgp = c(0, .5, 0), at = c(-125, -123, -121), labels = xlabels,
-    las = 2)
+                   las = 2)
   if(ii == 4) mtext(side = 4, "Before", line = .5)
   if(ii == 8) mtext(side = 4, "After", line = .5)
-
+  
 }
 
 #Add Color Bar
@@ -142,25 +149,25 @@ rect(xleft = -123.3, ybottom = 42.75, xright = -120.55, ytop = 48.2, col = 'whit
 
 par(mar = c(0, 0, 0, 0), fig = c(.97, 0.99, 0.3, .45), new = T)  
 color_bar(lut = gg$greys, Cex = .3, nticks = 5, min = 0, max = 1, tick_labs = c("0", "50", 
-  "100", "150", ">200"))
+                                                                                "100", "150", ">200"))
 
 dev.off()
 
 #-----------------------------------------------------------------------
 #Function for Color Bar on Plot
 color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), 
-  tick_labs, title='', Cex = .5) {
-    # browser()
-    scale = (length(lut)-1)/(max-min)
-    par(mgp = c(0, .5, 0))
-    # dev.new(width=1.75, height=5)
-    plot(c(0,10), c(min,max), type='n', xaxt='n', xlab='', yaxt='n', ylab=title, main='', 
-      cex.lab=1.5, mgp = c(0, .05, 0), bg = 'white', bty = 'n')
-    axis(2, at = ticks, labels = tick_labs, las=1, cex = Cex)
-    for (i in 1:(length(lut)-1)) {
-     y = (i-1)/scale + min
-     rect(0,y,10,y+1/scale, col=lut[i], border=NA)
-    }
+                      tick_labs, title='', Cex = .5) {
+  # browser()
+  scale = (length(lut)-1)/(max-min)
+  par(mgp = c(0, .5, 0))
+  # dev.new(width=1.75, height=5)
+  plot(c(0,10), c(min,max), type='n', xaxt='n', xlab='', yaxt='n', ylab=title, main='', 
+       cex.lab=1.5, mgp = c(0, .05, 0), bg = 'white', bty = 'n')
+  axis(2, at = ticks, labels = tick_labs, las=1, cex = Cex)
+  for (i in 1:(length(lut)-1)) {
+    y = (i-1)/scale + min
+    rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+  }
 }
 
 
@@ -292,9 +299,9 @@ color_bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nti
 #   print(med_val)
 #   print(mean(tt_temp$x))
 
-  
+
 #   (median(tt_temp$x) + 124)
-  
+
 #   abline(v = abs(median(tt_temp$x) + 124) * 24, las = 2)
 #   # abline()
 #   # 126 - 124
