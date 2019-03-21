@@ -201,6 +201,8 @@ length(which(emp_moran >= surr_years_moran)) / 1000
 #per Moran's I, confounded potentially with the overall decrease in effort
 
 
+
+
 #-------------------------------------------------------------------------------------
 #For the vessels that remained, was there statistically significant change in spatial
 #autocorrelation
@@ -286,6 +288,126 @@ load('output/moran_surrogates_vess.Rdata')
 emp_moran_vess <- emp_aft_vess$observed - emp_bef_vess$observed
 length(which(emp_moran_vess >= surr_years_moran_vess)) / 1000
 #Insignificant increase in Moran's I
+
+
+#-------------------------------------------------------------------------------------
+#Look at port specific changes in Moran's I, only among vessels that stayed
+#Function
+# fleet_name1 <- c("BROOKINGS", "CRESCENT CITY")
+
+port_moran <- function(fleet_name1, remain_vessels = FALSE){
+  if(remain_vessels == FALSE){
+    tc_unq_hauls2 <- tc_unq_hauls %>% filter(fleet_name %in% fleet_name1)
+  }
+  if(remain_vessels == TRUE){
+    tc_unq_hauls2 <- tc_unq_hauls1 %>% filter(fleet_name %in% fleet_name1)
+  }
+  
+  tows_ll_vess <- bin_data(tc_unq_hauls2, x_col = 'avg_long', y_col = 'avg_lat', 
+                    group = 'set_year', 
+                    grid_size = c(.5, .5),
+                    group_vec = 2007:2014)
+  
+  tows_ll_vess$when <- 'before'
+  tows_ll_vess[which(tows_ll_vess$year >= 2011), 'when'] <- 'after'
+  
+
+  bef_aft_vess <- tows_ll_vess %>% group_by(when, x, y, unq, xbin, ybin) %>%
+    summarize(count = sum(count))
+  
+  #Sum by periods
+  befs_vess <- bef_aft_vess %>% filter(when == 'before')
+  
+  grid_dists_vess <- as.matrix(dist(cbind(befs_vess$x, befs_vess$y)))
+  grid_dist_inv_vess <- 1 / grid_dists_vess
+  diag(grid_dist_inv_vess) <- 0
+  
+  emp_bef_vess <- Moran.I(befs_vess$count, grid_dist_inv_vess)
+  
+  #Do the same with values after
+  afts_vess <- bef_aft_vess %>% filter(when == 'after')
+  grid_dists_vess <- as.matrix(dist(cbind(afts_vess$x, afts_vess$y)))
+  grid_dist_inv_vess <- 1 / grid_dists_vess
+  diag(grid_dist_inv_vess) <- 0
+  
+  emp_aft_vess <- Moran.I(afts_vess$count, grid_dist_inv_vess)
+  vess_emp <- emp_aft_vess$observed - emp_bef_vess$observed
+  
+                                                   
+  set.seed(300)
+  surr_years <- make_surrogate_data(tc_unq_hauls2$set_year, n = 1000)
+  
+  start_time <- Sys.time()
+  surr_years_moran <- mclapply(1:1000, FUN = function(ii){
+    temp <- tc_unq_hauls2
+    temp$set_year <- surr_years[, ii]
+    tows_ll <- bin_data(temp, x_col = 'avg_long', y_col = 'avg_lat', 
+                        group = 'set_year', 
+                        grid_size = c(.5, .5),
+                        group_vec = 2007:2014)
+    tows_ll$when <- 'before'
+    tows_ll[which(tows_ll$year >= 2011), 'when'] <- 'after'
+    
+    #Calculate moran's I things
+    bef_aft <- tows_ll %>% group_by(when, x, y, unq, xbin, ybin) %>%
+      summarize(count = sum(count))
+    
+    #Sum by periods
+    befs <- bef_aft %>% filter(when == 'before')
+    
+    bef_grid_dists <- as.matrix(dist(cbind(befs$x, befs$y)))
+    bef_grid_dist_inv <- 1 / bef_grid_dists
+    diag(bef_grid_dist_inv) <- 0
+    
+    bef_m <- Moran.I(befs$count, bef_grid_dist_inv)
+    
+    #Do the same with values after
+    afts <- bef_aft %>% filter(when == 'after')
+    aft_grid_dists <- as.matrix(dist(cbind(afts$x, afts$y)))
+    aft_grid_dist_inv <- 1 / aft_grid_dists
+    diag(aft_grid_dist_inv) <- 0
+    
+    aft_m <- Moran.I(afts$count, aft_grid_dist_inv)
+    diff_m <- aft_m$observed - bef_m$observed
+    return(diff_m)
+  }, mc.cores = 6)
+  run_time <- Sys.time() - start_time; run_time #runs in about 30 seconds 
+  #in parallel
+  
+  surr_years_moran_vess <- (ldply(surr_years_moran))
+
+  emp_moran_vess <- emp_aft_vess$observed - emp_bef_vess$observed
+  p_val <- length(which(emp_moran_vess >= surr_years_moran_vess)) / 1000
+  out <- data.frame(fleet_name = fleet_name1, emp_val = emp_moran_vess, p_val = p_val)
+  return(out)
+}
+
+
+#------------------------------
+#Evaluate port-specific changes
+ptz <- unique(tc_unq_hauls1$fleet_name)[c(1, 4, 6, 7, 8)]
+
+#For vessels that remain
+the_port_morans1 <- lapply(ptz, FUN = function(pp){
+  kanye <- port_moran(fleet_name1 = pp, remain_vessels = TRUE)
+  return(kanye)
+})
+the_port_morans1 <- ldply(the_port_morans1)
+
+#For all vessels
+the_port_morans2 <- lapply(ptz, FUN = function(pp){
+  kanye <- port_moran(fleet_name1 = pp, remain_vessels = FALSE)
+  return(kanye)
+})
+the_port_morans2 <- ldply(the_port_morans2)
+
+
+
+
+the_port_morans$fleet_name <- as.character(the_port_morans$fleet_name)
+the_port_morans <- rbind(the_port_morans, c("BROOKINGS and CRESCENT CITY", -.117957, 0))
+save(the_port_morans, file = 'output/the_port_morans.Rdata')
+#Run for Brookings and crescent city
 
 
 #-------------------------------------------------------------------------------------
