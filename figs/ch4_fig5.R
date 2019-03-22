@@ -1,138 +1,132 @@
-#------------------------------------------------------------------------------------------------------
-# dev.new(width = 8.95, height = 8.43, res = 250)
-tiff(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.tiff', res = 300)
-# png(width = 8.95, height = 8.43, units = 'in', file = 'figs/ch4_fig5.png', res = 250)
-# tiff(width = 8.75, height = 8.34, units = 'in', filename = 'figs/ch4_sig_fig.tiff', res = 200)
-# pdf(width = 8.75, height = 8.34, file = 'figs/ch4_sig_fig.pdf')
-# dev.new(width = 8.75, height = 8.34)
+#----------------------------------------------------------------------
+#Make figure of coefficients with CIs
+library(ggsidekick)
+library(RColorBrewer)
+load(file = "output/mod_coefs_wstderror.Rdata")
+mod_coefs$low <- mod_coefs$coefs - mod_coefs$ses196
+mod_coefs$high <- mod_coefs$coefs + mod_coefs$ses196
 
-matlay <- matrix(c( 1,  2, 0,  3,  4,  5,  6, 
-                    7,  8, 0,  9, 10, 11, 12,
-                   13, 14, 0, 15, 16, 17, 18,
-                   19, 20, 0, 21, 22, 23, 24, 
-                   25, 26, 0, 27, 28, 29, 30,
-                   31, 32, 0, 33, 34, 35, 36), ncol = 7, byrow = T)
+mod_coefs$sig <- 'No'
+mod_coefs[which(mod_coefs$low < 0 & mod_coefs$high < 0 | 
+      mod_coefs$low > 0 & mod_coefs$high > 0), 'sig'] <- 'Yes'
 
-layout(matlay, widths = c(lcm(2.5), lcm(2.5), lcm(.25), rep(lcm(2.5), 4)), 
-  heights = lcm(2.75 * c(1.75, 1.25, 1, 1, 1, 1)))
+# mod_coefs %>% filter(sig == 'No')
 
-#no color for no significance, 
-#color for significance at .05
-#point on top of color for very significant coefficients
+cnames <- data.frame(coef_name = as.character(unique(mod_coefs$coef_name)),
+                                    plot_coef_name = c("Individual habit",
+                                                       "Individual habit last year",
+                                                       "Missing data", "First tow revenue",
+                                                       "First tow distance",
+                                                       "Later tow revenue", 
+                                                       "Later tow distance"))
 
-#------------------------------------------------------------------------------------------------------
-par(mar = c(0, 0, 0, 0), oma = c(0, 0, 0, 0)) #small numbers
+mod_coefs <- mod_coefs %>% left_join(cnames, by = "coef_name")
+mod_coefs$plot_coef_name <- factor(mod_coefs$plot_coef_name, levels = c("First tow distance",
+                                            "Later tow distance",
+                                            "First tow revenue",
+                                            "Later tow revenue",
+                                            "Missing data", 
+                                            "Individual habit", "Individual habit last year"))
 
-for(pp in 6:1){  
-  plot_dat <- port_plot[[pp]]
-  temp_bin <- port_bins %>% filter(fleet_name_comb %in% plot_dat$port_name)
-  port_locz <- some_port_locs[[pp]]
-  yrects <- seq(plot_dat$ylims[1], plot_dat$ylims[1] + 2, length.out = 8)
-  ylabels <- parse(text = paste(plot_dat$ylabs, "*degree*N", sep = " "))
 
-# axis(side = 2, at = plot_dat$ylabs, labels = ylabels, las = 2)
+#Jitter the plot years to aid visuals
+mod_coefs$plot_year <- 99
+ports <- unique(mod_coefs$port)
+#Ports order
+#ast, new, char, bCC, eur, ftb
+ports <- ports[c(1, 6, 2, 3, 4, 5)]
+padj <- data.frame(ports = ports, adj = c(-.25, -.15, -.05, .05, .15, .25))
+padj$port_name <- c("Astoria", "Newport", "Charleston", "Brookings & Crescent City", "Eureka", "Fort Bragg")
+names(padj)[1] <- 'port'
 
-  for(yy in 1:length(yrz)){  
-    # par(mar = c(0, 0, 0, 0))
-    par(mar = c(0, 0, 1.4, 0))
-    yr_temp <- temp_bin %>% filter(year == yrz[yy])
+pp <- padj %>% select(port, port_name)
+pp$port <- as.character(pp$port)
 
-plot(yr_temp$x, yr_temp$y, pch = 15, type = 'n', 
-  xlim = plot_dat$xlims, ylim = plot_dat$ylims, ann = F, axes = F)    
-# map('state', fill = FALSE, col = 'white', xlim = plot_dat$xlims,
-#       ylim = plot_dat$ylims, mar = c(0, 0, 0, 0), asp = 1.3, add = T)    
-    # map('state', fill = FALSE, col = 'white', xlim = plot_dat$xlims,
-    #   ylim = plot_dat$ylims, mar = c(0, 0, 1, 0), asp = 1.3)
-    points(yr_temp$x, yr_temp$y, pch = 15, cex = .6, col = yr_temp$greys)
-map('state', fill = TRUE, col = 'gray95', xlim = plot_dat$xlims,
-      ylim = plot_dat$ylims, mar = c(0, 0, 0, 0), add = T, asp = 1.3 )
-    # map('state', fill = TRUE, col = 'gray95', xlim = plot_dat$xlims,
-    #   ylim = plot_dat$ylims, mar = c(0, 0, 1, 0), add = T, asp = 1.3 )
-    
-    points(port_locz$d_port_long, port_locz$d_port_lat, pch = 21, col = 'black', bg = 'red')
-    
-    mtext(side = 3, text = paste0(plot_dat$letts[yy], ")"), adj = 0.02, line = -1,
-      cex = .8)
-    
-    #-----Add coefficient significance
-    rect(xleft = -123.32, xright = par('usr')[2], ybottom = par('usr')[3], ytop = par('usr')[3] + 2, 
-      col = 'white', border = FALSE)
-box()    
-    #Add rectangles
-    
-    for(fc in 1:7){
-      points(x = mean(c(-123.32, par("usr")[2])), 
-        y = mean(c(yrects[fc], yrects[fc + 1])), 
-        pch = plot_dat$coefs_pch[fc, yy + 2], 
-        col = plot_dat$coefs_colors[fc, yy + 2], cex = 2)  
-    }
-    
-    #Add points to significant and nonsignificant points
-    ypoints <- yrects[1:7] + diff(yrects)/2
-    
-    #Add black points if very significant
-    ptz <- plot_dat$coefs_point[, c(1, 2, (yy + 2))]
-    ptz$pch <- NA
-    ptz[which(ptz[, 3] == 'yes'), 4] <- 19
-    
-    # points(x = rep(-123.16, 7), y = ypoints, pch = ptz[, 4], cex = .6, col = 'white')
+mod_coefs <- mod_coefs %>% left_join(padj %>% select(port, port_name),
+  by = 'port')
+mod_coefs$port_name <- factor(mod_coefs$port_name, 
+  levels =  c("Astoria", "Newport", "Charleston", 
+    "Brookings & Crescent City", "Eureka", "Fort Bragg"))
 
-    #-----Add Axes
-    if(yy == 1 & pp != 6){
-      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs, labels = 
-        ylabels)
-      mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
-    } 
-    
-    if(pp == 6 & yy == 1){
-      # paste0("'", substr(yrz[yy], 3, 4))
-      # mtext(side = 3, paste0("'", substr(yrz[yy], 3, 4)), adj = 0, outer = F)
-      axis(side = 2, las = 2, mgp = c(0, .5, 0), at = plot_dat$ylabs, labels = ylabels)
-      mtext(side = 3, yrz[yy], adj = 1, outer = F)
-      mtext(side = 3, unique(port_locz$name), line = 0, adj = 0)
-      
-    }
-    if(pp == 6 & yy == 3) mtext(side = 3, line = 1.2, "After", adj = 0, cex = 1.2)
-    if(pp == 6 & yy == 2){
-      mtext(side = 3, yrz[yy], adj = 1, outer = F)
-      mtext(side = 3, line = 1.2, "Before", adj = 1, cex = 1.2)
-    }
-
-    if(pp == 6 & yy >= 3){
-      mtext(side = 3, yrz[yy], adj = 0, outer = F)
-    }
-    
-xlabels <- c(expression("126"*degree*W),
-             expression("125"*degree*W),
-             expression("124"*degree*W))
-  
-    if(pp == 1){
-      axis(side = 1, mgp = c(0, .5, 0), at = c(-126, -125, -124), 
-        labels = xlabels, las = 3)
-    } 
-    if(yy == 6){
-      axis(side = 4, las = 2, mgp = c(0, .5, 0), 
-        at = seq(plot_dat$ylims[1] + .1, plot_dat$ylims[1] + 1.9, length.out = 7),
-        labels = c('individual habit year prior', 
-          'individual habit', 'fleet habit', 'later tow revenue', 
-          'first tow revenue', 'later tow distance', "first tow distance"))
-    }
-  }
+for(ii in 1:length(ports)){
+  inds <- which(mod_coefs$port == ports[ii])  
+  the_adj <- padj %>% filter(ports == ports[ii]) %>% pull(adj)
+  mod_coefs[inds, 'plot_year'] <- mod_coefs[inds, 'year'] + the_adj
 }
+mod_coefs$vline <- mod_coefs$year + .5
 
-#----------------------------------------------
-#Add legend
-add_legend <- function(...) {
-  opar <- par(fig=c(0, 1, 0, 1), oma=c(0, 0, 0, 0), 
-    mar=c(0, 0, 0, 0), new=TRUE)
-  on.exit(par(opar))
-  plot(0, 0, type='n', bty='n', xaxt='n', yaxt='n')
-  legend(...)
-}
+#Make open and closed based on significance
+non_sigs <- mod_coefs %>% filter(sig == 'No')
+mod_coefs$port_num <- as.numeric(mod_coefs$port_name)
 
-#Add first legend
-add_legend(x = .72, y = .95, legend = c('negative', 'positive', 
-  ''), pch = c(15, 19, NA), 
-  xpd = TRUE, pt.cex = c(1.5, 1.5), bty = 'n')  
+#----------------------------------------------------------------------
+#Make table with the coefficients, formatted 
+#as the_coefs_06_27...
+mod_coefs$coef_round <- format(round(mod_coefs$coefs, digits = 3),
+  nsmall = 3)
+mod_coefs$sig_val <- ""
+mod_coefs[which(mod_coefs$sig == "Yes"), 'sig_val'] <- "*"
+mod_coefs$coef_round <- paste0(mod_coefs$coef_round, " ", 
+  mod_coefs$sig_val)
+mod_table <- mod_coefs %>% dcast(port_name + plot_coef_name ~ year, 
+  value.var = 'coef_round')
 
+#Add in the
+write.csv(mod_table, "output/the_coefs_03_20.csv", row.names = F)
+
+
+#----------------------------------------------------------------------
+#The figure png
+
+ggplot(mod_coefs, aes(x = year, colour = port_name, fill = port_name)) + 
+  geom_line(aes(x = plot_year, y = coefs, group = port_name), size = .5, alpha = .5) +
+  geom_hline(yintercept = 0, lty = 2, col = 'gray') +
+  geom_segment(aes(x = plot_year, y = coefs, xend = plot_year, yend = high), alpha = .3) +
+  geom_segment(aes(x = plot_year, y = coefs, xend = plot_year, yend = low), alpha = .3) +
+  geom_point(aes(x = plot_year, y = coefs, shape = sig)) + 
+  geom_vline(xintercept = 2010.5, lty = 2, col = 'gray') +
+  geom_point(data = non_sigs, aes(x = plot_year, 
+    y = coefs), fill = 'white', pch = 21) + 
+  facet_wrap(~ plot_coef_name, scales = 'free_y') + theme_sleek() + 
+  scale_colour_manual(values = c("#1b9e77", "#d95f02", "#7570b3",
+    "#e7298a", "#66a61e", "#e6ab02")) +
+  scale_fill_manual(values = c("#1b9e77", "#d95f02", "#7570b3",
+    "#e7298a", "#66a61e", "#e6ab02"), guide = FALSE) +
+  scale_shape_manual(values = c(1, 19))  + 
+  labs(x = "Year", y = "Value", colour = "Port name",
+    shape = "Significant (p < 0.05)") +
+  theme(legend.position = c(.5, .15), legend.box = 'horizontal') +
+  ggsave(file = 'figs/ch4_fig5.png', width = 10, height = 5.4)
+
+#In TIFF
+tiff(file = 'figs/ch4_fig5.tiff', width = 10, height = 5.4, res = 300,
+  units = 'in')
+ggplot(mod_coefs, aes(x = year, colour = port_name, fill = port_name)) + 
+  geom_line(aes(x = plot_year, y = coefs, group = port_name), size = .5, alpha = .5) +
+  geom_hline(yintercept = 0, lty = 2, col = 'gray') +
+  geom_segment(aes(x = plot_year, y = coefs, xend = plot_year, yend = high), alpha = .3) +
+  geom_segment(aes(x = plot_year, y = coefs, xend = plot_year, yend = low), alpha = .3) +
+  geom_point(aes(x = plot_year, y = coefs, shape = sig)) + 
+  geom_vline(xintercept = 2010.5, lty = 2, col = 'gray') +
+  geom_point(data = non_sigs, aes(x = plot_year, 
+    y = coefs), fill = 'white', pch = 21) + 
+  facet_wrap(~ plot_coef_name, scales = 'free_y') + theme_sleek() + 
+  scale_colour_manual(values = c("#1b9e77", "#d95f02", "#7570b3",
+    "#e7298a", "#66a61e", "#e6ab02")) +
+  scale_fill_manual(values = c("#1b9e77", "#d95f02", "#7570b3",
+    "#e7298a", "#66a61e", "#e6ab02"), guide = FALSE) +
+  scale_shape_manual(values = c(1, 19))  + 
+  labs(x = "Year", y = "Value", colour = "Port name",
+    shape = "Significant (p < 0.05)") +
+  theme(legend.position = c(.5, .15), legend.box = 'horizontal')
 dev.off()
+
+# ggplot(mod_coefs, aes(colour = port, shape = port),
+#        alpha = .5) + geom_point(aes(x = plotyear, y = coefs)) + 
+#   geom_segment(aes(x = plotyear, y = coefs, xend = year, yend = high)) +
+#   geom_segment(aes(x = year, y = coefs, xend = year, yend = low)) + 
+#   geom_vline(xintercept = 2010.5, lty = 2) +
+#   # geom_jitter(aes(year, y = coefs)) +
+#   facet_wrap(~ coef_name, scales = 'free') + theme_sleek()
+
+# mod_coefs %>% filter(year == 2009, port == "AST", coef_name == 'dummy_prev_days')
