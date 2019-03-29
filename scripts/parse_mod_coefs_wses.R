@@ -35,7 +35,46 @@ e1 + 1.96 * se1
 e1 - 1.96 * se1
 summary(mod)$model
 
+#----------------------------------------------------------------------
+#Extract p values 
+par_sigs <- lapply(1:length(mod_files), FUN = function(ii){
+  load(file = paste0("model_runs//", mod_files[ii]))
+  print(ii)
+  pvals <- summary(mod)$CoefTable  
+  pvals <- data.frame(pvals)
+  names(pvals) <- c("Estimate", "Std. Error", "z-value", "p-value")
+  pvals$filename <- mod_files[ii]
+  return(pvals)
+})
 
+par_sigs2 <- lapply(par_sigs, FUN = function(xx){
+  xx$coef_name <- cnames
+  return(xx)
+})
+
+par_sigs1 <- ldply(par_sigs2)
+par_sigs1$hsig <- ""
+par_sigs1[which(par_sigs1$'p-value' < .001), 'hsig'] <- "***"
+par_sigs1$port <- substr(par_sigs1$filename, 1, 3)
+par_sigs1$year <- substr(ldply(strsplit(par_sigs1$filename, split = "_focyr"))$V2,
+                         1, 4)
+
+par_sigs1[1:7, ]
+par_sigs1$coef_name <- factor(par_sigs1$coef_name, 
+                              levels = c("dummy_first:distance",
+                                         "distance:dummy_not_first",
+                                         "miss_rev_adj:dummy_first",
+                                         "miss_rev_adj:dummy_not_first",
+                                         "dummy_miss",
+                                         "dummy_prev_days",
+                                         "dummy_prev_year_days"))
+par_sigs1$port <- factor(par_sigs1$port, levels = c("AST",
+                                                    "NEW",
+                                                    "CHA", "CRE",
+                                                    "EUR", "FOR"))
+dcast(par_sigs1, port + coef_name ~ year, value.var = "hsig") %>%
+  filter(port == "FOR")
+save(par_sigs1, file = 'output/par_sigs.Rdata')
 #----------------------------------------------------------------------
 #Format the coefficient output with the ses
 
