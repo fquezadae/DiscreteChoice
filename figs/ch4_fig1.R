@@ -23,7 +23,7 @@ jitters <- function(x = 8, y = 3, radius = 1, n){
 #--------------------------------------------------------
 #Full figure
 # pdf(width = 7, height = 7, file = 'figs/ch4_choice_set_ex.pdf')
-png(width = 7, height = 7, file = 'figs/ch4_fig1.png',
+tiff(width = 7, height = 7, file = 'figs/ch4_fig1.tiff',
   res = 150, units = 'in')
 
 par(mar = c(0, 0, 0, 0))

@@ -14,7 +14,6 @@ library(plyr)
 library(reshape2)
 library(tidyverse)
 library(lubridate)
-
 library(devtools)
 library(maps)
 library(doParallel)
