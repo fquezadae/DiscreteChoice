@@ -23,7 +23,8 @@
 sampled_rums <- function(data_in = filt_clusts, the_port = "ASTORIA / WARRENTON",
   min_year = 2010, max_year = 2012, risk_coefficient = 1,
   ndays = 60, focus_year = 2012, nhauls_sampled = 50, seed = 300, ncores, rev_scale,
-  model_type = 'no_bycatch', net_cost, habit_distance, return_hauls = FALSE){
+  model_type = 'no_bycatch', net_cost, habit_distance, return_hauls = FALSE, 
+  exp_rev = "sdm"){
 #Start by sampling 50 tows within the same fleet  
 #Figure out how close the different clusters are
   #---------------------------------------------------------------
